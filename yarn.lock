@@ -7012,7 +7012,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"invariant@npm:^2.2.4":
+"invariant@npm:2.2.4, invariant@npm:^2.2.4":
   version: 2.2.4
   resolution: "invariant@npm:2.2.4"
   dependencies:
@@ -10521,6 +10521,25 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-app-auth@npm:^8.0.0":
+  version: 8.0.0
+  resolution: "react-native-app-auth@npm:8.0.0"
+  dependencies:
+    invariant: 2.2.4
+    react-native-base64: 0.0.2
+  peerDependencies:
+    react-native: ">=0.63.0"
+  checksum: d1ab260bc7134e32b4be4fbf769f9cdaabd5604bd08c608fd8c9a518574411da0ea5ab5099c2eb26427e1efc1523724cfb3b3bb642e13486045dd99c4a0be23a
+  languageName: node
+  linkType: hard
+
+"react-native-base64@npm:0.0.2":
+  version: 0.0.2
+  resolution: "react-native-base64@npm:0.0.2"
+  checksum: 696f6cad0e3ce26437275bcd791becaf597300d351a3ab2d7084fd42a177731bb9ab1e490534397ed35de4cd2a5a4385ee8d49bf5846069101b5ada98f132d23
+  languageName: node
+  linkType: hard
+
 "react-native-builder-bob@npm:^0.32.1":
   version: 0.32.1
   resolution: "react-native-builder-bob@npm:0.32.1"
@@ -10568,6 +10587,7 @@ __metadata:
     "@react-native/typescript-config": 0.76.2
     react: 18.3.1
     react-native: 0.76.2
+    react-native-app-auth: ^8.0.0
     react-native-builder-bob: ^0.32.1
   languageName: unknown
   linkType: soft
@@ -10592,6 +10612,7 @@ __metadata:
     prettier: ^3.0.3
     react: 18.3.1
     react-native: 0.76.2
+    react-native-app-auth: ^8.0.0
     react-native-builder-bob: ^0.32.1
     release-it: ^17.10.0
     turbo: ^1.10.7
@@ -10599,6 +10620,7 @@ __metadata:
   peerDependencies:
     react: "*"
     react-native: "*"
+    react-native-app-auth: "*"
   languageName: unknown
   linkType: soft
 

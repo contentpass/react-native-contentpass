@@ -1,8 +1,9 @@
 {
   "preset": "react-native",
   "modulePathIgnorePatterns": [
-    ",<rootDir>/example/node_modules",
-    "<rootDir>/lib/"
+    "./example/node_modules",
+    "./expoExample/node_modules",
+    "./lib/"
   ]
 }
 

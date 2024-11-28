@@ -12258,6 +12258,7 @@ __metadata:
     react-native-app-auth: ^8.0.0
     react-native-builder-bob: ^0.32.1
     react-native-encrypted-storage: ^4.0.3
+    sharedExample: "workspace:*"
   languageName: unknown
   linkType: soft
 
@@ -12282,6 +12283,7 @@ __metadata:
     react-native-app-auth: ^8.0.1
     react-native-builder-bob: ^0.32.1
     react-native-encrypted-storage: ^4.0.3
+    sharedExample: "workspace:*"
   languageName: unknown
   linkType: soft
 
@@ -13245,6 +13247,16 @@ __metadata:
   checksum: 39b3dd9630a774aba288a680e7d2901f5c0eae7b8387fc5c8ea559918b29b3da144b7bdb990d7ccd9e11be05508ac9e459ce51d01fd65e583282f6ffafcba2e7
   languageName: node
   linkType: hard
+
+"sharedExample@workspace:*, sharedExample@workspace:sharedExample":
+  version: 0.0.0-use.local
+  resolution: "sharedExample@workspace:sharedExample"
+  dependencies:
+    "@sourcepoint/react-native-cmp": ^0.3.0
+  peerDependencies:
+    "@sourcepoint/react-native-cmp": "*"
+  languageName: unknown
+  linkType: soft
 
 "shebang-command@npm:^1.2.0":
   version: 1.2.0

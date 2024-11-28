@@ -1,0 +1,10 @@
+{
+  "name": "sharedExample",
+  "private": true,
+  "peerDependencies": {
+    "@sourcepoint/react-native-cmp": "*"
+  },
+  "devDependencies": {
+    "@sourcepoint/react-native-cmp": "^0.3.0"
+  }
+}

@@ -102,7 +102,8 @@
   },
   "workspaces": [
     "example",
-    "expoExample"
+    "expoExample",
+    "sharedExample"
   ],
   "packageManager": "yarn@3.6.1",
   "react-native-builder-bob": {

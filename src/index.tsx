@@ -26,7 +26,7 @@ type ErrorAuthenticateResult = {
 type StandardAuthenticateResult = {
   state: State;
   hasValidSubscription: boolean;
-  error?: string;
+  error?: never;
 };
 
 export type AuthenticateResult =

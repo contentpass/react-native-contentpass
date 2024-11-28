@@ -3620,6 +3620,26 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@sourcepoint/react-native-cmp@npm:0.3.0":
+  version: 0.3.0
+  resolution: "@sourcepoint/react-native-cmp@npm:0.3.0"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: dc41dc065a0ab54a87cfbd03fae4a78923904585eff2b9d6cedea35a1b662c5ee61ea0178af2121de3819afa995fbdf712503629a4e0189e822b9291e3dd42ba
+  languageName: node
+  linkType: hard
+
+"@sourcepoint/react-native-cmp@patch:@sourcepoint/react-native-cmp@npm%3A0.3.0#./.yarn/patches/@sourcepoint-react-native-cmp-npm-0.3.0-2434c31dc9.patch::locator=react-native-contentpass%40workspace%3A.":
+  version: 0.3.0
+  resolution: "@sourcepoint/react-native-cmp@patch:@sourcepoint/react-native-cmp@npm%3A0.3.0#./.yarn/patches/@sourcepoint-react-native-cmp-npm-0.3.0-2434c31dc9.patch::version=0.3.0&hash=664e70&locator=react-native-contentpass%40workspace%3A."
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 19e09814040bb9d7e5aaf2bc9aa937f97fed96341ee21f676edcafda2d0300f24ec6799e81fe5c6c8583387e1fc542e72ad6e3756fa839ae2952dc102c9cad7e
+  languageName: node
+  linkType: hard
+
 "@tootallnate/quickjs-emscripten@npm:^0.23.0":
   version: 0.23.0
   resolution: "@tootallnate/quickjs-emscripten@npm:0.23.0"
@@ -12232,6 +12252,7 @@ __metadata:
     "@react-native/babel-preset": 0.76.2
     "@react-native/metro-config": 0.76.2
     "@react-native/typescript-config": 0.76.2
+    "@sourcepoint/react-native-cmp": ^0.3.0
     react: 18.3.1
     react-native: 0.76.2
     react-native-app-auth: ^8.0.0
@@ -12253,6 +12274,7 @@ __metadata:
     "@react-native/babel-preset": 0.76.2
     "@react-native/metro-config": 0.76.2
     "@react-native/typescript-config": 0.76.2
+    "@sourcepoint/react-native-cmp": ^0.3.0
     expo: ~52.0.11
     expo-status-bar: ~2.0.0
     react: 18.3.1

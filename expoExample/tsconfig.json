@@ -1,18 +1,14 @@
 {
   "compilerOptions": {
-    "rootDir": ".",
-    "paths": {
-      "react-native-contentpass": ["./src/index"]
-    },
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
-    "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "jsx": "react-jsx",
-    "lib": ["ESNext"],
+    "lib": [
+      "ESNext"
+    ],
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "noEmit": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
     "noImplicitUseStrict": false,
@@ -20,11 +16,14 @@
     "noUncheckedIndexedAccess": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "resolveJsonModule": true,
-    "skipLibCheck": true,
     "strict": true,
     "target": "ESNext",
     "verbatimModuleSyntax": true,
-    "types": ["react-native", "jest", "node"]
-  }
+    "paths": {
+      "react-native-contentpass": [
+        "../src/index"
+      ]
+    }
+  },
+  "extends": "expo/tsconfig.base"
 }

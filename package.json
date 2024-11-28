@@ -39,11 +39,12 @@
   ],
   "scripts": {
     "example": "yarn workspace react-native-contentpass-example",
+    "expo-example": "yarn workspace react-native-contentpass-expo-example",
     "test": "jest",
     "typecheck": "tsc",
     "lint": "eslint \"**/*.{js,ts,tsx}\"",
     "prettier:check": "prettier --check \"**/*.{js,ts,tsx}\"",
-    "clean": "del-cli android/build example/android/build example/android/app/build example/ios/build lib",
+    "clean": "del-cli android/build example/android/build expoExample/android/build example/android/app/build expoExample/android/app/build example/ios/build exampleExample/ios/build lib",
     "prepare": "bob build",
     "release": "release-it"
   },
@@ -99,7 +100,8 @@
     "react-native-encrypted-storage": "*"
   },
   "workspaces": [
-    "example"
+    "example",
+    "expoExample"
   ],
   "packageManager": "yarn@3.6.1",
   "react-native-builder-bob": {

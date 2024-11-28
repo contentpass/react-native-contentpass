@@ -3,11 +3,13 @@ import { TOKEN_ENDPOINT } from '../oidcConsts';
 export default async function fetchContentpassToken({
   idToken,
   propertyId,
+  issuer,
 }: {
   idToken: string;
   propertyId: string;
+  issuer: string;
 }) {
-  const tokenEndpointResponse = await fetch(TOKEN_ENDPOINT, {
+  const tokenEndpointResponse = await fetch(`${issuer}${TOKEN_ENDPOINT}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',

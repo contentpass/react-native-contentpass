@@ -12168,6 +12168,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-app-auth@npm:^8.0.1":
+  version: 8.0.1
+  resolution: "react-native-app-auth@npm:8.0.1"
+  dependencies:
+    invariant: 2.2.4
+    react-native-base64: 0.0.2
+  peerDependencies:
+    react-native: ">=0.63.0"
+  checksum: 0a5beda9af784e32b4c0d6772f62ff3ab881a3a7a787d0ba6ec439799989cbe2c7d5f53b2ed641625ae784236d06eda26d1bf145680992744fed7fc8c06b7be1
+  languageName: node
+  linkType: hard
+
 "react-native-base64@npm:0.0.2":
   version: 0.0.2
   resolution: "react-native-base64@npm:0.0.2"
@@ -12245,7 +12257,9 @@ __metadata:
     expo-status-bar: ~2.0.0
     react: 18.3.1
     react-native: 0.76.3
+    react-native-app-auth: ^8.0.1
     react-native-builder-bob: ^0.32.1
+    react-native-encrypted-storage: ^4.0.3
   languageName: unknown
   linkType: soft
 

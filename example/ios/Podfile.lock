@@ -6,6 +6,8 @@ PODS:
   - AppAuth/ExternalUserAgent (1.7.5):
     - AppAuth/Core
   - boost (1.84.0)
+  - ConsentViewController (7.6.7):
+    - Down (~> 0.11.0)
   - DoubleConversion (1.1.6)
   - FBLazyVector (0.76.2)
   - fmt (9.1.0)
@@ -1542,6 +1544,28 @@ PODS:
     - React-perflogger (= 0.76.2)
     - React-utils (= 0.76.2)
   - SocketRocket (0.7.1)
+  - sourcepoint-react-native-cmp (0.3.0):
+    - ConsentViewController (= 7.6.7)
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - RCT-Folly (= 2024.01.01.00)
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - Yoga
   - Yoga (0.0.0)
 
 DEPENDENCIES:
@@ -1612,11 +1636,13 @@ DEPENDENCIES:
   - React-utils (from `../node_modules/react-native/ReactCommon/react/utils`)
   - ReactCodegen (from `build/generated/ios`)
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
+  - "sourcepoint-react-native-cmp (from `../node_modules/@sourcepoint/react-native-cmp`)"
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
 SPEC REPOS:
   trunk:
     - AppAuth
+    - ConsentViewController
     - SocketRocket
 
 EXTERNAL SOURCES:
@@ -1751,12 +1777,15 @@ EXTERNAL SOURCES:
     :path: build/generated/ios
   ReactCommon:
     :path: "../node_modules/react-native/ReactCommon"
+  sourcepoint-react-native-cmp:
+    :path: "../node_modules/@sourcepoint/react-native-cmp"
   Yoga:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
 SPEC CHECKSUMS:
   AppAuth: 501c04eda8a8d11f179dbe8637b7a91bb7e5d2fa
   boost: 1dca942403ed9342f98334bf4c3621f011aa7946
+  ConsentViewController: 243f7bfcde4b6ec71a5033486465b7c17448493c
   DoubleConversion: f16ae600a246532c4020132d54af21d0ddb2a385
   FBLazyVector: bc70dcb22ad30ce734a7cce7210791dc737e230f
   fmt: 10c6e61f4be25dc963c36bd73fc7b1705fe975be
@@ -1822,6 +1851,7 @@ SPEC CHECKSUMS:
   ReactCodegen: 93b271af49774429f34d7fd561197020d86436e2
   ReactCommon: 208cb02e3c0bb8a727b3e1a1782202bcfa5d9631
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
+  sourcepoint-react-native-cmp: 895d48d036184268872955c4df25bb3bd44c2266
   Yoga: 96872ee462cfc43866ad013c8160d4ff6b85709b
 
 PODFILE CHECKSUM: c50a131c6dd5a8e1657bf6b76ff12413d914b88e

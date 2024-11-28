@@ -3,7 +3,9 @@
   "modulePathIgnorePatterns": [
     "./example/node_modules",
     "./expoExample/node_modules",
-    "./lib/"
+    "./lib/",
+    "./ios/",
+    "./android/"
   ]
 }
 

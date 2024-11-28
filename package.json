@@ -91,7 +91,8 @@
     "typescript": "^5.2.2"
   },
   "resolutions": {
-    "@types/react": "^18.2.44"
+    "@types/react": "^18.2.44",
+    "@sourcepoint/react-native-cmp@^0.3.0": "patch:@sourcepoint/react-native-cmp@npm%3A0.3.0#./.yarn/patches/@sourcepoint-react-native-cmp-npm-0.3.0-2434c31dc9.patch"
   },
   "peerDependencies": {
     "react": "*",

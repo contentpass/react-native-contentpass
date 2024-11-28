@@ -8,6 +8,7 @@
     "ios": "expo run:ios"
   },
   "dependencies": {
+    "@sourcepoint/react-native-cmp": "^0.3.0",
     "expo": "~52.0.11",
     "expo-status-bar": "~2.0.0",
     "react": "18.3.1",

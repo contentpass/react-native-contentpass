@@ -1,5 +1,5 @@
 import { authorize, type AuthorizeResult } from 'react-native-app-auth';
-import { ISSUER, SCOPES } from './oidcConsts';
+import { SCOPES } from './oidcConsts';
 import OidcAuthStateStorage from './OidcAuthStateStorage';
 import parseContentpassToken from './utils/parseContentpassToken';
 import fetchContentpassToken from './utils/fetchContentpassToken';
@@ -7,6 +7,7 @@ import fetchContentpassToken from './utils/fetchContentpassToken';
 export type Config = {
   propertyId: string;
   redirectUrl: string;
+  issuer: string;
 };
 
 export enum State {
@@ -49,7 +50,7 @@ export class Contentpass {
       result = await authorize({
         clientId: this.config.propertyId,
         redirectUrl: this.config.redirectUrl,
-        issuer: ISSUER,
+        issuer: this.config.issuer,
         scopes: SCOPES,
         additionalParameters: {
           cp_route: 'login',
@@ -72,8 +73,9 @@ export class Contentpass {
 
     try {
       const contentpassToken = await fetchContentpassToken({
-        idToken: result.idToken,
+        issuer: this.config.issuer,
         propertyId: this.config.propertyId,
+        idToken: result.idToken,
       });
       const hasValidSubscription = this.validateSubscription(contentpassToken);
 

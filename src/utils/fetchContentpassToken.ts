@@ -1,4 +1,4 @@
-import { TOKEN_ENDPOINT } from '../oidcConsts';
+import { TOKEN_ENDPOINT } from '../consts/oidcConsts';
 
 export default async function fetchContentpassToken({
   idToken,

@@ -1,7 +1,7 @@
 import { useContentpassSdk } from './ContentpassContext';
 import { Button, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import type { AuthenticateResult } from 'react-native-contentpass';
+import { useEffect, useRef, useState } from 'react';
+import type { ContentpassState } from 'react-native-contentpass';
 import {
   SPConsentManager,
   type SPUserData,
@@ -12,6 +12,11 @@ const styles = StyleSheet.create({
     padding: 10,
     height: 400,
     flexGrow: 0,
+  },
+  buttonsContainer: {
+    display: 'flex',
+    gap: 4,
+    marginTop: 10,
   },
   logsView: {
     marginTop: 10,
@@ -40,20 +45,12 @@ const setupSourcepoint = (hasValidSubscription: boolean) => {
 };
 
 export default function ContentpassUsage() {
-  const [authResult, setAuthResult] = useState<
-    AuthenticateResult | undefined
-  >();
+  const [authResult, setAuthResult] = useState<ContentpassState | undefined>();
   const contentpassSdk = useContentpassSdk();
   const spConsentManager = useRef<SPConsentManager | null>();
   const [sourcepointUserData, setSourcepointUserData] = useState<
     SPUserData | undefined
   >();
-
-  const authenticate = useCallback(async () => {
-    spConsentManager.current?.dispose();
-    const result = await contentpassSdk.authenticate();
-    setAuthResult(result);
-  }, [contentpassSdk]);
 
   useEffect(() => {
     spConsentManager.current = setupSourcepoint(
@@ -66,7 +63,7 @@ export default function ContentpassUsage() {
 
     spConsentManager.current?.onAction((action) => {
       if (action.customActionId === "cp('login')") {
-        authenticate();
+        contentpassSdk.authenticate();
       }
     });
 
@@ -75,7 +72,18 @@ export default function ContentpassUsage() {
     return () => {
       spConsentManager.current?.dispose();
     };
-  }, [authResult, authenticate]);
+  }, [authResult, contentpassSdk]);
+
+  useEffect(() => {
+    const onContentpassStateChange = (state: ContentpassState) => {
+      setAuthResult(state);
+    };
+    contentpassSdk.registerObserver(onContentpassStateChange);
+
+    return () => {
+      contentpassSdk.unregisterObserver(onContentpassStateChange);
+    };
+  }, [contentpassSdk]);
 
   const clearSourcepointData = () => {
     spConsentManager.current?.clearLocalData();
@@ -85,7 +93,13 @@ export default function ContentpassUsage() {
 
   return (
     <>
-      <Button title={'Clear sourcepoint data'} onPress={clearSourcepointData} />
+      <View style={styles.buttonsContainer}>
+        <Button
+          title={'Clear sourcepoint data'}
+          onPress={clearSourcepointData}
+        />
+        <Button title={'Logout'} onPress={contentpassSdk.logout} />
+      </View>
       <View style={styles.logsView}>
         <Text>Authenticate result:</Text>
         <Text>{JSON.stringify(authResult, null, 2)}</Text>

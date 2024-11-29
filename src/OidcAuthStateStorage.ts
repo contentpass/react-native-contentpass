@@ -1,7 +1,14 @@
 import EncryptedStorage from 'react-native-encrypted-storage';
-import type { AuthorizeResult } from 'react-native-app-auth';
 
 const AUTH_STATE_KEY = 'OIDCAuthState';
+
+export type OidcAuthState = {
+  accessToken: string;
+  accessTokenExpirationDate: string;
+  idToken: string;
+  refreshToken: string | null;
+  tokenType: string;
+};
 
 export default class OidcAuthStateStorage {
   private readonly key;
@@ -10,11 +17,11 @@ export default class OidcAuthStateStorage {
     this.key = `de.contentpass.${clientId}-${AUTH_STATE_KEY}`;
   }
 
-  public async storeOidcAuthState(authState: AuthorizeResult) {
+  public async storeOidcAuthState(authState: OidcAuthState) {
     await EncryptedStorage.setItem(this.key, JSON.stringify(authState));
   }
 
-  public async getOidcAuthState() {
+  public async getOidcAuthState(): Promise<OidcAuthState | undefined> {
     const oidcAuthStateString = await EncryptedStorage.getItem(this.key);
 
     return oidcAuthStateString ? JSON.parse(oidcAuthStateString) : undefined;

@@ -1,49 +1,51 @@
-import { authorize, type AuthorizeResult } from 'react-native-app-auth';
-import { SCOPES } from './oidcConsts';
-import OidcAuthStateStorage from './OidcAuthStateStorage';
-import parseContentpassToken from './utils/parseContentpassToken';
+import {
+  authorize,
+  type AuthorizeResult,
+  refresh,
+} from 'react-native-app-auth';
+import { REFRESH_TOKEN_RETRIES, SCOPES } from './consts/oidcConsts';
+import OidcAuthStateStorage, {
+  type OidcAuthState,
+} from './OidcAuthStateStorage';
 import fetchContentpassToken from './utils/fetchContentpassToken';
+import {
+  type ContentpassState,
+  ContentpassStateType,
+} from './types/ContentpassState';
+import type { ContentpassConfig } from './types/ContentpassConfig';
+import validateSubscription from './utils/validateSubscription';
+import { RefreshTokenStrategy } from './types/RefreshTokenStrategy';
 
-export type Config = {
-  propertyId: string;
-  redirectUrl: string;
-  issuer: string;
-};
+export type {
+  ContentpassState,
+  ErrorState,
+  AuthenticatedState,
+  InitialisingState,
+  UnauthenticatedState,
+} from './types/ContentpassState';
 
-export enum State {
-  INITIALISING = 'INITIALISING',
-  UNAUTHENTICATED = 'UNAUTHENTICATED',
-  AUTHENTICATED = 'AUTHENTICATED',
-  ERROR = 'ERROR',
-}
+export type { ContentpassConfig } from './types/ContentpassConfig';
 
-type ErrorAuthenticateResult = {
-  state: State.ERROR;
-  hasValidSubscription: false;
-  error: Error;
-};
-
-type StandardAuthenticateResult = {
-  state: State;
-  hasValidSubscription: boolean;
-  error?: never;
-};
-
-export type AuthenticateResult =
-  | StandardAuthenticateResult
-  | ErrorAuthenticateResult;
+export type ContentpassObserver = (state: ContentpassState) => void;
 
 export class Contentpass {
   private authStateStorage: OidcAuthStateStorage;
-  private readonly config: Config;
-  private state: State = State.INITIALISING;
+  private readonly config: ContentpassConfig;
 
-  constructor(config: Config) {
+  private contentpassState: ContentpassState = {
+    state: ContentpassStateType.INITIALISING,
+  };
+  private contentpassStateObservers: ContentpassObserver[] = [];
+  private oidcAuthState: OidcAuthState | null = null;
+  private refreshTimer: NodeJS.Timeout | null = null;
+
+  constructor(config: ContentpassConfig) {
     this.authStateStorage = new OidcAuthStateStorage(config.propertyId);
     this.config = config;
+    this.initialiseAuthState();
   }
 
-  public async authenticate(): Promise<AuthenticateResult> {
+  public authenticate = async (): Promise<void> => {
     let result: AuthorizeResult;
 
     try {
@@ -61,40 +63,161 @@ export class Contentpass {
     } catch (err: any) {
       // FIXME: logger for error
 
-      return {
-        state: State.ERROR,
-        hasValidSubscription: false,
+      this.changeContentpassState({
+        state: ContentpassStateType.ERROR,
         error: 'message' in err ? err.message : 'Unknown error',
-      };
+      });
+      return;
     }
 
-    this.state = State.AUTHENTICATED;
-    await this.authStateStorage.storeOidcAuthState(result);
+    await this.onNewAuthState(result);
+  };
+
+  public registerObserver(observer: ContentpassObserver) {
+    if (this.contentpassStateObservers.includes(observer)) {
+      return;
+    }
+
+    observer(this.contentpassState);
+    this.contentpassStateObservers.push(observer);
+  }
+
+  public unregisterObserver(observer: ContentpassObserver) {
+    this.contentpassStateObservers = this.contentpassStateObservers.filter(
+      (o) => o !== observer
+    );
+  }
+
+  public logout = async () => {
+    await this.authStateStorage.clearOidcAuthState();
+    this.changeContentpassState({
+      state: ContentpassStateType.UNAUTHENTICATED,
+      hasValidSubscription: false,
+    });
+  };
+
+  public recoverFromError = async () => {
+    this.changeContentpassState({
+      state: ContentpassStateType.INITIALISING,
+    });
+
+    await this.initialiseAuthState();
+  };
+
+  private initialiseAuthState = async () => {
+    const authState = await this.authStateStorage.getOidcAuthState();
+    if (authState) {
+      await this.onNewAuthState(authState);
+      return;
+    }
+
+    this.changeContentpassState({
+      state: ContentpassStateType.UNAUTHENTICATED,
+      hasValidSubscription: false,
+    });
+  };
+
+  private onNewAuthState = async (authState: OidcAuthState) => {
+    this.oidcAuthState = authState;
+    await this.authStateStorage.storeOidcAuthState(authState);
+
+    const strategy = this.setupRefreshTimer();
+    if (strategy !== RefreshTokenStrategy.TIMER_SET) {
+      return;
+    }
 
     try {
       const contentpassToken = await fetchContentpassToken({
         issuer: this.config.issuer,
         propertyId: this.config.propertyId,
-        idToken: result.idToken,
+        idToken: this.oidcAuthState.idToken,
       });
-      const hasValidSubscription = this.validateSubscription(contentpassToken);
-
-      return {
-        state: this.state,
+      const hasValidSubscription = validateSubscription(contentpassToken);
+      this.changeContentpassState({
+        state: ContentpassStateType.AUTHENTICATED,
         hasValidSubscription,
-      };
-    } catch (err) {
-      // FIXME: logger for error
-      return {
-        state: this.state,
-        hasValidSubscription: false,
-      };
+      });
+    } catch (err: any) {
+      this.changeContentpassState({
+        state: ContentpassStateType.ERROR,
+        error: err.message || 'Unknown error',
+      });
     }
-  }
+  };
 
-  private validateSubscription(contentpassToken: string) {
-    const { body } = parseContentpassToken(contentpassToken);
+  private setupRefreshTimer = (): RefreshTokenStrategy => {
+    const accessTokenExpirationDate =
+      this.oidcAuthState?.accessTokenExpirationDate;
 
-    return !!body.auth && !!body.plans.length;
-  }
+    if (!accessTokenExpirationDate) {
+      return RefreshTokenStrategy.NO_REFRESH;
+    }
+
+    const now = new Date();
+    const expirationDate = new Date(accessTokenExpirationDate);
+    const timeDiff = expirationDate.getTime() - now.getTime();
+    if (timeDiff <= 0) {
+      this.refreshToken(0);
+      return RefreshTokenStrategy.INSTANTLY;
+    }
+
+    if (this.refreshTimer) {
+      clearTimeout(this.refreshTimer);
+    }
+
+    this.refreshTimer = setTimeout(async () => {
+      await this.refreshToken(0);
+    }, timeDiff);
+
+    return RefreshTokenStrategy.TIMER_SET;
+  };
+
+  private refreshToken = async (counter: number) => {
+    if (!this.oidcAuthState?.refreshToken) {
+      return;
+    }
+
+    try {
+      const refreshResult = await refresh(
+        {
+          clientId: this.config.propertyId,
+          redirectUrl: this.config.redirectUrl,
+          issuer: this.config.issuer,
+          scopes: SCOPES,
+        },
+        {
+          refreshToken: this.oidcAuthState.refreshToken,
+        }
+      );
+      await this.onNewAuthState(refreshResult);
+    } catch (err) {
+      await this.onRefreshTokenError(counter, err);
+    }
+  };
+
+  // @ts-expect-error remove when err starts being used
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  private onRefreshTokenError = async (counter: number, err: unknown) => {
+    // FIXME: logger for error
+    // FIXME: add handling for specific error to not retry in every case
+    if (counter <= REFRESH_TOKEN_RETRIES) {
+      const delay = counter * 1000 * 10;
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      await this.refreshToken(counter + 1);
+      return;
+    }
+
+    this.changeContentpassState({
+      state: ContentpassStateType.UNAUTHENTICATED,
+      hasValidSubscription: false,
+    });
+    await this.authStateStorage.clearOidcAuthState();
+  };
+
+  private changeContentpassState = (state: ContentpassState) => {
+    this.contentpassState = state;
+    this.contentpassStateObservers.forEach((observer) => observer(state));
+
+    return this.contentpassState;
+  };
 }

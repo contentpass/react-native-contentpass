@@ -1,0 +1,13 @@
+diff --git a/android/src/main/java/com/sourcepoint/reactnativecmp/RNSourcepointCmpTypes.kt b/android/src/main/java/com/sourcepoint/reactnativecmp/RNSourcepointCmpTypes.kt
+index bb8c6c37adc3d7980c7e92268b98b9d97ef8de40..3d67b3a3f44743c4542a1966e66e1af3ea93c555 100644
+--- a/android/src/main/java/com/sourcepoint/reactnativecmp/RNSourcepointCmpTypes.kt
++++ b/android/src/main/java/com/sourcepoint/reactnativecmp/RNSourcepointCmpTypes.kt
+@@ -16,7 +16,7 @@ data class SPCampaign(
+   val rawTargetingParam: ReadableMap?,
+   val supportLegacyUSPString: Boolean
+ ) {
+-  val targetingParams = rawTargetingParam?.toHashMap()?.map { TargetingParam(it.key, it.toString()) } ?: emptyList()
++  val targetingParams = rawTargetingParam?.toHashMap()?.map { TargetingParam(it.key, it.value.toString()) } ?: emptyList()
+ }
+ 
+ data class SPCampaigns(

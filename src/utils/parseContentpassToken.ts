@@ -1,4 +1,21 @@
-export default function parseContentpassToken(contentpassToken: string) {
+type ParsedToken = {
+  body: {
+    aud: string;
+    auth: boolean;
+    exp: number;
+    iat: number;
+    plans: string[];
+    type: string;
+  };
+  header: {
+    alg: string;
+    kid: string;
+  };
+};
+
+export default function parseContentpassToken(
+  contentpassToken: string
+): ParsedToken {
   const tokenParts = contentpassToken.split('.');
   if (tokenParts.length < 3) {
     throw new Error('Invalid token');

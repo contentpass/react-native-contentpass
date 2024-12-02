@@ -1,3 +1,4 @@
+import { isEqual } from 'lodash';
 import OidcAuthStateStorage, {
   type OidcAuthState,
 } from './OidcAuthStateStorage';
@@ -112,7 +113,8 @@ export default class Contentpass {
     await this.authStateStorage.storeOidcAuthState(authState);
 
     const strategy = this.setupRefreshTimer();
-    if (strategy !== RefreshTokenStrategy.TIMER_SET) {
+    // if instant refresh, no need to check subscription as it will happen in the refresh
+    if (strategy === RefreshTokenStrategy.INSTANTLY) {
       return;
     }
 
@@ -164,6 +166,7 @@ export default class Contentpass {
 
   private refreshToken = async (counter: number) => {
     if (!this.oidcAuthState?.refreshToken) {
+      // FIXME: logger for error
       return;
     }
 
@@ -197,17 +200,15 @@ export default class Contentpass {
       return;
     }
 
-    this.changeContentpassState({
-      state: ContentpassStateType.UNAUTHENTICATED,
-      hasValidSubscription: false,
-    });
-    await this.authStateStorage.clearOidcAuthState();
+    await this.logout();
   };
 
   private changeContentpassState = (state: ContentpassState) => {
+    if (isEqual(this.contentpassState, state)) {
+      return;
+    }
+
     this.contentpassState = state;
     this.contentpassStateObservers.forEach((observer) => observer(state));
-
-    return this.contentpassState;
   };
 }

@@ -1,3 +1,5 @@
+/* istanbul ignore file */
+
 export enum ContentpassStateType {
   INITIALISING = 'INITIALISING',
   UNAUTHENTICATED = 'UNAUTHENTICATED',

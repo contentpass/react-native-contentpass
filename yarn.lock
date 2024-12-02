@@ -3630,13 +3630,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sourcepoint/react-native-cmp@patch:@sourcepoint/react-native-cmp@npm%3A0.3.0#./.yarn/patches/@sourcepoint-react-native-cmp-npm-0.3.0-2434c31dc9.patch::locator=react-native-contentpass%40workspace%3A.":
+"@sourcepoint/react-native-cmp@patch:@sourcepoint/react-native-cmp@npm%3A0.3.0#./.yarn/patches/@sourcepoint-react-native-cmp-npm-0.3.0-2434c31dc9.patch::version=0.3.0&hash=664e70&locator=react-native-contentpass%40workspace%3A.":
   version: 0.3.0
   resolution: "@sourcepoint/react-native-cmp@patch:@sourcepoint/react-native-cmp@npm%3A0.3.0#./.yarn/patches/@sourcepoint-react-native-cmp-npm-0.3.0-2434c31dc9.patch::version=0.3.0&hash=664e70&locator=react-native-contentpass%40workspace%3A."
   peerDependencies:
     react: "*"
     react-native: "*"
   checksum: 19e09814040bb9d7e5aaf2bc9aa937f97fed96341ee21f676edcafda2d0300f24ec6799e81fe5c6c8583387e1fc542e72ad6e3756fa839ae2952dc102c9cad7e
+  languageName: node
+  linkType: hard
+
+"@sourcepoint/react-native-cmp@patch:@sourcepoint/react-native-cmp@patch%3A@sourcepoint/react-native-cmp@npm%253A0.3.0%23./.yarn/patches/@sourcepoint-react-native-cmp-npm-0.3.0-2434c31dc9.patch%3A%3Aversion=0.3.0&hash=664e70&locator=react-native-contentpass%2540workspace%253A.#./.yarn/patches/@sourcepoint-react-native-cmp-patch-34fca36663.patch::locator=react-native-contentpass%40workspace%3A.":
+  version: 0.3.0
+  resolution: "@sourcepoint/react-native-cmp@patch:@sourcepoint/react-native-cmp@patch%3A@sourcepoint/react-native-cmp@npm%253A0.3.0%23./.yarn/patches/@sourcepoint-react-native-cmp-npm-0.3.0-2434c31dc9.patch%3A%3Aversion=0.3.0&hash=664e70&locator=react-native-contentpass%2540workspace%253A.#./.yarn/patches/@sourcepoint-react-native-cmp-patch-34fca36663.patch::version=0.3.0&hash=5a881d&locator=react-native-contentpass%40workspace%3A."
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 0e4d72b3f43e6fa7ee00a7d9fddc53058a7b8dc0a513bc85d2d05f3cd58da2b52fecc498212d6546ae0cd40556c2ab4fa7e12ac8fa70a4e0716c6c2078aaf966
   languageName: node
   linkType: hard
 

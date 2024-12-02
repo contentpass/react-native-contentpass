@@ -1,5 +1,17 @@
 {
   "preset": "react-native",
+  "setupFilesAfterEnv": ["./jest-setup.ts"],
+  "transform": {
+    "^.+\\.(js)$": [
+      "babel-jest",
+      {
+        "plugins": [
+          "babel-plugin-syntax-hermes-parser"
+        ]
+      }
+    ],
+    "^.+\\.(ts|tsx)$": "babel-jest"
+  },
   "modulePathIgnorePatterns": [
     "./example/node_modules",
     "./expoExample/node_modules",

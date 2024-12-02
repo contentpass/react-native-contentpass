@@ -1,11 +1,14 @@
-import { useContentpassSdk } from './ContentpassContext';
 import { Button, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useEffect, useRef, useState } from 'react';
-import type { ContentpassState } from 'react-native-contentpass';
+import {
+  type ContentpassState,
+  useContentpassSdk,
+} from 'react-native-contentpass';
 import {
   SPConsentManager,
   type SPUserData,
 } from '@sourcepoint/react-native-cmp';
+import setupSourcepoint from './setupSourcepoint';
 
 const styles = StyleSheet.create({
   sourcepointDataContainer: {
@@ -22,27 +25,6 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
 });
-
-const sourcePointConfig = {
-  accountId: 375,
-  propertyId: 37858,
-  propertyName: 'mobile.cmpsourcepoint.demo',
-};
-
-const setupSourcepoint = (hasValidSubscription: boolean) => {
-  const { accountId, propertyName, propertyId } = sourcePointConfig;
-  const spConsentManager = new SPConsentManager();
-
-  spConsentManager.build(accountId, propertyId, propertyName, {
-    gdpr: {
-      targetingParams: {
-        acps: hasValidSubscription ? 'true' : 'false',
-      },
-    },
-  });
-
-  return spConsentManager;
-};
 
 export default function ContentpassUsage() {
   const [authResult, setAuthResult] = useState<ContentpassState | undefined>();
@@ -78,6 +60,7 @@ export default function ContentpassUsage() {
     const onContentpassStateChange = (state: ContentpassState) => {
       setAuthResult(state);
     };
+
     contentpassSdk.registerObserver(onContentpassStateChange);
 
     return () => {

@@ -1,6 +1,7 @@
 import { StyleSheet, View } from 'react-native';
-import { ContentpassSdkProvider } from './ContentpassContext';
 import ContentpassUsage from './ContentpassUsage';
+import { ContentpassSdkProvider } from 'react-native-contentpass';
+import { contentpassConfig } from './contentpassConfig';
 
 const styles = StyleSheet.create({
   container: {
@@ -17,7 +18,7 @@ const styles = StyleSheet.create({
 
 export default function App() {
   return (
-    <ContentpassSdkProvider>
+    <ContentpassSdkProvider contentpassConfig={contentpassConfig}>
       <View style={styles.container}>
         <ContentpassUsage />
       </View>

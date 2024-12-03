@@ -28,7 +28,7 @@ export type AuthenticatedState = {
 export type ErrorState = {
   state: ContentpassStateType.ERROR;
   hasValidSubscription?: never;
-  error: string;
+  error: unknown;
 };
 
 export type ContentpassState =

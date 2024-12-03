@@ -57,7 +57,7 @@ export default class Contentpass {
 
       this.changeContentpassState({
         state: ContentpassStateType.ERROR,
-        error: 'message' in err ? err.message : 'Unknown error',
+        error: err,
       });
       return;
     }
@@ -133,7 +133,7 @@ export default class Contentpass {
     } catch (err: any) {
       this.changeContentpassState({
         state: ContentpassStateType.ERROR,
-        error: err.message || 'Unknown error',
+        error: err,
       });
     }
   };

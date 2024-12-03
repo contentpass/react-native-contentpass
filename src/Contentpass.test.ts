@@ -186,7 +186,7 @@ describe('Contentpass', () => {
       expect(contentpassStates).toHaveLength(2);
       expect(contentpassStates[1]).toEqual({
         state: 'ERROR',
-        error: 'Authorize error',
+        error,
       });
     });
 
@@ -213,7 +213,8 @@ describe('Contentpass', () => {
       contentpass.registerObserver((state) => {
         contentpassStates.push(state);
       });
-      fetchContentpassTokenSpy.mockRejectedValue(new Error('Fetch error'));
+      const error = new Error('Fetch error');
+      fetchContentpassTokenSpy.mockRejectedValue(error);
 
       await contentpass.authenticate();
 
@@ -223,7 +224,7 @@ describe('Contentpass', () => {
       expect(contentpassStates).toHaveLength(2);
       expect(contentpassStates[1]).toEqual({
         state: 'ERROR',
-        error: 'Fetch error',
+        error,
       });
     });
 
@@ -410,13 +411,14 @@ describe('Contentpass', () => {
         contentpassStates.push(state);
       });
 
-      authorizeSpy.mockRejectedValue(new Error('Authorize error'));
+      const error = new Error('Authorize error');
+      authorizeSpy.mockRejectedValue(error);
 
       await contentpass.authenticate();
 
       expect(contentpassStates[1]).toEqual({
         state: 'ERROR',
-        error: 'Authorize error',
+        error,
       });
 
       await contentpass.recoverFromError();

@@ -11,10 +11,14 @@ import {
 import setupSourcepoint from './setupSourcepoint';
 
 const styles = StyleSheet.create({
-  sourcepointDataContainer: {
+  scrollViewLogsContainer: {
     padding: 10,
-    height: 400,
+    height: 200,
     flexGrow: 0,
+  },
+  resultsText: {
+    marginTop: 20,
+    fontWeight: 'bold',
   },
   buttonsContainer: {
     display: 'flex',
@@ -84,10 +88,12 @@ export default function ContentpassUsage() {
         <Button title={'Logout'} onPress={contentpassSdk.logout} />
       </View>
       <View style={styles.logsView}>
-        <Text>Authenticate result:</Text>
-        <Text>{JSON.stringify(authResult, null, 2)}</Text>
-        <Text>Sourcepoint user data:</Text>
-        <ScrollView style={styles.sourcepointDataContainer}>
+        <Text style={styles.resultsText}>Authenticate result:</Text>
+        <ScrollView style={styles.scrollViewLogsContainer}>
+          <Text>{JSON.stringify(authResult, null, 2)}</Text>
+        </ScrollView>
+        <Text style={styles.resultsText}>Sourcepoint user data:</Text>
+        <ScrollView style={styles.scrollViewLogsContainer}>
           <Text>{JSON.stringify(sourcepointUserData, null, 2)}</Text>
         </ScrollView>
       </View>

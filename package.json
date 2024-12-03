@@ -50,6 +50,7 @@
     "release": "release-it"
   },
   "keywords": [
+    "contentpass",
     "react-native",
     "ios",
     "android"
@@ -58,7 +59,7 @@
     "type": "git",
     "url": "git+https://github.com/contentpass/react-native-contentpass.git"
   },
-  "author": "contentpass <product@contentpass.de> (https://github.com/contentpass)",
+  "author": "contentpass <dev@contentpass.de> (https://github.com/contentpass)",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/contentpass/react-native-contentpass/issues"

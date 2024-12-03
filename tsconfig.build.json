@@ -1,4 +1,12 @@
 {
   "extends": "./tsconfig",
-  "exclude": ["example", "expoExample", "sharedExample", "lib"]
+  "exclude": [
+    "example",
+    "expoExample",
+    "sharedExample",
+    "lib",
+    "jest-setup.ts",
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx"
+  ]
 }

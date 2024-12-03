@@ -1,4 +1,3 @@
-import { isEqual } from 'lodash';
 import OidcAuthStateStorage, {
   type OidcAuthState,
 } from './OidcAuthStateStorage';
@@ -206,10 +205,6 @@ export default class Contentpass {
   };
 
   private changeContentpassState = (state: ContentpassState) => {
-    if (isEqual(this.contentpassState, state)) {
-      return;
-    }
-
     this.contentpassState = state;
     this.contentpassStateObservers.forEach((observer) => observer(state));
   };

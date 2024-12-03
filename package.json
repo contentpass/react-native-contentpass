@@ -141,6 +141,7 @@
     "version": "0.44.1"
   },
   "dependencies": {
+    "@sentry/react-native": "^6.3.0",
     "lodash": "^4.17.21"
   }
 }

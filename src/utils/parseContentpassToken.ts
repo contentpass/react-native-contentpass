@@ -18,7 +18,7 @@ export default function parseContentpassToken(
 ): ParsedToken {
   const tokenParts = contentpassToken.split('.');
   if (tokenParts.length < 3) {
-    throw new Error('Invalid token');
+    throw new Error('Invalid token, token should have at least 3 parts');
   }
 
   const header = JSON.parse(atob(tokenParts[0]!));

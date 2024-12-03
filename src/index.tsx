@@ -1,5 +1,6 @@
 export type {
   ContentpassState,
+  ContentpassStateType,
   ErrorState,
   AuthenticatedState,
   InitialisingState,
@@ -9,7 +10,7 @@ export type {
 export type { ContentpassConfig } from './types/ContentpassConfig';
 
 export {
-  default as Contentpass,
+  type default as Contentpass,
   type ContentpassObserver,
 } from './Contentpass';
 

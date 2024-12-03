@@ -11,3 +11,19 @@ jest.mock('react-native-encrypted-storage', () => ({
   removeItem: jest.fn(() => Promise.resolve()),
   clear: jest.fn(() => Promise.resolve()),
 }));
+
+jest.mock('@sentry/react-native', () => ({
+  ReactNativeClient: jest.fn().mockReturnValue({
+    init: jest.fn(),
+  }),
+  Scope: jest.fn().mockReturnValue({
+    setClient: jest.fn(),
+    setExtra: jest.fn(),
+    addBreadcrumb: jest.fn(),
+    captureException: jest.fn(),
+  }),
+}));
+
+jest.mock('@sentry/react-native/dist/js/integrations/default', () => ({
+  getDefaultIntegrations: jest.fn().mockReturnValue([]),
+}));

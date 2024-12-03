@@ -7,6 +7,7 @@ import type { ContentpassState } from './types/ContentpassState';
 import OidcAuthStateStorage from './OidcAuthStateStorage';
 import * as FetchContentpassTokenModule from './utils/fetchContentpassToken';
 import { SCOPES } from './consts/oidcConsts';
+import * as SentryIntegrationModule from './sentryIntegration';
 
 const config: ContentpassConfig = {
   propertyId: 'propertyId-1',
@@ -39,6 +40,7 @@ describe('Contentpass', () => {
   let contentpass: Contentpass;
   let authorizeSpy: jest.SpyInstance;
   let refreshSpy: jest.SpyInstance;
+  let reportErrorSpy: jest.SpyInstance;
   let fetchContentpassTokenSpy: jest.SpyInstance;
   let oidcAuthStorageMock: OidcAuthStateStorage;
 
@@ -50,6 +52,9 @@ describe('Contentpass', () => {
     refreshSpy = jest
       .spyOn(AppAuthModule, 'refresh')
       .mockResolvedValue(EXAMPLE_REFRESH_RESULT);
+    reportErrorSpy = jest
+      .spyOn(SentryIntegrationModule, 'reportError')
+      .mockReturnValue(undefined);
 
     oidcAuthStorageMock = {
       storeOidcAuthState: jest.fn(),
@@ -166,12 +171,17 @@ describe('Contentpass', () => {
 
     it('should change contentpass state to error when authorize throws an error', async () => {
       const contentpassStates: ContentpassState[] = [];
-      authorizeSpy.mockRejectedValue(new Error('Authorize error'));
+      const error = new Error('Authorize error');
+      authorizeSpy.mockRejectedValue(error);
       contentpass.registerObserver((state) => {
         contentpassStates.push(state);
       });
 
       await contentpass.authenticate();
+
+      expect(reportErrorSpy).toHaveBeenCalledWith(error, {
+        msg: 'Failed to authorize',
+      });
 
       expect(contentpassStates).toHaveLength(2);
       expect(contentpassStates[1]).toEqual({
@@ -291,7 +301,8 @@ describe('Contentpass', () => {
       ).getTime();
       const expectedDelay = expirationDate - NOW;
 
-      refreshSpy.mockRejectedValue(new Error('Refresh error'));
+      const refreshError = new Error('Refresh error');
+      refreshSpy.mockRejectedValue(refreshError);
 
       await jest.advanceTimersByTimeAsync(expectedDelay);
       expect(contentpassStates).toHaveLength(2);
@@ -308,7 +319,11 @@ describe('Contentpass', () => {
       });
 
       // after 6 retries the state should change to error
-      await jest.advanceTimersByTimeAsync(180001);
+      await jest.advanceTimersByTimeAsync(120001);
+      expect(reportErrorSpy).toHaveBeenCalledTimes(7);
+      expect(reportErrorSpy).toHaveBeenCalledWith(refreshError, {
+        msg: 'Failed to refresh token after 6 retries',
+      });
       expect(contentpassStates).toHaveLength(3);
       expect(contentpassStates[2]).toEqual({
         state: 'UNAUTHENTICATED',

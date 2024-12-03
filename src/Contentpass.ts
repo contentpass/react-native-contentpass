@@ -16,6 +16,7 @@ import { RefreshTokenStrategy } from './types/RefreshTokenStrategy';
 import fetchContentpassToken from './utils/fetchContentpassToken';
 import validateSubscription from './utils/validateSubscription';
 import type { ContentpassConfig } from './types/ContentpassConfig';
+import { reportError, setSentryExtraAttribute } from './sentryIntegration';
 
 export type ContentpassObserver = (state: ContentpassState) => void;
 
@@ -33,6 +34,7 @@ export default class Contentpass {
   constructor(config: ContentpassConfig) {
     this.authStateStorage = new OidcAuthStateStorage(config.propertyId);
     this.config = config;
+    setSentryExtraAttribute('propertyId', config.propertyId);
     this.initialiseAuthState();
   }
 
@@ -52,7 +54,7 @@ export default class Contentpass {
         },
       });
     } catch (err: any) {
-      // FIXME: logger for error
+      reportError(err, { msg: 'Failed to authorize' });
 
       this.changeContentpassState({
         state: ContentpassStateType.ERROR,
@@ -166,7 +168,7 @@ export default class Contentpass {
 
   private refreshToken = async (counter: number) => {
     if (!this.oidcAuthState?.refreshToken) {
-      // FIXME: logger for error
+      reportError(new Error('No Refresh Token in oidcAuthState provided'));
       return;
     }
 
@@ -183,17 +185,17 @@ export default class Contentpass {
         }
       );
       await this.onNewAuthState(refreshResult);
-    } catch (err) {
+    } catch (err: any) {
       await this.onRefreshTokenError(counter, err);
     }
   };
 
-  // @ts-expect-error remove when err starts being used
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  private onRefreshTokenError = async (counter: number, err: unknown) => {
-    // FIXME: logger for error
+  private onRefreshTokenError = async (counter: number, err: Error) => {
+    reportError(err, {
+      msg: `Failed to refresh token after ${counter} retries`,
+    });
     // FIXME: add handling for specific error to not retry in every case
-    if (counter <= REFRESH_TOKEN_RETRIES) {
+    if (counter < REFRESH_TOKEN_RETRIES) {
       const delay = counter * 1000 * 10;
       await new Promise((resolve) => setTimeout(resolve, delay));
       await this.refreshToken(counter + 1);

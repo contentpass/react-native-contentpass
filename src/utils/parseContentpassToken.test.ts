@@ -36,6 +36,6 @@ describe('parseContentpassToken', () => {
 
     expect(() => {
       parseContentpassToken(invalidToken);
-    }).toThrow('Invalid token');
+    }).toThrow('Invalid token, token should have at least 3 parts');
   });
 });

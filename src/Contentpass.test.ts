@@ -5,14 +5,18 @@ import * as AppAuthModule from 'react-native-app-auth';
 import * as OidcAuthStateStorageModule from './OidcAuthStateStorage';
 import type { ContentpassState } from './types/ContentpassState';
 import OidcAuthStateStorage from './OidcAuthStateStorage';
-import * as FetchContentpassTokenModule from './utils/fetchContentpassToken';
+import * as FetchContentpassTokenModule from './contentpassTokenUtils/fetchContentpassToken';
 import { SCOPES } from './consts/oidcConsts';
 import * as SentryIntegrationModule from './sentryIntegration';
+import * as SendStatsModule from './countImpressionUtils/sendStats';
+import * as SendPageViewEventModule from './countImpressionUtils/sendPageViewEvent';
 
 const config: ContentpassConfig = {
-  propertyId: 'propertyId-1',
+  propertyId: '5803179c-5b9f-40be-9a91-e67e8ea20593',
   redirectUrl: 'de.test.net://oauth',
   issuer: 'https://issuer.net',
+  apiUrl: 'https://cp.property.com',
+  samplingRate: 1,
 };
 
 const NOW = new Date('2024-12-02T11:53:56.272Z').getTime();
@@ -36,6 +40,12 @@ const EXAMPLE_REFRESH_RESULT = {
   accessTokenExpirationDate: '2024-12-03T10:00:50Z',
 };
 
+const CONTENTPASS_TOKEN_WITH_PLANS =
+  'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY5NzUwYTZjLTNmYjctNDUyNi05NWY4LTVhZmYxMmIyZjFjOSJ9.eyJhdXRoIjp0cnVlLCJ0eXBlIjoiY3AiLCJwbGFucyI6WyIwYWNhZTkxNy1iZTk5LTQ4ZWEtYjhmMS0yMGZhNjhhNDdkM2EiLCI0NDIxNjI4Yy05NjA2LTRjMDEtOGU1ZC1jMmE5YmNhNjhhYjQiLCI3ZThkZTBjYy0zZTk3LTQ5YTItODgxZC05ZmZiNWI4NDE1MTUiLCJhNDcyMWRiNS02N2RmLTQxNDUtYmJiZi1jYmQwOWY3ZTAzOTciLCJjNGQzYjBmNS05ODlhLTRmN2ItOGFjNy0zZDhmZmE5NTcxN2YiLCI2NGRkOTkwNS05NmUxLTRmYjItOTgwZC01MDdmMTYzNzVmZTkiXSwiYXVkIjoiY2MzZmM0YWQiLCJpYXQiOjE3MzMxMzU2ODEsImV4cCI6MTczMzMxMjA4MX0.CMtH7HRLf2HVgw3_cZRN0en8tml_SQKM73iLGJAp72-vJuRJaq85xBp6Jgy9WD3L7x4itRlBAYZxX8tLxZGogU0WP4_dMGFQ2QlcwKshwJygwRM1YqvxGWX2Az_KxEMc2QGHvpE1qe2MAr_xOU7VFfc0-vWxFc3hRzpAM5j7YHctj2t1v6h9-M7V2Hkcn37569QmtgU8gJkUxXsgUTufbb1ikjjjAvnjvTluHJo51_utbimpUbCk3EFxXVCVEI_pAqiZQXNninUQ6dbSujLb3L2UlEdQzLeUiBdYroeFzSyruLrR841ledLQ5ZP2OqzF5oUMuAGVOOhmgGdwGMCDRQ';
+
+export const CONTENTPASS_TOKEN_WITHOUT_PLANS =
+  'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY5NzUwYTZjLTNmYjctNDUyNi05NWY4LTVhZmYxMmIyZjFjOSJ9.eyJhdXRoIjp0cnVlLCJ0eXBlIjoiY3AiLCJwbGFucyI6W10sImF1ZCI6ImNjM2ZjNGFkIiwiaWF0IjoxNzMzMTM1NjgxLCJleHAiOjE3MzMzMTIwODF9.CMtH7HRLf2HVgw3_cZRN0en8tml_SQKM73iLGJAp72-vJuRJaq85xBp6Jgy9WD3L7x4itRlBAYZxX8tLxZGogU0WP4_dMGFQ2QlcwKshwJygwRM1YqvxGWX2Az_KxEMc2QGHvpE1qe2MAr_xOU7VFfc0-vWxFc3hRzpAM5j7YHctj2t1v6h9-M7V2Hkcn37569QmtgU8gJkUxXsgUTufbb1ikjjjAvnjvTluHJo51_utbimpUbCk3EFxXVCVEI_pAqiZQXNninUQ6dbSujLb3L2UlEdQzLeUiBdYroeFzSyruLrR841ledLQ5ZP2OqzF5oUMuAGVOOhmgGdwGMCDRQ';
+
 describe('Contentpass', () => {
   let contentpass: Contentpass;
   let authorizeSpy: jest.SpyInstance;
@@ -43,6 +53,8 @@ describe('Contentpass', () => {
   let reportErrorSpy: jest.SpyInstance;
   let fetchContentpassTokenSpy: jest.SpyInstance;
   let oidcAuthStorageMock: OidcAuthStateStorage;
+  let sendStatsSpy: jest.SpyInstance;
+  let sendPageViewEventSpy: jest.SpyInstance;
 
   beforeEach(() => {
     jest.useFakeTimers({ now: NOW });
@@ -68,9 +80,15 @@ describe('Contentpass', () => {
 
     fetchContentpassTokenSpy = jest
       .spyOn(FetchContentpassTokenModule, 'default')
-      .mockResolvedValue(
-        'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY5NzUwYTZjLTNmYjctNDUyNi05NWY4LTVhZmYxMmIyZjFjOSJ9.eyJhdXRoIjp0cnVlLCJ0eXBlIjoiY3AiLCJwbGFucyI6WyIwYWNhZTkxNy1iZTk5LTQ4ZWEtYjhmMS0yMGZhNjhhNDdkM2EiLCI0NDIxNjI4Yy05NjA2LTRjMDEtOGU1ZC1jMmE5YmNhNjhhYjQiLCI3ZThkZTBjYy0zZTk3LTQ5YTItODgxZC05ZmZiNWI4NDE1MTUiLCJhNDcyMWRiNS02N2RmLTQxNDUtYmJiZi1jYmQwOWY3ZTAzOTciLCJjNGQzYjBmNS05ODlhLTRmN2ItOGFjNy0zZDhmZmE5NTcxN2YiLCI2NGRkOTkwNS05NmUxLTRmYjItOTgwZC01MDdmMTYzNzVmZTkiXSwiYXVkIjoiY2MzZmM0YWQiLCJpYXQiOjE3MzMxMzU2ODEsImV4cCI6MTczMzMxMjA4MX0.CMtH7HRLf2HVgw3_cZRN0en8tml_SQKM73iLGJAp72-vJuRJaq85xBp6Jgy9WD3L7x4itRlBAYZxX8tLxZGogU0WP4_dMGFQ2QlcwKshwJygwRM1YqvxGWX2Az_KxEMc2QGHvpE1qe2MAr_xOU7VFfc0-vWxFc3hRzpAM5j7YHctj2t1v6h9-M7V2Hkcn37569QmtgU8gJkUxXsgUTufbb1ikjjjAvnjvTluHJo51_utbimpUbCk3EFxXVCVEI_pAqiZQXNninUQ6dbSujLb3L2UlEdQzLeUiBdYroeFzSyruLrR841ledLQ5ZP2OqzF5oUMuAGVOOhmgGdwGMCDRQ'
-      );
+      .mockResolvedValue(CONTENTPASS_TOKEN_WITH_PLANS);
+
+    sendStatsSpy = jest
+      .spyOn(SendStatsModule, 'default')
+      .mockResolvedValue({ ok: true } as any);
+
+    sendPageViewEventSpy = jest
+      .spyOn(SendPageViewEventModule, 'default')
+      .mockResolvedValue({ ok: true } as any);
 
     contentpass = new Contentpass(config);
   });
@@ -82,6 +100,24 @@ describe('Contentpass', () => {
   });
 
   describe('constructor', () => {
+    it('should throw an error if sampling rate is not between 0 and 1', () => {
+      expect(
+        () =>
+          new Contentpass({
+            ...config,
+            samplingRate: -1,
+          })
+      ).toThrow('Sampling rate must be between 0 and 1');
+
+      expect(
+        () =>
+          new Contentpass({
+            ...config,
+            samplingRate: 2,
+          })
+      ).toThrow('Sampling rate must be between 0 and 1');
+    });
+
     it('should initialise contentpass state', () => {
       const contentpassStates: ContentpassState[] = [];
       contentpass.registerObserver((state) => {
@@ -137,9 +173,9 @@ describe('Contentpass', () => {
       expect(refreshSpy).toHaveBeenCalledTimes(1);
       expect(refreshSpy).toHaveBeenCalledWith(
         {
-          clientId: 'propertyId-1',
-          redirectUrl: 'de.test.net://oauth',
-          issuer: 'https://issuer.net',
+          clientId: config.propertyId,
+          redirectUrl: config.redirectUrl,
+          issuer: config.issuer,
           scopes: SCOPES,
         },
         { refreshToken: EXAMPLE_AUTH_RESULT.refreshToken }
@@ -158,13 +194,13 @@ describe('Contentpass', () => {
 
       expect(authorizeSpy).toHaveBeenCalledWith({
         additionalParameters: {
-          cp_property: 'propertyId-1',
+          cp_property: config.propertyId,
           cp_route: 'login',
           prompt: 'consent',
         },
-        clientId: 'propertyId-1',
-        issuer: 'https://issuer.net',
-        redirectUrl: 'de.test.net://oauth',
+        clientId: config.propertyId,
+        issuer: config.issuer,
+        redirectUrl: config.redirectUrl,
         scopes: ['openid', 'offline_access', 'contentpass'],
       });
     });
@@ -248,9 +284,9 @@ describe('Contentpass', () => {
       expect(refreshSpy).toHaveBeenCalledTimes(1);
       expect(refreshSpy).toHaveBeenCalledWith(
         {
-          clientId: 'propertyId-1',
-          redirectUrl: 'de.test.net://oauth',
-          issuer: 'https://issuer.net',
+          clientId: config.propertyId,
+          redirectUrl: config.redirectUrl,
+          issuer: config.issuer,
           scopes: SCOPES,
         },
         { refreshToken: EXAMPLE_AUTH_RESULT.refreshToken }
@@ -434,6 +470,80 @@ describe('Contentpass', () => {
         state: 'UNAUTHENTICATED',
         hasValidSubscription: false,
       });
+    });
+  });
+
+  describe('countImpression', () => {
+    it('should count paid impression if user has valid subscription and access token', async () => {
+      await contentpass.authenticate();
+
+      await contentpass.countImpression();
+
+      expect(sendPageViewEventSpy).toHaveBeenCalledWith(config.apiUrl, {
+        propertyId: config.propertyId,
+        impressionId: expect.any(String),
+        accessToken: EXAMPLE_AUTH_RESULT.accessToken,
+      });
+      expect(sendStatsSpy).toHaveBeenCalled();
+    });
+
+    it('should not count paid impression if user is authenticated, but does not have valid subscription', async () => {
+      fetchContentpassTokenSpy.mockResolvedValue(
+        CONTENTPASS_TOKEN_WITHOUT_PLANS
+      );
+      await contentpass.authenticate();
+
+      await contentpass.countImpression();
+
+      expect(sendPageViewEventSpy).not.toHaveBeenCalled();
+      expect(sendStatsSpy).toHaveBeenCalled();
+    });
+
+    it('should report error if counting paid impression fails', async () => {
+      await contentpass.authenticate();
+
+      const error = new Error('Send page view event error');
+      sendPageViewEventSpy.mockRejectedValue(error);
+
+      await contentpass.countImpression();
+
+      expect(reportErrorSpy).toHaveBeenCalledWith(error, {
+        msg: 'Failed to count paid impression',
+      });
+      expect(sendStatsSpy).toHaveBeenCalled();
+    });
+
+    it('should count sampled impression even if user does not have valid subscription', async () => {
+      await contentpass.countImpression();
+
+      expect(sendPageViewEventSpy).not.toHaveBeenCalled();
+      expect(sendStatsSpy).toHaveBeenCalledWith(config.apiUrl, {
+        cpabid: expect.any(String),
+        cppid: '5803179c',
+        cpsr: config.samplingRate,
+        ea: 'load',
+        ec: 'tcf-sampled',
+      });
+    });
+
+    it('should report error if counting sampled impression fails', async () => {
+      const error = new Error('Send stats error');
+      sendStatsSpy.mockRejectedValue(error);
+
+      await contentpass.countImpression();
+
+      expect(reportErrorSpy).toHaveBeenCalledWith(error, {
+        msg: 'Failed to count sampled impression',
+      });
+    });
+
+    it('should not send sampled impression when generatedSample is higher than samplingRate', async () => {
+      jest.spyOn(Math, 'random').mockReturnValue(0.5);
+      contentpass = new Contentpass({ ...config, samplingRate: 0.4 });
+
+      await contentpass.countImpression();
+      expect(sendStatsSpy).not.toHaveBeenCalled();
+      expect(sendPageViewEventSpy).not.toHaveBeenCalled();
     });
   });
 });

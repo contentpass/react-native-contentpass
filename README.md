@@ -70,6 +70,10 @@ The SDK exposes the following methods through the `useContentpassSdk` hook:
 Initiates the OAuth 2.0 authentication process via a modal interface. It validates the user’s active Contentpass subscriptions
 upon successful authentication.
 
+### countImpression
+Tracks and increments the impression count for the current user. This method should be invoked whenever a user views a
+piece of content. It applies to all users, whether authenticated or unauthenticated.
+
 ### registerObserver
 Registers a callback function to listen for changes in the user’s authentication and subscription status. The observer function
 receives a state object describing the current status (see the exported [ContentpassState](./src/types/ContentpassState.ts) type).
@@ -94,6 +98,7 @@ import { Button, View } from 'react-native';
 const YourApp = () => {
   const {
     authenticate,
+    countImpression,
     registerObserver,
     unregisterObserver,
     logout,
@@ -115,6 +120,7 @@ const YourApp = () => {
   return (
     <View>
       <Button onPress={authenticate} title={'Authenticate'} />
+      <Button onPress={countImpression} title={'Count Impression'} />
     </View>
   );
 };

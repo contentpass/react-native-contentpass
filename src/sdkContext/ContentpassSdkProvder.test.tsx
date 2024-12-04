@@ -11,6 +11,7 @@ describe('ContentpassSdkProvider', () => {
     issuer: 'https://my.contentpass.me',
     propertyId: 'my-property-id',
     redirectUrl: 'de.contentpass.test://oauth',
+    apiUrl: 'https://cp.propert.com',
   };
 
   afterEach(() => {

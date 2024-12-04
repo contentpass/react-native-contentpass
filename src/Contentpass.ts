@@ -1,3 +1,4 @@
+import uuid from 'react-native-uuid';
 import OidcAuthStateStorage, {
   type OidcAuthState,
 } from './OidcAuthStateStorage';
@@ -12,16 +13,31 @@ import {
 } from 'react-native-app-auth';
 import { REFRESH_TOKEN_RETRIES, SCOPES } from './consts/oidcConsts';
 import { RefreshTokenStrategy } from './types/RefreshTokenStrategy';
-import fetchContentpassToken from './utils/fetchContentpassToken';
-import validateSubscription from './utils/validateSubscription';
+import fetchContentpassToken from './contentpassTokenUtils/fetchContentpassToken';
+import validateSubscription from './contentpassTokenUtils/validateSubscription';
 import type { ContentpassConfig } from './types/ContentpassConfig';
 import { reportError, setSentryExtraAttribute } from './sentryIntegration';
+import sendStats from './countImpressionUtils/sendStats';
+import sendPageViewEvent from './countImpressionUtils/sendPageViewEvent';
+
+const DEFAULT_SAMPLING_RATE = 0.05;
 
 export type ContentpassObserver = (state: ContentpassState) => void;
 
-export default class Contentpass {
+interface ContentpassInterface {
+  authenticate: () => Promise<void>;
+  registerObserver: (observer: ContentpassObserver) => void;
+  unregisterObserver: (observer: ContentpassObserver) => void;
+  logout: () => Promise<void>;
+  recoverFromError: () => Promise<void>;
+  countImpression: () => Promise<void>;
+}
+
+export default class Contentpass implements ContentpassInterface {
   private authStateStorage: OidcAuthStateStorage;
   private readonly config: ContentpassConfig;
+  private readonly samplingRate: number;
+  private readonly instanceId: string;
 
   private contentpassState: ContentpassState = {
     state: ContentpassStateType.INITIALISING,
@@ -31,6 +47,14 @@ export default class Contentpass {
   private refreshTimer: NodeJS.Timeout | null = null;
 
   constructor(config: ContentpassConfig) {
+    if (
+      config.samplingRate &&
+      (config.samplingRate < 0 || config.samplingRate > 1)
+    ) {
+      throw new Error('Sampling rate must be between 0 and 1');
+    }
+    this.samplingRate = config.samplingRate || DEFAULT_SAMPLING_RATE;
+    this.instanceId = uuid.v4();
     this.authStateStorage = new OidcAuthStateStorage(config.propertyId);
     this.config = config;
     setSentryExtraAttribute('propertyId', config.propertyId);
@@ -94,6 +118,49 @@ export default class Contentpass {
     });
 
     await this.initialiseAuthState();
+  };
+
+  public countImpression = async () => {
+    if (this.hasValidSubscriptionAndAccessToken()) {
+      try {
+        await this.countPaidImpression();
+      } catch (err: any) {
+        reportError(err, { msg: 'Failed to count paid impression' });
+      }
+    }
+
+    try {
+      await this.countSampledImpression();
+    } catch (err: any) {
+      reportError(err, { msg: 'Failed to count sampled impression' });
+    }
+  };
+
+  private countPaidImpression = async () => {
+    const impressionId = uuid.v4();
+
+    await sendPageViewEvent(this.config.apiUrl, {
+      propertyId: this.config.propertyId,
+      impressionId,
+      accessToken: this.oidcAuthState!.accessToken,
+    });
+  };
+
+  private countSampledImpression = async () => {
+    const generatedSample = Math.random();
+    const publicId = this.config.propertyId.slice(0, 8);
+
+    if (generatedSample >= this.samplingRate) {
+      return;
+    }
+
+    await sendStats(this.config.apiUrl, {
+      ea: 'load',
+      ec: 'tcf-sampled',
+      cpabid: this.instanceId,
+      cppid: publicId,
+      cpsr: this.samplingRate,
+    });
   };
 
   private initialiseAuthState = async () => {
@@ -207,5 +274,13 @@ export default class Contentpass {
   private changeContentpassState = (state: ContentpassState) => {
     this.contentpassState = state;
     this.contentpassStateObservers.forEach((observer) => observer(state));
+  };
+
+  private hasValidSubscriptionAndAccessToken = () => {
+    return (
+      this.contentpassState.state === ContentpassStateType.AUTHENTICATED &&
+      this.contentpassState.hasValidSubscription &&
+      this.oidcAuthState?.accessToken
+    );
   };
 }

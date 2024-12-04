@@ -31,9 +31,9 @@ If you want to use Android Studio or XCode to edit the native code, you can open
 - `example/ios`
 - `expoExample/android`
 - `expoExample/ios`
-directories respectively in those editors. To edit the Objective-C or Swift files, open `ios/ContentpassExample.xcworkspace` in XCode and find the source files at `Pods > Development Pods > react-native-contentpass`.
+directories respectively in those editors. To edit the Objective-C or Swift files, open `ios/ContentpassExample.xcworkspace` in XCode and find the source files at `Pods > Development Pods > contentpass-react-native-contentpass`.
 
-To edit the Java or Kotlin files, open `android` in Android studio and find the source files at `react-native-contentpass` under `Android`.
+To edit the Java or Kotlin files, open `android` in Android studio and find the source files at `@contentpass/react-native-contentpass` under `Android`.
 
 You can use various commands from the root directory to work with the project.
 

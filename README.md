@@ -1,4 +1,4 @@
-# react-native-contentpass
+# @contentpass/react-native-contentpass
 
 Contentpass React Native SDK enables easy integration of Contentpass functionality into your React Native applications.
 
@@ -6,13 +6,13 @@ Contentpass React Native SDK enables easy integration of Contentpass functionali
 Install the package using npm or Yarn:
 
 ```sh
-npm install react-native-contentpass
+npm install @contentpass/react-native-contentpass
 ```
 
 or
 
 ```sh
-yarn add react-native-contentpass
+yarn add @contentpass/react-native-contentpass
 ```
 
 ### Peer Dependencies
@@ -44,7 +44,7 @@ Wrap your app's root component with ContentpassSdkProvider. The provider require
 
 ```jsx
 import React from 'react';
-import { ContentpassSdkProvider } from 'react-native-contentpass';
+import { ContentpassSdkProvider } from '@contentpass/react-native-contentpass';
 
 const contentpassConfig = {
   propertyId: 'your-property-id',
@@ -88,7 +88,7 @@ or improved. The SDK will then refresh and revalidate the user's authentication 
 
 ```jsx
 import React, { useEffect } from 'react';
-import { useContentpassSdk } from 'react-native-contentpass';
+import { useContentpassSdk } from '@contentpass/react-native-contentpass';
 import { Button, View } from 'react-native';
 
 const YourApp = () => {

@@ -1,6 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 import ContentpassUsage from './ContentpassUsage';
-import { ContentpassSdkProvider } from 'react-native-contentpass';
+import { ContentpassSdkProvider } from '@contentpass/react-native-contentpass';
 import { contentpassConfig } from './contentpassConfig';
 
 const styles = StyleSheet.create({

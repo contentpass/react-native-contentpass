@@ -1,4 +1,4 @@
-import type { ContentpassConfig } from 'react-native-contentpass';
+import type { ContentpassConfig } from '@contentpass/react-native-contentpass';
 
 export const contentpassConfig: ContentpassConfig = {
   // Testing app

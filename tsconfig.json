@@ -2,7 +2,7 @@
   "compilerOptions": {
     "rootDir": ".",
     "paths": {
-      "react-native-contentpass": ["./src/index"]
+      "@contentpass/react-native-contentpass": ["./src/index"]
     },
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,

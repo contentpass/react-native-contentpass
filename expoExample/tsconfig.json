@@ -20,7 +20,7 @@
     "target": "ESNext",
     "verbatimModuleSyntax": true,
     "paths": {
-      "react-native-contentpass": [
+      "@contentpass/react-native-contentpass": [
         "../src/index"
       ]
     }

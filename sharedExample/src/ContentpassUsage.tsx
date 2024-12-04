@@ -93,6 +93,10 @@ export default function ContentpassUsage() {
     spConsentManager.current?.loadMessage();
   };
 
+  const countImpression = async () => {
+    await contentpassSdk.countImpression();
+  };
+
   return (
     <>
       <View style={styles.buttonsContainer}>
@@ -100,6 +104,7 @@ export default function ContentpassUsage() {
           title={'Clear sourcepoint data'}
           onPress={clearSourcepointData}
         />
+        <Button title={'Count impression'} onPress={countImpression} />
         <Button title={'Logout'} onPress={contentpassSdk.logout} />
       </View>
       <View style={styles.logsView}>

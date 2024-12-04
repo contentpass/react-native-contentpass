@@ -21,6 +21,12 @@ export default async function fetchContentpassToken({
     }).toString(),
   });
 
+  if (!tokenEndpointResponse.ok) {
+    throw new Error(
+      `Failed to fetch Contentpass token, status: ${tokenEndpointResponse.statusText}`
+    );
+  }
+
   const { contentpass_token } = await tokenEndpointResponse.json();
 
   return contentpass_token;

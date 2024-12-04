@@ -177,7 +177,9 @@ describe('Contentpass', () => {
         contentpassStates.push(state);
       });
 
-      await contentpass.authenticate();
+      await expect(async () => {
+        await contentpass.authenticate();
+      }).rejects.toThrow(error);
 
       expect(reportErrorSpy).toHaveBeenCalledWith(error, {
         msg: 'Failed to authorize',
@@ -241,10 +243,10 @@ describe('Contentpass', () => {
       ).getTime();
       const expectedDelay = expirationDate - NOW;
 
-      expect(refreshSpy).toBeCalledTimes(0);
+      expect(refreshSpy).toHaveBeenCalledTimes(0);
       jest.advanceTimersByTime(expectedDelay);
-      expect(refreshSpy).toBeCalledTimes(1);
-      expect(refreshSpy).toBeCalledWith(
+      expect(refreshSpy).toHaveBeenCalledTimes(1);
+      expect(refreshSpy).toHaveBeenCalledWith(
         {
           clientId: 'propertyId-1',
           redirectUrl: 'de.test.net://oauth',
@@ -274,7 +276,7 @@ describe('Contentpass', () => {
 
       await contentpass.authenticate();
 
-      expect(refreshSpy).toBeCalledTimes(0);
+      expect(refreshSpy).toHaveBeenCalledTimes(0);
 
       expect(contentpassStates).toHaveLength(2);
       expect(contentpassStates[1]).toEqual({
@@ -414,8 +416,9 @@ describe('Contentpass', () => {
       const error = new Error('Authorize error');
       authorizeSpy.mockRejectedValue(error);
 
-      await contentpass.authenticate();
-
+      await expect(async () => {
+        await contentpass.authenticate();
+      }).rejects.toThrow(error);
       expect(contentpassStates[1]).toEqual({
         state: 'ERROR',
         error,

@@ -54,12 +54,12 @@ export default class Contentpass {
       });
     } catch (err: any) {
       reportError(err, { msg: 'Failed to authorize' });
-
       this.changeContentpassState({
         state: ContentpassStateType.ERROR,
         error: err,
       });
-      return;
+
+      throw err;
     }
 
     await this.onNewAuthState(result);

@@ -2,8 +2,9 @@ import { Button, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useEffect, useRef, useState } from 'react';
 import {
   type ContentpassState,
+  ContentpassStateType,
   useContentpassSdk,
-} from 'react-native-contentpass';
+} from '@contentpass/react-native-contentpass';
 import {
   SPConsentManager,
   type SPUserData,
@@ -39,6 +40,11 @@ export default function ContentpassUsage() {
   >();
 
   useEffect(() => {
+    // wait for the authResult to be set before setting up Sourcepoint
+    if (!authResult || authResult.state === ContentpassStateType.INITIALISING) {
+      return;
+    }
+
     spConsentManager.current = setupSourcepoint(
       authResult?.hasValidSubscription ?? false
     );

@@ -1,5 +1,5 @@
 {
-  "name": "react-native-contentpass",
+  "name": "@contentpass/react-native-contentpass",
   "version": "0.2.4",
   "description": "Contentpass React Native SDK",
   "source": "./src/index.tsx",
@@ -85,7 +85,7 @@
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-prettier": "^5.0.1",
     "jest": "^29.7.0",
-    "prettier": "^3.0.3",
+    "prettier": "^3.4.2",
     "react": "18.3.1",
     "react-native": "0.76.2",
     "react-native-app-auth": "^8.0.0",

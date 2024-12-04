@@ -49,7 +49,16 @@ export default function ContentpassUsage() {
 
     spConsentManager.current?.onAction((action) => {
       if (action.customActionId === "cp('login')") {
-        contentpassSdk.authenticate();
+        contentpassSdk
+          .authenticate()
+          .then(() => {
+            // eslint-disable-next-line no-console
+            console.log('Successfully authenticated');
+          })
+          .catch((err) => {
+            // eslint-disable-next-line no-console
+            console.error('Failed to authenticate:', err);
+          });
       }
     });
 

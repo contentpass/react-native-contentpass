@@ -1,6 +1,6 @@
 {
   "name": "react-native-contentpass",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Contentpass React Native SDK",
   "source": "./src/index.tsx",
   "main": "./lib/commonjs/index.js",

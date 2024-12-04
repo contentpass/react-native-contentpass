@@ -5,4 +5,6 @@ export type ContentpassConfig = {
   planId: string;
   redirectUrl: string;
   issuer: string;
+  apiUrl: string;
+  samplingRate?: number;
 };

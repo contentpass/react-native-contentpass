@@ -89,9 +89,16 @@ or improved. The SDK will then refresh and revalidate the user's authentication 
 ```jsx
 import React, { useEffect } from 'react';
 import { useContentpassSdk } from 'react-native-contentpass';
+import { Button, View } from 'react-native';
 
 const YourApp = () => {
-  const { authenticate, registerObserver, unregisterObserver, logout, recoverFromError } = useContentpassSdk();
+  const {
+    authenticate,
+    registerObserver,
+    unregisterObserver,
+    logout,
+    recoverFromError
+  } = useContentpassSdk();
 
   useEffect(() => {
     const observer = (state) => {
@@ -106,7 +113,9 @@ const YourApp = () => {
   }, []);
 
   return (
-    <button onClick={authenticate}>Authenticate</button>
+    <View>
+      <Button onPress={authenticate} title={'Authenticate'} />
+    </View>
   );
 };
 ```

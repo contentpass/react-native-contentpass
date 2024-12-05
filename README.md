@@ -37,7 +37,8 @@ npx expo prebuild
 
 ### Initialization
 Wrap your app's root component with ContentpassSdkProvider. The provider requires a configuration object (contentpassConfig) with the following properties:
-- `propertyId` - Your unique property ID
+- `propertyId` - Your unique property ID (ask Contentpass team for details)
+- `planId` - The ID of the plan you want to check the user's subscription status against (ask Contentpass team for details)
 - `issuer` - The OAuth 2.0 server URL (e.g. `https://my.contentpass.net`)
 - `redirectUrl` - the redirect URL of your app to which the OAuth2 server will redirect after the authentication
 
@@ -47,7 +48,8 @@ import React from 'react';
 import { ContentpassSdkProvider } from '@contentpass/react-native-contentpass';
 
 const contentpassConfig = {
-  propertyId: 'your-property-id',
+  propertyId: 'property-id',
+  planId: 'plan-id',
   issuer: 'https://my.contentpass.net',
   redirectUrl: 'com.yourapp://oauthredirect',
 };

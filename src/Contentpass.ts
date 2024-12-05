@@ -50,6 +50,7 @@ export default class Contentpass {
           cp_route: 'login',
           prompt: 'consent',
           cp_property: this.config.propertyId,
+          cp_plan: this.config.planId,
         },
       });
     } catch (err: any) {

@@ -10,6 +10,7 @@ describe('ContentpassSdkProvider', () => {
   const mockConfig: ContentpassConfig = {
     issuer: 'https://my.contentpass.me',
     propertyId: 'my-property-id',
+    planId: 'my-plan-id',
     redirectUrl: 'de.contentpass.test://oauth',
   };
 

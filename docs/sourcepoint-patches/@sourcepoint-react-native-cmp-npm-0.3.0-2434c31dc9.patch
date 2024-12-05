@@ -1,0 +1,78 @@
+diff --git a/android/src/main/java/com/sourcepoint/reactnativecmp/RNSourcepointCmpModule.kt b/android/src/main/java/com/sourcepoint/reactnativecmp/RNSourcepointCmpModule.kt
+index deb04fb18dbd8adffcb225801ad35b3154a3c7ad..4d372d921cbae6163179435feb9c821e3c37134b 100644
+--- a/android/src/main/java/com/sourcepoint/reactnativecmp/RNSourcepointCmpModule.kt
++++ b/android/src/main/java/com/sourcepoint/reactnativecmp/RNSourcepointCmpModule.kt
+@@ -119,6 +119,7 @@ class RNSourcepointCmpModule internal constructor(context: ReactApplicationConte
+   override fun onAction(view: View, consentAction: ConsentAction): ConsentAction {
+     sendEvent(SDKEvent.onAction, createMap().apply {
+       putString("actionType", RNSourcepointActionType.from(consentAction.actionType).name)
++      putString("customActionId", consentAction.customActionId ?: "")
+     })
+     return consentAction
+   }
+diff --git a/ios/RNSourcepointCmp.swift b/ios/RNSourcepointCmp.swift
+index 556b56618c847ad8aeaf9cdc680813cc26b732a9..ba7d707232d72fe5038ec05fb6fdb8e27216e4ee 100644
+--- a/ios/RNSourcepointCmp.swift
++++ b/ios/RNSourcepointCmp.swift
+@@ -69,7 +69,10 @@ extension RNSourcepointCmp: SPDelegate {
+     func onAction(_ action: SPAction, from controller: UIViewController) {
+         RNSourcepointCmp.shared?.sendEvent(
+             withName: "onAction",
+-            body: ["actionType": RNSourcepointActionType(from: action.type).rawValue]
++            body: [
++                "actionType": RNSourcepointActionType(from: action.type).rawValue,
++                "customActionId": action.customActionId ?? "",
++            ]
+         )
+     }
+ 
+diff --git a/lib/typescript/src/index.d.ts b/lib/typescript/src/index.d.ts
+index 1602516717becd5ec0a8e5036ad2d821110af96f..67bb9e5153b7489c5ead4dcd056b502b71bc2a7d 100644
+--- a/lib/typescript/src/index.d.ts
++++ b/lib/typescript/src/index.d.ts
+@@ -12,6 +12,7 @@ export declare class SPConsentManager implements Spec {
+     loadUSNatPrivacyManager(pmId: string): void;
+     onAction(callback: (body: {
+         actionType: SPActionType;
++        customActionId: string;
+     }) => void): void;
+     onSPUIReady(callback: () => void): void;
+     onSPUIFinished(callback: () => void): void;
+diff --git a/lib/typescript/src/types.d.ts b/lib/typescript/src/types.d.ts
+index a15f7a06c3e0635168987a44a33009ff42bbd31c..a035a72af14f32adf0ff88f959eb8c517ffaea47 100644
+--- a/lib/typescript/src/types.d.ts
++++ b/lib/typescript/src/types.d.ts
+@@ -86,6 +86,7 @@ export interface Spec extends TurboModule {
+     loadUSNatPrivacyManager(pmId: string): void;
+     onAction(callback: (body: {
+         actionType: SPActionType;
++        customActionId: string;
+     }) => void): void;
+     onSPUIReady(callback: () => void): void;
+     onSPUIFinished(callback: () => void): void;
+diff --git a/src/index.ts b/src/index.ts
+index b3e76b15572c56f1a4e54068b90243d6dd028e18..a03d87fea4a93edb6bf904c99d32b029b840bade 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -67,7 +67,7 @@ export class SPConsentManager implements Spec {
+     RNSourcepointCmp.loadUSNatPrivacyManager(pmId);
+   }
+ 
+-  onAction(callback: (body: { actionType: SPActionType }) => void): void {
++  onAction(callback: (body: { actionType: SPActionType, customActionId: string }) => void): void {
+     this.emitter.removeAllListeners('onAction');
+     this.emitter.addListener('onAction', callback);
+   }
+diff --git a/src/types.ts b/src/types.ts
+index 26ac3d8162c0534af98e2a20d237856195fe5a10..4257aff5ed128988c7d3fba60545672966162b20 100644
+--- a/src/types.ts
++++ b/src/types.ts
+@@ -113,7 +113,7 @@ export interface Spec extends TurboModule {
+   loadGDPRPrivacyManager(pmId: string): void;
+   loadUSNatPrivacyManager(pmId: string): void;
+ 
+-  onAction(callback: (body: { actionType: SPActionType }) => void): void;
++  onAction(callback: (body: { actionType: SPActionType, customActionId: string }) => void): void;
+   onSPUIReady(callback: () => void): void;
+   onSPUIFinished(callback: () => void): void;
+   onFinished(callback: () => void): void;

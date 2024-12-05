@@ -19,6 +19,7 @@ import type { ContentpassConfig } from './types/ContentpassConfig';
 import { reportError, setSentryExtraAttribute } from './sentryIntegration';
 import sendStats from './countImpressionUtils/sendStats';
 import sendPageViewEvent from './countImpressionUtils/sendPageViewEvent';
+import logger, { enableLogger } from './logger';
 
 const DEFAULT_SAMPLING_RATE = 0.05;
 
@@ -47,10 +48,16 @@ export default class Contentpass implements ContentpassInterface {
   private refreshTimer: NodeJS.Timeout | null = null;
 
   constructor(config: ContentpassConfig) {
+    if (config.logLevel) {
+      enableLogger(config.logLevel);
+    }
+
+    logger.debug('Contentpass initialised with config', config);
     if (
       config.samplingRate &&
       (config.samplingRate < 0 || config.samplingRate > 1)
     ) {
+      logger.error('Sampling rate must be between 0 and 1');
       throw new Error('Sampling rate must be between 0 and 1');
     }
     this.samplingRate = config.samplingRate || DEFAULT_SAMPLING_RATE;
@@ -62,6 +69,7 @@ export default class Contentpass implements ContentpassInterface {
   }
 
   public authenticate = async (): Promise<void> => {
+    logger.info('Starting authentication flow');
     let result: AuthorizeResult;
 
     try {
@@ -86,11 +94,13 @@ export default class Contentpass implements ContentpassInterface {
 
       throw err;
     }
+    logger.info('Authentication flow finished, checking subscription...');
 
     await this.onNewAuthState(result);
   };
 
   public registerObserver(observer: ContentpassObserver) {
+    logger.info('Registering observer');
     if (this.contentpassStateObservers.includes(observer)) {
       return;
     }
@@ -100,12 +110,14 @@ export default class Contentpass implements ContentpassInterface {
   }
 
   public unregisterObserver(observer: ContentpassObserver) {
+    logger.info('Unregistering observer');
     this.contentpassStateObservers = this.contentpassStateObservers.filter(
       (o) => o !== observer
     );
   }
 
   public logout = async () => {
+    logger.info('Logging out and clearing auth state');
     await this.authStateStorage.clearOidcAuthState();
     this.changeContentpassState({
       state: ContentpassStateType.UNAUTHENTICATED,
@@ -114,6 +126,7 @@ export default class Contentpass implements ContentpassInterface {
   };
 
   public recoverFromError = async () => {
+    logger.info('Recovering from error');
     this.changeContentpassState({
       state: ContentpassStateType.INITIALISING,
     });
@@ -138,6 +151,7 @@ export default class Contentpass implements ContentpassInterface {
   };
 
   private countPaidImpression = async () => {
+    logger.info('Counting paid impression');
     const impressionId = uuid.v4();
 
     await sendPageViewEvent(this.config.apiUrl, {
@@ -155,6 +169,7 @@ export default class Contentpass implements ContentpassInterface {
       return;
     }
 
+    logger.info('Counting sampled impression');
     await sendStats(this.config.apiUrl, {
       ea: 'load',
       ec: 'tcf-sampled',
@@ -167,10 +182,14 @@ export default class Contentpass implements ContentpassInterface {
   private initialiseAuthState = async () => {
     const authState = await this.authStateStorage.getOidcAuthState();
     if (authState) {
+      logger.debug('Found auth state in storage, initialising with it');
       await this.onNewAuthState(authState);
       return;
     }
 
+    logger.debug(
+      'No auth state found in storage, initialising unauthenticated'
+    );
     this.changeContentpassState({
       state: ContentpassStateType.UNAUTHENTICATED,
       hasValidSubscription: false,
@@ -178,27 +197,34 @@ export default class Contentpass implements ContentpassInterface {
   };
 
   private onNewAuthState = async (authState: OidcAuthState) => {
+    logger.debug('New auth state received');
     this.oidcAuthState = authState;
     await this.authStateStorage.storeOidcAuthState(authState);
 
     const strategy = this.setupRefreshTimer();
     // if instant refresh, no need to check subscription as it will happen in the refresh
     if (strategy === RefreshTokenStrategy.INSTANTLY) {
+      logger.debug('Instant refresh, skipping subscription check');
       return;
     }
 
     try {
+      logger.info('Checking subscription');
       const contentpassToken = await fetchContentpassToken({
         issuer: this.config.issuer,
         propertyId: this.config.propertyId,
         idToken: this.oidcAuthState.idToken,
       });
       const hasValidSubscription = validateSubscription(contentpassToken);
+      logger.info({ hasValidSubscription }, 'Subscription check successful');
       this.changeContentpassState({
         state: ContentpassStateType.AUTHENTICATED,
         hasValidSubscription,
       });
     } catch (err: any) {
+      reportError(err, {
+        msg: 'Failed to fetch contentpass token and validate subscription',
+      });
       this.changeContentpassState({
         state: ContentpassStateType.ERROR,
         error: err,
@@ -211,6 +237,7 @@ export default class Contentpass implements ContentpassInterface {
       this.oidcAuthState?.accessTokenExpirationDate;
 
     if (!accessTokenExpirationDate) {
+      logger.warn('No access token expiration date provided');
       return RefreshTokenStrategy.NO_REFRESH;
     }
 
@@ -218,6 +245,7 @@ export default class Contentpass implements ContentpassInterface {
     const expirationDate = new Date(accessTokenExpirationDate);
     const timeDiff = expirationDate.getTime() - now.getTime();
     if (timeDiff <= 0) {
+      logger.debug('Access token expired, refreshing instantly');
       this.refreshToken(0);
       return RefreshTokenStrategy.INSTANTLY;
     }
@@ -226,6 +254,7 @@ export default class Contentpass implements ContentpassInterface {
       clearTimeout(this.refreshTimer);
     }
 
+    logger.debug({ timeDiff }, 'Setting up refresh timer');
     this.refreshTimer = setTimeout(async () => {
       await this.refreshToken(0);
     }, timeDiff);
@@ -240,6 +269,7 @@ export default class Contentpass implements ContentpassInterface {
     }
 
     try {
+      logger.info('Refreshing token');
       const refreshResult = await refresh(
         {
           clientId: this.config.propertyId,
@@ -252,22 +282,25 @@ export default class Contentpass implements ContentpassInterface {
         }
       );
       await this.onNewAuthState(refreshResult);
+      logger.info('Token refreshed successfully');
     } catch (err: any) {
       await this.onRefreshTokenError(counter, err);
     }
   };
 
   private onRefreshTokenError = async (counter: number, err: Error) => {
-    reportError(err, {
-      msg: `Failed to refresh token after ${counter} retries`,
-    });
     // FIXME: add handling for specific error to not retry in every case
     if (counter < REFRESH_TOKEN_RETRIES) {
+      logger.warn({ err, counter }, 'Failed to refresh token, retrying');
       const delay = counter * 1000 * 10;
       await new Promise((resolve) => setTimeout(resolve, delay));
       await this.refreshToken(counter + 1);
       return;
     }
+
+    reportError(err, {
+      msg: `Failed to refresh token after ${counter} retries`,
+    });
 
     await this.logout();
   };

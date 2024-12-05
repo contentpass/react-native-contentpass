@@ -1,5 +1,7 @@
 /* istanbul ignore file */
 
+export type Severity = 'debug' | 'info' | 'warn' | 'error';
+
 export type ContentpassConfig = {
   propertyId: string;
   planId: string;
@@ -7,4 +9,5 @@ export type ContentpassConfig = {
   issuer: string;
   apiUrl: string;
   samplingRate?: number;
+  logLevel?: Severity;
 };

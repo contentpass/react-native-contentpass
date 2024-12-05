@@ -41,6 +41,8 @@ Wrap your app's root component with ContentpassSdkProvider. The provider require
 - `planId` - The ID of the plan you want to check the user's subscription status against (ask Contentpass team for details)
 - `issuer` - The OAuth 2.0 server URL (e.g. `https://my.contentpass.net`)
 - `redirectUrl` - the redirect URL of your app to which the OAuth2 server will redirect after the authentication
+- `samplingRate` - Optional: The rate at which the SDK will send impression events for unauthenticated users. Default is 0.05 (5%)
+- `logLevel` - Optional: The log level for the SDK. By default logger is disabled. Possible values are 'info', 'warn', 'error' and 'debug'
 
 
 ```jsx
@@ -52,6 +54,8 @@ const contentpassConfig = {
   planId: 'plan-id',
   issuer: 'https://my.contentpass.net',
   redirectUrl: 'com.yourapp://oauthredirect',
+  samplingRate: 0.1,
+  logLevel: 'info'
 };
 
 const App = () => {

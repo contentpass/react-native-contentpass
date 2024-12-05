@@ -14,4 +14,5 @@ export const contentpassConfig: ContentpassConfig = {
 
   samplingRate: 1,
   redirectUrl: 'de.contentpass.demo://oauth',
+  logLevel: 'debug',
 };

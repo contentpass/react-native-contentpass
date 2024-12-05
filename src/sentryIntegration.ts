@@ -1,6 +1,7 @@
 import * as Sentry from '@sentry/react-native';
 import { defaultStackParser, makeFetchTransport } from '@sentry/react';
 import { getDefaultIntegrations } from '@sentry/react-native/dist/js/integrations/default';
+import logger from './logger';
 
 // as it's only the open source package, we want to have minimal sentry configuration here to not override sentry instance,
 // which can be used in the application
@@ -43,6 +44,7 @@ type ReportErrorOptions = {
 };
 
 export const reportError = (err: Error, { msg }: ReportErrorOptions = {}) => {
+  logger.error({ err }, msg || 'Unexpected error');
   if (msg) {
     sentryScope.addBreadcrumb({
       category: 'Error',

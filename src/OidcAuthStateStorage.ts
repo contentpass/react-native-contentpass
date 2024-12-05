@@ -1,4 +1,5 @@
 import EncryptedStorage from 'react-native-encrypted-storage';
+import { reportError } from './sentryIntegration';
 
 const AUTH_STATE_KEY = 'OIDCAuthState';
 
@@ -28,6 +29,12 @@ export default class OidcAuthStateStorage {
   }
 
   public async clearOidcAuthState() {
-    await EncryptedStorage.removeItem(this.key);
+    try {
+      await EncryptedStorage.removeItem(this.key);
+    } catch (err: any) {
+      reportError(err, {
+        msg: 'Failed to clear OIDC auth state. Most probably we tried to remove item which does not exist',
+      });
+    }
   }
 }

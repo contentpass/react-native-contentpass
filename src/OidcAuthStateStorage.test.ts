@@ -2,12 +2,14 @@ import EncryptedStorage from 'react-native-encrypted-storage';
 import OidcAuthStateStorage, {
   type OidcAuthState,
 } from './OidcAuthStateStorage';
+import * as SentryIntegrationModule from './sentryIntegration';
 
 describe('OidcAuthStateStorage', () => {
   const CLIENT_ID = 'test-client-id';
   const EXPECTED_STORAGE_KEY = `de.contentpass.${CLIENT_ID}-OIDCAuthState`;
 
   let storage: OidcAuthStateStorage;
+  let reportErrorSpy: jest.SpyInstance;
   const mockAuthState: OidcAuthState = {
     accessToken: 'test-access-token',
     accessTokenExpirationDate: '2023-12-31T23:59:59Z',
@@ -18,6 +20,9 @@ describe('OidcAuthStateStorage', () => {
 
   beforeEach(() => {
     storage = new OidcAuthStateStorage(CLIENT_ID);
+    reportErrorSpy = jest
+      .spyOn(SentryIntegrationModule, 'reportError')
+      .mockReturnValue(undefined);
   });
 
   afterEach(() => {
@@ -58,5 +63,19 @@ describe('OidcAuthStateStorage', () => {
     expect(EncryptedStorage.removeItem).toHaveBeenCalledWith(
       EXPECTED_STORAGE_KEY
     );
+  });
+
+  it('should report error if clearing OIDC auth state fails', async () => {
+    const error = new Error('test-error');
+    (EncryptedStorage.removeItem as jest.Mock).mockRejectedValue(error);
+
+    await storage.clearOidcAuthState();
+
+    expect(EncryptedStorage.removeItem).toHaveBeenCalledWith(
+      EXPECTED_STORAGE_KEY
+    );
+    expect(reportErrorSpy).toHaveBeenCalledWith(error, {
+      msg: 'Failed to clear OIDC auth state. Most probably we tried to remove item which does not exist',
+    });
   });
 });

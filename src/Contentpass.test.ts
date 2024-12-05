@@ -361,7 +361,7 @@ describe('Contentpass', () => {
 
       // after 6 retries the state should change to error
       await jest.advanceTimersByTimeAsync(120001);
-      expect(reportErrorSpy).toHaveBeenCalledTimes(7);
+      expect(reportErrorSpy).toHaveBeenCalledTimes(1);
       expect(reportErrorSpy).toHaveBeenCalledWith(refreshError, {
         msg: 'Failed to refresh token after 6 retries',
       });

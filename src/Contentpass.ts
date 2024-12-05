@@ -38,7 +38,6 @@ export default class Contentpass implements ContentpassInterface {
   private authStateStorage: OidcAuthStateStorage;
   private readonly config: ContentpassConfig;
   private readonly samplingRate: number;
-  private readonly instanceId: string;
 
   private contentpassState: ContentpassState = {
     state: ContentpassStateType.INITIALISING,
@@ -61,7 +60,6 @@ export default class Contentpass implements ContentpassInterface {
       throw new Error('Sampling rate must be between 0 and 1');
     }
     this.samplingRate = config.samplingRate || DEFAULT_SAMPLING_RATE;
-    this.instanceId = uuid.v4();
     this.authStateStorage = new OidcAuthStateStorage(config.propertyId);
     this.config = config;
     setSentryExtraAttribute('propertyId', config.propertyId);
@@ -135,48 +133,52 @@ export default class Contentpass implements ContentpassInterface {
   };
 
   public countImpression = async () => {
-    if (this.hasValidSubscriptionAndAccessToken()) {
-      try {
-        await this.countPaidImpression();
-      } catch (err: any) {
-        reportError(err, { msg: 'Failed to count paid impression' });
-      }
-    }
-
-    try {
-      await this.countSampledImpression();
-    } catch (err: any) {
-      reportError(err, { msg: 'Failed to count sampled impression' });
-    }
+    await Promise.all([
+      this.countPaidImpressionWhenUserHasValidSub(),
+      this.countSampledImpression(),
+    ]);
   };
 
-  private countPaidImpression = async () => {
+  private countPaidImpressionWhenUserHasValidSub = async () => {
+    if (!this.hasValidSubscriptionAndAccessToken()) {
+      return;
+    }
+
     logger.info('Counting paid impression');
     const impressionId = uuid.v4();
 
-    await sendPageViewEvent(this.config.apiUrl, {
-      propertyId: this.config.propertyId,
-      impressionId,
-      accessToken: this.oidcAuthState!.accessToken,
-    });
+    try {
+      await sendPageViewEvent(this.config.apiUrl, {
+        propertyId: this.config.propertyId,
+        impressionId,
+        accessToken: this.oidcAuthState!.accessToken,
+      });
+    } catch (err: any) {
+      reportError(err, { msg: 'Failed to count paid impression' });
+    }
   };
 
   private countSampledImpression = async () => {
     const generatedSample = Math.random();
     const publicId = this.config.propertyId.slice(0, 8);
+    const instanceId = uuid.v4();
 
     if (generatedSample >= this.samplingRate) {
       return;
     }
 
     logger.info('Counting sampled impression');
-    await sendStats(this.config.apiUrl, {
-      ea: 'load',
-      ec: 'tcf-sampled',
-      cpabid: this.instanceId,
-      cppid: publicId,
-      cpsr: this.samplingRate,
-    });
+    try {
+      await sendStats(this.config.apiUrl, {
+        ea: 'load',
+        ec: 'tcf-sampled',
+        cpabid: instanceId,
+        cppid: publicId,
+        cpsr: this.samplingRate,
+      });
+    } catch (err: any) {
+      reportError(err, { msg: 'Failed to count sampled impression' });
+    }
   };
 
   private initialiseAuthState = async () => {

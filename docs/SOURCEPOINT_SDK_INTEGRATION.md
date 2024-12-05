@@ -34,7 +34,7 @@ SDKs in your app.
 
 ### Important note
 After creating a property in Sourcepoint, you must wait approximately 15 minutes before it becomes available for use
-with the `@sourcepoint/react-native-cmp package`. This delay allows the configuration to propagate.
+with the `@sourcepoint/react-native-cmp` package. This delay allows the configuration to propagate.
 
 ### Implementation
 Install the Sourcepoint SDK package, then use the following code to integrate the two SDKs in your app:

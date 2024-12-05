@@ -123,7 +123,12 @@ const YourApp = () => {
 
 ## Contributing
 
-See the [contributing guide](CONTRIBUTING.md) to learn how to contribute to the repository and the development workflow.
+See the [contributing guide](docs/CONTRIBUTING.md) to learn how to contribute to the repository and the development workflow.
+
+## Integration with Sourcepoint SDK
+
+See the [Sourcepoint SDK documentation](./docs/SOURCEPOINT.md) for information on integrating the Contentpass SDK with the Sourcepoint SDK.
+
 
 ## License
 

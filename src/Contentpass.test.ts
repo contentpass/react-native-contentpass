@@ -11,6 +11,7 @@ import * as SentryIntegrationModule from './sentryIntegration';
 
 const config: ContentpassConfig = {
   propertyId: 'propertyId-1',
+  planId: 'planId-1',
   redirectUrl: 'de.test.net://oauth',
   issuer: 'https://issuer.net',
 };
@@ -159,6 +160,7 @@ describe('Contentpass', () => {
       expect(authorizeSpy).toHaveBeenCalledWith({
         additionalParameters: {
           cp_property: 'propertyId-1',
+          cp_plan: 'planId-1',
           cp_route: 'login',
           prompt: 'consent',
         },

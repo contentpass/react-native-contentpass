@@ -110,17 +110,3 @@ const App = () => {
   )
 }
 ```
-
-## Troubleshooting
-While integrating the Contentpass SDK with Sourcepoint SDK (version `0.3.0`), you may encounter known issues. Pull requests
-addressing these issues have been submitted in the [Sourcepoint GitHub repository](https://github.com/SourcePointUSA/react-native-sourcepoint-cmp):
-- [PR #10](https://github.com/SourcePointUSA/react-native-sourcepoint-cmp/pull/10)
-- [PR #11](https://github.com/SourcePointUSA/react-native-sourcepoint-cmp/pull/11)
-
-### Temporary Fixes
-If these fixes are not yet available in the latest version of the SDK, you can patch node_modules in your project using
-tools like `yarn patch` or similar. The patch files can be found here:
-- Patch for [PR #10](https://github.com/SourcePointUSA/react-native-sourcepoint-cmp/pull/10): [@sourcepoint-react-native-cmp-npm-0.3.0-2434c31dc9.patch](./sourcepoint-patches/@sourcepoint-react-native-cmp-npm-0.3.0-2434c31dc9.patch)
-- Patch for [PR #11](https://github.com/SourcePointUSA/react-native-sourcepoint-cmp/pull/11): [@sourcepoint-react-native-cmp-patch-34fca36663.patch](./sourcepoint-patches/@sourcepoint-react-native-cmp-patch-34fca36663.patch)
-
-We hope these issues will be resolved in the next release of the Sourcepoint SDK, eliminating the need for manual patches.

@@ -89,7 +89,7 @@ const App = () => {
     }
 
     spConsentManager.current = setupSourcepoint(
-      authResult?.hasValidSubscription ?? false
+      authResult.hasValidSubscription || false
     );
 
     spConsentManager.current?.onAction((action) => {
@@ -121,6 +121,6 @@ addressing these issues have been submitted in the [Sourcepoint GitHub repositor
 If these fixes are not yet available in the latest version of the SDK, you can patch node_modules in your project using
 tools like `yarn patch` or similar. The patch files can be found here:
 - Patch for [PR #10](https://github.com/SourcePointUSA/react-native-sourcepoint-cmp/pull/10): [@sourcepoint-react-native-cmp-npm-0.3.0-2434c31dc9.patch](./sourcepoint-patches/@sourcepoint-react-native-cmp-npm-0.3.0-2434c31dc9.patch)
-- Patch for [PR #11](https://github.com/SourcePointUSA/react-native-sourcepoint-cmp/pull/11): (https://github.com/SourcePointUSA/react-native-sourcepoint-cmp/pull/11): [@sourcepoint-react-native-cmp-patch-34fca36663.patch](./sourcepoint-patches/@sourcepoint-react-native-cmp-patch-34fca36663.patch)
+- Patch for [PR #11](https://github.com/SourcePointUSA/react-native-sourcepoint-cmp/pull/11): [@sourcepoint-react-native-cmp-patch-34fca36663.patch](./sourcepoint-patches/@sourcepoint-react-native-cmp-patch-34fca36663.patch)
 
 We hope these issues will be resolved in the next release of the Sourcepoint SDK, eliminating the need for manual patches.

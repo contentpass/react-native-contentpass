@@ -120,14 +120,13 @@ const YourApp = () => {
 };
 ```
 
+## Integration with Sourcepoint SDK
+
+See the [Sourcepoint SDK documentation](docs/SOURCEPOINT_SDK_INTEGRATION.md) for information on integrating the Contentpass SDK with the Sourcepoint SDK.
 
 ## Contributing
 
 See the [contributing guide](docs/CONTRIBUTING.md) to learn how to contribute to the repository and the development workflow.
-
-## Integration with Sourcepoint SDK
-
-See the [Sourcepoint SDK documentation](./docs/SOURCEPOINT.md) for information on integrating the Contentpass SDK with the Sourcepoint SDK.
 
 
 ## License

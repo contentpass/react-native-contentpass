@@ -1,4 +1,13 @@
 {
+  "hooks": {
+    "before:init": [
+      "yarn lint",
+      "yarn test",
+      "yarn typecheck",
+      "yarn prettier:check",
+      "yarn prepare"
+    ]
+  },
   "git": {
     "commitMessage": "chore: release ${version}",
     "tagName": "v${version}"

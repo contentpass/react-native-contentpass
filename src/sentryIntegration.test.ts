@@ -1,48 +1,72 @@
-import * as Sentry from '@sentry/react-native';
 import { defaultStackParser, makeFetchTransport } from '@sentry/react';
 import * as SentryReactNativeModule from '@sentry/react-native';
-import { reportError, setSentryExtraAttribute } from './sentryIntegration';
+import {
+  __internal_reset_sentry_scope,
+  initSentry,
+  reportError,
+} from './sentryIntegration';
+import logger from './logger';
 
-jest.mock('@sentry/react-native', () => {
-  const scope = {
-    setClient: jest.fn(),
-    addBreadcrumb: jest.fn(),
-    captureException: jest.fn(),
-    setExtra: jest.fn(),
-  };
+jest.mock('react-native', () => {
   return {
-    ReactNativeClient: jest.fn().mockImplementation(() => ({
-      init: jest.fn(),
-      captureException: jest.fn(),
-    })),
-    Scope: jest.fn().mockImplementation(() => scope),
-
-    // Only for internal testing
-    __test_getScope: () => scope,
+    Platform: {
+      OS: 'android',
+      Version: '10.1.2',
+    },
   };
 });
 
-describe('sentryScope', () => {
+describe('sentryIntegration', () => {
   let addBreadcrumbMock: jest.Mock;
   let captureExceptionMock: jest.Mock;
+  let setTagsMock: jest.Mock;
+  let ReactNativeClientSpy: jest.SpyInstance;
+  let ScopeSpy: jest.SpyInstance;
 
   beforeEach(() => {
     addBreadcrumbMock = jest.fn();
     captureExceptionMock = jest.fn();
-    jest.spyOn(SentryReactNativeModule, 'Scope').mockReturnValue({
+    setTagsMock = jest.fn();
+    ScopeSpy = jest.spyOn(SentryReactNativeModule, 'Scope').mockReturnValue({
       setClient: jest.fn(),
+      init: jest.fn(),
       addBreadcrumb: addBreadcrumbMock,
       captureException: captureExceptionMock,
+      setTags: setTagsMock,
     } as any);
+
+    ReactNativeClientSpy = jest
+      .spyOn(SentryReactNativeModule, 'ReactNativeClient')
+      .mockImplementation(
+        () =>
+          ({
+            init: jest.fn(),
+          }) as any
+      );
+
+    jest.spyOn(logger, 'error').mockImplementation(() => {});
+    jest.spyOn(logger, 'warn').mockImplementation(() => {});
   });
 
   afterEach(() => {
     jest.restoreAllMocks();
     jest.resetAllMocks();
+    __internal_reset_sentry_scope();
+  });
+
+  it('should not initialise sentry scope if already initialised', () => {
+    initSentry({ propertyId: 'test-id' });
+    initSentry({ propertyId: 'test-id' });
+
+    expect(logger.warn).toHaveBeenCalledWith('Sentry already initialized');
+    expect(ReactNativeClientSpy).toHaveBeenCalledTimes(1);
+    expect(ScopeSpy).toHaveBeenCalledTimes(1);
   });
 
   it('should initialise sentry scope with correct options', () => {
-    expect(Sentry.ReactNativeClient).toHaveBeenCalledWith({
+    initSentry({ propertyId: 'test-id' });
+
+    expect(ReactNativeClientSpy).toHaveBeenCalledWith({
       attachStacktrace: true,
       autoInitializeNativeSdk: false,
       dsn: 'https://74ab84b55b30a3800255a25eac4d089c@sentry.tools.contentpass.dev/8',
@@ -57,52 +81,58 @@ describe('sentryScope', () => {
       enableStallTracking: true,
       enableUserInteractionTracing: false,
       enableWatchdogTerminationTracking: false,
+      environment: 'development',
       maxQueueSize: 30,
       parentSpanIsAlwaysRootSpan: true,
       patchGlobalPromise: true,
       sendClientReports: true,
-      integrations: [],
+      integrations: undefined,
       stackParser: defaultStackParser,
       transport: makeFetchTransport,
+    });
+
+    expect(setTagsMock).toHaveBeenCalledWith({
+      OS: 'android',
+      platformVersion: '10.1.2',
+      propertyId: 'test-id',
     });
   });
 
   describe('reportError', () => {
     it('should add breadcrumb with message if provided', () => {
+      initSentry({ propertyId: 'test-id' });
       const err = new Error('test');
       const msg = 'test message';
-      // @ts-ignore
-      const { addBreadcrumb, captureException } = Sentry.__test_getScope();
+
       reportError(err, { msg });
 
-      expect(addBreadcrumb).toHaveBeenCalledWith({
+      expect(addBreadcrumbMock).toHaveBeenCalledWith({
         category: 'Error',
         message: msg,
         level: 'log',
       });
-      expect(captureException).toHaveBeenCalledWith(err);
+      expect(captureExceptionMock).toHaveBeenCalledWith(err);
     });
 
     it('should not add breadcrumb if message is not provided', () => {
+      initSentry({ propertyId: 'test-id' });
       const err = new Error('test');
-      // @ts-ignore
-      const { addBreadcrumb, captureException } = Sentry.__test_getScope();
+
       reportError(err);
 
-      expect(addBreadcrumb).not.toHaveBeenCalled();
-      expect(captureException).toHaveBeenCalledWith(err);
+      expect(addBreadcrumbMock).not.toHaveBeenCalled();
+      expect(captureExceptionMock).toHaveBeenCalledWith(err);
     });
-  });
 
-  describe('setSentryExtraAttribute', () => {
-    it('should set extra attribute', () => {
-      const key = 'testKey';
-      const value = 'testValue';
-      // @ts-ignore
-      const { setExtra } = Sentry.__test_getScope();
-      setSentryExtraAttribute(key, value);
+    it('should not throw error when reportError is called before initSentry', () => {
+      const err = new Error('test');
+      const msg = 'test message';
 
-      expect(setExtra).toHaveBeenCalledWith(key, value);
+      reportError(err, { msg });
+
+      expect(logger.error).toHaveBeenCalledWith({ err }, msg);
+      expect(addBreadcrumbMock).not.toHaveBeenCalled();
+      expect(captureExceptionMock).not.toHaveBeenCalledWith(err);
     });
   });
 });

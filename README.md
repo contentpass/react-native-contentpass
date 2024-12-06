@@ -41,6 +41,8 @@ Wrap your app's root component with ContentpassSdkProvider. The provider require
 - `planId` - The ID of the plan you want to check the user's subscription status against (ask Contentpass team for details)
 - `issuer` - The OAuth 2.0 server URL (e.g. `https://my.contentpass.net`)
 - `redirectUrl` - the redirect URL of your app to which the OAuth2 server will redirect after the authentication
+- `samplingRate` - Optional: The rate at which the SDK will send impression events for unauthenticated users. Default is 0.05 (5%)
+- `logLevel` - Optional: The log level for the SDK. By default logger is disabled. Possible values are 'info', 'warn', 'error' and 'debug'
 
 
 ```jsx
@@ -52,6 +54,8 @@ const contentpassConfig = {
   planId: 'plan-id',
   issuer: 'https://my.contentpass.net',
   redirectUrl: 'com.yourapp://oauthredirect',
+  samplingRate: 0.1,
+  logLevel: 'info'
 };
 
 const App = () => {
@@ -71,6 +75,10 @@ The SDK exposes the following methods through the `useContentpassSdk` hook:
 ### authenticate
 Initiates the OAuth 2.0 authentication process via a modal interface. It validates the user’s active Contentpass subscriptions
 upon successful authentication.
+
+### countImpression
+Tracks and increments the impression count for the current user. This method should be invoked whenever a user views a
+piece of content. It applies to all users, whether authenticated or unauthenticated.
 
 ### registerObserver
 Registers a callback function to listen for changes in the user’s authentication and subscription status. The observer function
@@ -96,6 +104,7 @@ import { Button, View } from 'react-native';
 const YourApp = () => {
   const {
     authenticate,
+    countImpression,
     registerObserver,
     unregisterObserver,
     logout,
@@ -117,6 +126,7 @@ const YourApp = () => {
   return (
     <View>
       <Button onPress={authenticate} title={'Authenticate'} />
+      <Button onPress={countImpression} title={'Count Impression'} />
     </View>
   );
 };

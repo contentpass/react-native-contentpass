@@ -150,6 +150,8 @@
     "version": "0.44.1"
   },
   "dependencies": {
-    "@sentry/react-native": "^6.3.0"
+    "@sentry/react-native": "^6.3.0",
+    "react-native-logs": "^5.3.0",
+    "react-native-uuid": "^2.0.3"
   }
 }

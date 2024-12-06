@@ -8,6 +8,7 @@ describe('fetchContentpassToken', () => {
 
   it('should return the contentpass token', async () => {
     jest.spyOn(global, 'fetch').mockResolvedValue({
+      ok: true,
       json: jest
         .fn()
         .mockResolvedValue({ contentpass_token: 'example_contentpass_token' }),
@@ -30,5 +31,20 @@ describe('fetchContentpassToken', () => {
         },
       }
     );
+  });
+
+  it('should throw an error if the fetch fails', async () => {
+    jest.spyOn(global, 'fetch').mockResolvedValue({
+      ok: false,
+      statusText: 'Not Found',
+    } as any);
+
+    await expect(async () => {
+      await fetchContentpassToken({
+        idToken: '123456',
+        propertyId: '987654321',
+        issuer: 'https://issuer.com',
+      });
+    }).rejects.toThrow('Failed to fetch Contentpass token, status: Not Found');
   });
 });

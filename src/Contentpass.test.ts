@@ -10,6 +10,7 @@ import { SCOPES } from './consts/oidcConsts';
 import * as SentryIntegrationModule from './sentryIntegration';
 import * as SendStatsModule from './countImpressionUtils/sendStats';
 import * as SendPageViewEventModule from './countImpressionUtils/sendPageViewEvent';
+import * as LoggerModule from './logger';
 
 const config: ContentpassConfig = {
   propertyId: '5803179c-5b9f-40be-9a91-e67e8ea20593',
@@ -56,6 +57,7 @@ describe('Contentpass', () => {
   let oidcAuthStorageMock: OidcAuthStateStorage;
   let sendStatsSpy: jest.SpyInstance;
   let sendPageViewEventSpy: jest.SpyInstance;
+  let enableLoggerSpy: jest.SpyInstance;
 
   beforeEach(() => {
     jest.useFakeTimers({ now: NOW });
@@ -90,6 +92,10 @@ describe('Contentpass', () => {
     sendPageViewEventSpy = jest
       .spyOn(SendPageViewEventModule, 'default')
       .mockResolvedValue({ ok: true } as any);
+
+    enableLoggerSpy = jest
+      .spyOn(LoggerModule, 'enableLogger')
+      .mockReturnValue(undefined);
 
     contentpass = new Contentpass(config);
   });
@@ -186,6 +192,15 @@ describe('Contentpass', () => {
         state: 'AUTHENTICATED',
         hasValidSubscription: true,
       });
+    });
+
+    it('should enable logger if logLevel is set', () => {
+      contentpass = new Contentpass({
+        ...config,
+        logLevel: 'info',
+      });
+
+      expect(enableLoggerSpy).toHaveBeenCalledWith('info');
     });
   });
 

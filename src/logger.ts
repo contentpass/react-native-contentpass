@@ -1,7 +1,16 @@
-import { consoleTransport, logger } from 'react-native-logs';
+import {
+  consoleTransport,
+  logger,
+  type transportFunctionType,
+} from 'react-native-logs';
 import type { Severity } from './types/ContentpassConfig';
+import type { ConsoleTransportOptions } from 'react-native-logs/dist/transports/consoleTransport';
 
-const log = logger.createLogger({
+type Logger = ReturnType<
+  typeof logger.createLogger<transportFunctionType<ConsoleTransportOptions>>
+>;
+
+const log: Logger = logger.createLogger({
   // by default loggger is disabled
   enabled: false,
   transport: consoleTransport,

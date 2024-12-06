@@ -2,6 +2,7 @@ import * as Sentry from '@sentry/react-native';
 import { defaultStackParser, makeFetchTransport } from '@sentry/react';
 import { getDefaultIntegrations } from '@sentry/react-native/dist/js/integrations/default';
 import logger from './logger';
+import { Platform } from 'react-native';
 
 // as it's only the open source package, we want to have minimal sentry configuration here to not override sentry instance,
 // which can be used in the application
@@ -27,17 +28,37 @@ const options = {
   stackParser: defaultStackParser,
   transport: makeFetchTransport,
   integrations: [],
+  environment: __DEV__ ? 'development' : 'production',
 };
 
-const sentryClient = new Sentry.ReactNativeClient({
-  ...options,
-  integrations: getDefaultIntegrations(options),
-});
+type InitSentryArgs = {
+  propertyId: string;
+};
 
-const sentryScope = new Sentry.Scope();
-sentryScope.setClient(sentryClient);
+let sentryScope: Sentry.Scope | null = null;
 
-sentryClient.init();
+export const initSentry = (args: InitSentryArgs) => {
+  if (sentryScope) {
+    logger.warn('Sentry already initialized');
+    return;
+  }
+
+  const sentryClient = new Sentry.ReactNativeClient({
+    ...options,
+    integrations: getDefaultIntegrations(options),
+  });
+
+  sentryScope = new Sentry.Scope();
+  sentryScope.setClient(sentryClient);
+
+  sentryClient.init();
+
+  sentryScope.setTags({
+    propertyId: args.propertyId,
+    OS: Platform.OS,
+    platformVersion: Platform.Version,
+  });
+};
 
 type ReportErrorOptions = {
   msg?: string;
@@ -45,6 +66,10 @@ type ReportErrorOptions = {
 
 export const reportError = (err: Error, { msg }: ReportErrorOptions = {}) => {
   logger.error({ err }, msg || 'Unexpected error');
+  if (!sentryScope) {
+    return;
+  }
+
   if (msg) {
     sentryScope.addBreadcrumb({
       category: 'Error',
@@ -56,6 +81,6 @@ export const reportError = (err: Error, { msg }: ReportErrorOptions = {}) => {
   sentryScope.captureException(err);
 };
 
-export const setSentryExtraAttribute = (key: string, value: string) => {
-  sentryScope.setExtra(key, value);
+export const __internal_reset_sentry_scope = () => {
+  sentryScope = null;
 };

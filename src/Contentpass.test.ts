@@ -58,6 +58,7 @@ describe('Contentpass', () => {
   let sendStatsSpy: jest.SpyInstance;
   let sendPageViewEventSpy: jest.SpyInstance;
   let enableLoggerSpy: jest.SpyInstance;
+  let initSentrySpy: jest.SpyInstance;
 
   beforeEach(() => {
     jest.useFakeTimers({ now: NOW });
@@ -69,6 +70,10 @@ describe('Contentpass', () => {
       .mockResolvedValue(EXAMPLE_REFRESH_RESULT);
     reportErrorSpy = jest
       .spyOn(SentryIntegrationModule, 'reportError')
+      .mockReturnValue(undefined);
+
+    initSentrySpy = jest
+      .spyOn(SentryIntegrationModule, 'initSentry')
       .mockReturnValue(undefined);
 
     oidcAuthStorageMock = {
@@ -123,6 +128,12 @@ describe('Contentpass', () => {
             samplingRate: 2,
           })
       ).toThrow('Sampling rate must be between 0 and 1');
+    });
+
+    it('should initialise sentry', () => {
+      expect(initSentrySpy).toHaveBeenCalledWith({
+        propertyId: config.propertyId,
+      });
     });
 
     it('should initialise contentpass state', () => {

@@ -16,7 +16,7 @@ import { RefreshTokenStrategy } from './types/RefreshTokenStrategy';
 import fetchContentpassToken from './contentpassTokenUtils/fetchContentpassToken';
 import validateSubscription from './contentpassTokenUtils/validateSubscription';
 import type { ContentpassConfig } from './types/ContentpassConfig';
-import { reportError, setSentryExtraAttribute } from './sentryIntegration';
+import { initSentry, reportError } from './sentryIntegration';
 import sendStats from './countImpressionUtils/sendStats';
 import sendPageViewEvent from './countImpressionUtils/sendPageViewEvent';
 import logger, { enableLogger } from './logger';
@@ -62,7 +62,7 @@ export default class Contentpass implements ContentpassInterface {
     this.samplingRate = config.samplingRate || DEFAULT_SAMPLING_RATE;
     this.authStateStorage = new OidcAuthStateStorage(config.propertyId);
     this.config = config;
-    setSentryExtraAttribute('propertyId', config.propertyId);
+    initSentry({ propertyId: config.propertyId });
     this.initialiseAuthState();
   }
 

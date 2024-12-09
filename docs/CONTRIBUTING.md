@@ -13,6 +13,26 @@ This project is a monorepo managed using [Yarn workspaces](https://yarnpkg.com/f
 - An expo example app in the `expoExample/` directory.
 - A shared frontend code for example apps in the `sharedExample/` directory.
 
+### Prerequisites IOS
+#### Ruby
+To be able to run ios example applications you need to have Ruby installed on your machine. We recommend using [rbenv](https://github.com/rbenv/rbenv)
+to manage your Ruby versions. Before installing rbenv you can uninstall any existing Ruby versions on your machine to
+prevent conflicts.
+
+#### CocoaPods
+To be able to run ios example applications you need to have CocoaPods installed on your machine. You can install CocoaPods by running the following command:
+
+```sh
+sudo gem install cocoapods
+```
+
+### Prerequisites Android
+#### Android Studio
+To be able to debug android example applications you need to have Android Studio installed on your machine.
+You can download Android Studio from [here](https://developer.android.com/studio). It will also install the Android SDK,
+Android Virtual Device (AVD) and all the necessary tools to build your android application.
+
+### Getting started
 To get started with the project, run `yarn` in the root directory to install the required dependencies for each package:
 
 ```sh
@@ -20,6 +40,8 @@ yarn
 ```
 
 > Since the project relies on Yarn workspaces, you cannot use [`npm`](https://github.com/npm/cli) for development.
+
+```sh
 
 The [example app](/example/) and [expo example app](/expoExample/) demonstrates usage of the library. You need to run it to test any changes you make.
 
@@ -62,6 +84,9 @@ yarn expo-example android
 ```
 
 To run the example app on iOS:
+
+**NOTE**: You need to run `bundle install` in the `example/ios` directory before running the following command.
+`bundle install` commands is responsible for installing the required dependencies for the iOS project.
 
 ```sh
 yarn example ios

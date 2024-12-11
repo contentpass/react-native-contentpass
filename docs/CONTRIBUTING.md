@@ -41,9 +41,9 @@ yarn
 
 > Since the project relies on Yarn workspaces, you cannot use [`npm`](https://github.com/npm/cli) for development.
 
-```sh
-
 The [example app](/example/) and [expo example app](/expoExample/) demonstrates usage of the library. You need to run it to test any changes you make.
+The default [configuration](../sharedExample/src/contentpassConfig.ts) in example apps points to contentpass testing environment.
+You can change it to any other environment by updating the `contentpassConfig.ts` file.
 
 It is configured to use the local version of the library, so any changes you make to the library's source code will be reflected in the example apps.
 Changes to the library's JavaScript code will be reflected in the example apps without a rebuild, but native code changes will require a rebuild of the example app.
@@ -71,7 +71,10 @@ OR
 yarn expo-example start
 ```
 
-To run the example app on Android:
+**NOTE**: The `expo start` command only runs the development server. To build and install the app, use the commands
+described below: `yarn expo-example android`, `yarn expo-example ios`.
+
+To run the example apps on Android:
 
 ```sh
 yarn example android
@@ -83,7 +86,7 @@ OR
 yarn expo-example android
 ```
 
-To run the example app on iOS:
+To run the example apps on iOS:
 
 **NOTE**: You need to run `bundle install` in the `example/ios` directory before running the following command.
 `bundle install` commands is responsible for installing the required dependencies for the iOS project.

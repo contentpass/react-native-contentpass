@@ -84,3 +84,6 @@ ios/generated
 android/generated
 
 /coverage/
+
+# to not commit NPM token
+.npmrc

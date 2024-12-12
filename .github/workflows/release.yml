@@ -16,6 +16,14 @@ jobs:
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Initialize Git user
+        run: |
+          git config --global user.email "dev@contentpass.de"
+          git config --global user.name "Release Workflow"
+
+      - name: Log git status
+        run: git status
+
       - name: Run release
         run: npm run release --ci
         env:

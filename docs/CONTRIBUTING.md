@@ -144,13 +144,24 @@ Our pre-commit hooks verify that the linter and tests pass when committing.
 
 ### Publishing to npm
 
-We use [release-it](https://github.com/release-it/release-it) to make it easier to publish new versions. It handles common tasks like bumping version based on semver, creating tags and releases etc.
+We use [release-it](https://github.com/release-it/release-it) to make it easier to publish new versions. It handles common
+tasks like bumping version based on semver, creating tags and releases etc.
 
 To publish new versions, run the following:
 
 ```sh
 yarn release
 ```
+
+#### Publishing the Package to npm using GitHub Actions
+You can use GitHub Actions to automate the process of publishing the package to npm. Follow these steps:
+1. Navigate to [release workflow](https://github.com/contentpass/react-native-contentpass/actions/workflows/release.yml) on GitHub.
+2. Run the workflow manually:
+   - Click on the `Run workflow` button.
+   - Select the `main` branch.
+   - Confirm and execute the workflow.
+
+This process will handle the publication of the package to npm using the configurations defined in the workflow.
 
 ### Sending a pull request
 

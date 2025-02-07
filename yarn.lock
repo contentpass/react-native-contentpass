@@ -3853,33 +3853,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sourcepoint/react-native-cmp@npm:0.3.0":
-  version: 0.3.0
-  resolution: "@sourcepoint/react-native-cmp@npm:0.3.0"
+"@sourcepoint/react-native-cmp@npm:^0.4.0":
+  version: 0.4.0
+  resolution: "@sourcepoint/react-native-cmp@npm:0.4.0"
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: dc41dc065a0ab54a87cfbd03fae4a78923904585eff2b9d6cedea35a1b662c5ee61ea0178af2121de3819afa995fbdf712503629a4e0189e822b9291e3dd42ba
-  languageName: node
-  linkType: hard
-
-"@sourcepoint/react-native-cmp@patch:@sourcepoint/react-native-cmp@npm%3A0.3.0#./.yarn/patches/@sourcepoint-react-native-cmp-npm-0.3.0-2434c31dc9.patch::version=0.3.0&hash=664e70&locator=react-native-contentpass%40workspace%3A.":
-  version: 0.3.0
-  resolution: "@sourcepoint/react-native-cmp@patch:@sourcepoint/react-native-cmp@npm%3A0.3.0#./.yarn/patches/@sourcepoint-react-native-cmp-npm-0.3.0-2434c31dc9.patch::version=0.3.0&hash=664e70&locator=react-native-contentpass%40workspace%3A."
-  peerDependencies:
-    react: "*"
-    react-native: "*"
-  checksum: 19e09814040bb9d7e5aaf2bc9aa937f97fed96341ee21f676edcafda2d0300f24ec6799e81fe5c6c8583387e1fc542e72ad6e3756fa839ae2952dc102c9cad7e
-  languageName: node
-  linkType: hard
-
-"@sourcepoint/react-native-cmp@patch:@sourcepoint/react-native-cmp@patch%3A@sourcepoint/react-native-cmp@npm%253A0.3.0%23./.yarn/patches/@sourcepoint-react-native-cmp-npm-0.3.0-2434c31dc9.patch%3A%3Aversion=0.3.0&hash=664e70&locator=react-native-contentpass%2540workspace%253A.#./.yarn/patches/@sourcepoint-react-native-cmp-patch-34fca36663.patch::locator=%40contentpass%2Freact-native-contentpass%40workspace%3A.":
-  version: 0.3.0
-  resolution: "@sourcepoint/react-native-cmp@patch:@sourcepoint/react-native-cmp@patch%3A@sourcepoint/react-native-cmp@npm%253A0.3.0%23./.yarn/patches/@sourcepoint-react-native-cmp-npm-0.3.0-2434c31dc9.patch%3A%3Aversion=0.3.0&hash=664e70&locator=react-native-contentpass%2540workspace%253A.#./.yarn/patches/@sourcepoint-react-native-cmp-patch-34fca36663.patch::version=0.3.0&hash=5a881d&locator=%40contentpass%2Freact-native-contentpass%40workspace%3A."
-  peerDependencies:
-    react: "*"
-    react-native: "*"
-  checksum: 0e4d72b3f43e6fa7ee00a7d9fddc53058a7b8dc0a513bc85d2d05f3cd58da2b52fecc498212d6546ae0cd40556c2ab4fa7e12ac8fa70a4e0716c6c2078aaf966
+  checksum: 555d482f1d242aae97fddebddcb8a68aab8cef6f0f811f8f1b1e0f65c0a162cab2d51a39b417d2cc1a89bca73d3b8e84219d0a3f46d171a0f0e5f37da5491785
   languageName: node
   linkType: hard
 
@@ -12544,7 +12524,7 @@ __metadata:
     "@react-native/babel-preset": 0.76.2
     "@react-native/metro-config": 0.76.2
     "@react-native/typescript-config": 0.76.2
-    "@sourcepoint/react-native-cmp": ^0.3.0
+    "@sourcepoint/react-native-cmp": ^0.4.0
     react: 18.3.1
     react-native: 0.76.2
     react-native-app-auth: ^8.0.0
@@ -12567,7 +12547,7 @@ __metadata:
     "@react-native/babel-preset": 0.76.2
     "@react-native/metro-config": 0.76.2
     "@react-native/typescript-config": 0.76.2
-    "@sourcepoint/react-native-cmp": ^0.3.0
+    "@sourcepoint/react-native-cmp": ^0.4.0
     expo: ~52.0.11
     expo-status-bar: ~2.0.0
     react: 18.3.1
@@ -13558,7 +13538,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "sharedExample@workspace:sharedExample"
   dependencies:
-    "@sourcepoint/react-native-cmp": ^0.3.0
+    "@sourcepoint/react-native-cmp": ^0.4.0
   peerDependencies:
     "@sourcepoint/react-native-cmp": "*"
   languageName: unknown

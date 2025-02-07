@@ -99,8 +99,7 @@
     "typescript": "^5.2.2"
   },
   "resolutions": {
-    "@types/react": "^18.2.44",
-    "@sourcepoint/react-native-cmp@^0.3.0": "patch:@sourcepoint/react-native-cmp@patch%3A@sourcepoint/react-native-cmp@npm%253A0.3.0%23./.yarn/patches/@sourcepoint-react-native-cmp-npm-0.3.0-2434c31dc9.patch%3A%3Aversion=0.3.0&hash=664e70&locator=react-native-contentpass%2540workspace%253A.#./.yarn/patches/@sourcepoint-react-native-cmp-patch-34fca36663.patch"
+    "@types/react": "^18.2.44"
   },
   "peerDependencies": {
     "react": "*",

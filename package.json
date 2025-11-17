@@ -102,7 +102,7 @@
     "@types/react": "^18.2.44"
   },
   "peerDependencies": {
-    "@sentry/react-native": ">=6.3.0",
+    "@sentry/react-native": ">=7.0.0",
     "react": "*",
     "react-native": "*",
     "react-native-app-auth": "*",

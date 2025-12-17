@@ -65,6 +65,9 @@
     "url": "https://github.com/contentpass/react-native-contentpass/issues"
   },
   "homepage": "https://github.com/contentpass/react-native-contentpass#readme",
+  "npm": {
+    "skipChecks": true
+  },
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"

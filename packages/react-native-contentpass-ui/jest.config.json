@@ -1,0 +1,12 @@
+{
+  "preset": "react-native",
+  "setupFilesAfterEnv": ["./jest-setup.ts"],
+  "transform": {
+    "^.+\\.(js|ts|tsx)$": "babel-jest"
+  },
+  "modulePathIgnorePatterns": [
+    "./lib/",
+    "./ios/",
+    "./android/"
+  ]
+}

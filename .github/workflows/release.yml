@@ -28,6 +28,6 @@ jobs:
         run: git status
 
       - name: Run release
-        run: npm run release --ci
+        run: yarn release --ci
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_GITHUB_TOKEN }}

@@ -1,0 +1,36 @@
+{
+  "name": "@contentpass/examples-sourcepoint-expo",
+  "version": "0.0.1",
+  "main": "index.ts",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo run:android",
+    "ios": "expo run:ios"
+  },
+  "dependencies": {
+    "@contentpass/examples-sourcepoint-shared": "workspace:*",
+    "@sourcepoint/react-native-cmp": "^1.0.13",
+    "expo": "~54.0.33",
+    "expo-status-bar": "~3.0.9",
+    "react": "19.2.4",
+    "react-native": "0.83.1",
+    "react-native-app-auth": "^8.1.0",
+    "react-native-encrypted-storage": "^4.0.3"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.29.0",
+    "@babel/preset-env": "^7.29.0",
+    "@babel/runtime": "^7.28.6",
+    "@react-native-community/cli": "20.1.1",
+    "@react-native-community/cli-platform-android": "20.1.1",
+    "@react-native-community/cli-platform-ios": "20.1.1",
+    "@react-native/babel-preset": "0.83.1",
+    "@react-native/metro-config": "0.83.1",
+    "@react-native/typescript-config": "0.83.1",
+    "babel-preset-expo": "^54.0.10",
+    "patch-package": "^8.0.1",
+    "postinstall-postinstall": "^2.1.0",
+    "react-native-builder-bob": "^0.40.17"
+  },
+  "private": true
+}

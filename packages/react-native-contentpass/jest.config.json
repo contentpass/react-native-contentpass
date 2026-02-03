@@ -1,0 +1,23 @@
+{
+  "preset": "react-native",
+  "setupFilesAfterEnv": ["./jest-setup.ts"],
+  "transform": {
+    "^.+\\.(js|ts|tsx)$": [
+      "babel-jest",
+      {
+        "configFile": false,
+        "presets": ["@react-native/babel-preset"]
+      }
+    ]
+  },
+  "moduleNameMapper": {
+    "^react$": "<rootDir>/node_modules/react",
+    "^react-native$": "<rootDir>/node_modules/react-native",
+    "^react-test-renderer$": "<rootDir>/node_modules/react-test-renderer"
+  },
+  "modulePathIgnorePatterns": [
+    "./lib/",
+    "./ios/",
+    "./android/"
+  ]
+}

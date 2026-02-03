@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "paths": {
+      "@contentpass/react-native-contentpass-cmp-onetrust": ["./src/index"],
+      "@contentpass/react-native-contentpass": [
+        "../react-native-contentpass/src/index"
+      ],
+      "react-native-onetrust-cmp": [
+        "./src/react-native-onetrust-cmp.d.ts"
+      ]
+    }
+  }
+}

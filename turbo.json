@@ -1,47 +1,44 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "pipeline": {
+  "tasks": {
+    "typecheck": {
+      "outputs": []
+    },
+    "test": {
+      "outputs": []
+    },
+    "prepare": {
+      "outputs": [
+        "lib/**"
+      ]
+    },
     "build:android": {
-      // We had to disable the new architecture because @sourcepoint/react-native-cmp doesn;t support it
-      //      "env": ["ORG_GRADLE_PROJECT_newArchEnabled"],
       "inputs": [
         "package.json",
-        "android",
-        "!android/build",
-        "src/*.ts",
-        "src/*.tsx",
-        "example/package.json",
-        "example/android",
-        "expoExample/package.json",
-        "expoExample/android",
-        "sharedExample/package.json",
-        "!example/android/.gradle",
-        "!example/android/build",
-        "!example/android/app/build",
-        "!expoExample/android/.gradle",
-        "!expoExample/android/build",
-        "!expoExample/android/app/build"
+        "packages/react-native-contentpass/package.json",
+        "packages/react-native-contentpass/android",
+        "packages/react-native-contentpass/src/*.ts",
+        "packages/react-native-contentpass/src/*.tsx",
+        "examples/*/package.json",
+        "examples/*/android",
+        "!examples/*/android/.gradle",
+        "!examples/*/android/build",
+        "!examples/*/android/app/build"
       ],
       "outputs": []
     },
     "build:ios": {
-      // We had to disable the new architecture because @sourcepoint/react-native-cmp doesn;t support it
-      //      "env": ["RCT_NEW_ARCH_ENABLED"],
       "inputs": [
         "package.json",
-        "*.podspec",
-        "ios",
-        "src/*.ts",
-        "src/*.tsx",
-        "example/package.json",
-        "example/ios",
-        "expoExample/package.json",
-        "expoExample/ios",
-        "sharedExample/package.json",
-        "!example/ios/build",
-        "!example/ios/Pods",
-        "!expoExample/ios/build",
-        "!expoExample/ios/Pods"
+        "packages/react-native-contentpass/package.json",
+        "packages/react-native-contentpass/*.podspec",
+        "packages/react-native-contentpass/ios",
+        "packages/react-native-contentpass/src/*.ts",
+        "packages/react-native-contentpass/src/*.tsx",
+        "examples/*/package.json",
+        "examples/*/ios",
+        "!examples/*/ios/build",
+        "!examples/*/ios/Pods"
       ],
       "outputs": []
     }

@@ -5,7 +5,7 @@
       "yarn test",
       "yarn typecheck",
       "yarn prettier:check",
-      "yarn prepare"
+      "yarn build"
     ]
   },
   "git": {
@@ -15,7 +15,13 @@
   },
   "npm": {
     "publish": true,
-    "skipChecks": true
+    "skipChecks": true,
+    "publishArgs": [
+      "--workspaces"
+    ],
+    "versionArgs": [
+      "--workspaces"
+    ]
   },
   "github": {
     "release": true

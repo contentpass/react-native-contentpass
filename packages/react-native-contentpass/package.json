@@ -1,0 +1,121 @@
+{
+  "name": "@contentpass/react-native-contentpass",
+  "version": "0.3.18",
+  "description": "Contentpass React Native SDK",
+  "source": "./src/index.tsx",
+  "main": "./lib/commonjs/index.js",
+  "module": "./lib/module/index.js",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./lib/typescript/module/src/index.d.ts",
+        "default": "./lib/module/index.js"
+      },
+      "require": {
+        "types": "./lib/typescript/commonjs/src/index.d.ts",
+        "default": "./lib/commonjs/index.js"
+      }
+    }
+  },
+  "types": "./lib/typescript/module/src/index.d.ts",
+  "files": [
+    "lib",
+    "android",
+    "ios",
+    "cpp",
+    "docs",
+    "*.podspec",
+    "!ios/build",
+    "!android/build",
+    "!android/gradle",
+    "!android/gradlew",
+    "!android/gradlew.bat",
+    "!android/local.properties",
+    "!**/*.test.ts",
+    "!**/*.test.tsx",
+    "!**/__tests__",
+    "!**/__fixtures__",
+    "!**/__mocks__",
+    "!**/.*"
+  ],
+  "scripts": {
+    "test": "jest --coverage",
+    "typecheck": "tsc",
+    "prepare": "bob build"
+  },
+  "keywords": [
+    "contentpass",
+    "react-native",
+    "ios",
+    "android"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/contentpass/react-native-contentpass.git"
+  },
+  "author": "contentpass <dev@contentpass.de> (https://github.com/contentpass)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/contentpass/react-native-contentpass/issues"
+  },
+  "homepage": "https://github.com/contentpass/react-native-contentpass#readme",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*",
+    "react-native-app-auth": "*",
+    "react-native-encrypted-storage": "*"
+  },
+  "dependencies": {
+    "@sentry/react-native": "^7.11.0",
+    "react-native-logs": "^5.5.0",
+    "react-native-uuid": "^2.0.3"
+  },
+  "devDependencies": {
+    "@react-native-community/cli": "20.1.1",
+    "@react-native/babel-preset": "0.83.1",
+    "@types/jest": "^30.0.0",
+    "@types/lodash": "^4.17.23",
+    "@types/react": "^19.2.10",
+    "jest": "^30.2.0",
+    "react": "19.2.4",
+    "react-native": "0.83.1",
+    "react-native-app-auth": "^8.1.0",
+    "react-native-builder-bob": "^0.40.17",
+    "react-native-encrypted-storage": "^4.0.3",
+    "react-test-renderer": "19.2.4",
+    "typescript": "^5.9.3"
+  },
+  "react-native-builder-bob": {
+    "source": "src",
+    "output": "lib",
+    "targets": [
+      [
+        "commonjs",
+        {
+          "esm": true
+        }
+      ],
+      [
+        "module",
+        {
+          "esm": true
+        }
+      ],
+      [
+        "typescript",
+        {
+          "project": "tsconfig.build.json"
+        }
+      ]
+    ]
+  },
+  "create-react-native-library": {
+    "type": "module-legacy",
+    "languages": "kotlin-objc",
+    "version": "0.44.1"
+  }
+}

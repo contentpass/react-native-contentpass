@@ -82,7 +82,7 @@ piece of content. It applies to all users, whether authenticated or unauthentica
 
 ### registerObserver
 Registers a callback function to listen for changes in the user’s authentication and subscription status. The observer function
-receives a state object describing the current status (see the exported [ContentpassState](./src/types/ContentpassState.ts) type).
+receives a state object describing the current status (see the exported [ContentpassState](./packages/react-native-contentpass/src/types/ContentpassState.ts) type).
 
 ### unregisterObserver
 Unregisters a previously registered observer. The observer will no longer receive updates.
@@ -134,11 +134,11 @@ const YourApp = () => {
 
 ## Integration with Sourcepoint SDK
 
-See the [Sourcepoint SDK documentation](docs/SOURCEPOINT_SDK_INTEGRATION.md) for information on integrating the Contentpass SDK with the Sourcepoint SDK.
+See the [Sourcepoint SDK documentation](packages/react-native-contentpass/docs/SOURCEPOINT_SDK_INTEGRATION.md) for information on integrating the Contentpass SDK with the Sourcepoint SDK.
 
 ## Contributing
 
-See the [contributing guide](docs/CONTRIBUTING.md) to learn how to contribute to the repository and the development workflow.
+See the [contributing guide](packages/react-native-contentpass/docs/CONTRIBUTING.md) to learn how to contribute to the repository and the development workflow.
 
 
 ## License

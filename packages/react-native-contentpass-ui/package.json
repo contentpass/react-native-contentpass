@@ -1,6 +1,6 @@
 {
   "name": "@contentpass/react-native-contentpass-ui",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Contentpass React Native UI Components",
   "source": "./src/index.tsx",
   "main": "./lib/commonjs/index.js",

@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "rootDir": "..",
+    "rootDirs": ["src", "../react-native-contentpass/src"],
+    "paths": {
+      "@contentpass/react-native-contentpass": [
+        "../react-native-contentpass/src/index"
+      ],
+      "@contentpass/react-native-contentpass-ui": ["./src/index"]
+    }
+  }
+}

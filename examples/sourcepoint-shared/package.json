@@ -1,0 +1,14 @@
+{
+  "name": "@contentpass/examples-sourcepoint-shared",
+  "private": true,
+  "peerDependencies": {
+    "@contentpass/react-native-contentpass": "*",
+    "@contentpass/react-native-contentpass-ui": "*",
+    "@sourcepoint/react-native-cmp": "*"
+  },
+  "devDependencies": {
+    "@contentpass/react-native-contentpass": "workspace:*",
+    "@contentpass/react-native-contentpass-ui": "workspace:*",
+    "@sourcepoint/react-native-cmp": "^1.0.13"
+  }
+}

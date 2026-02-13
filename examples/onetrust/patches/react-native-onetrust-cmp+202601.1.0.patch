@@ -1,0 +1,130 @@
+diff --git a/node_modules/react-native-onetrust-cmp/android/src/main/java/com/onetrust/OneTrust.java b/node_modules/react-native-onetrust-cmp/android/src/main/java/com/onetrust/OneTrust.java
+index 199531c..c3cfd17 100644
+--- a/node_modules/react-native-onetrust-cmp/android/src/main/java/com/onetrust/OneTrust.java
++++ b/node_modules/react-native-onetrust-cmp/android/src/main/java/com/onetrust/OneTrust.java
+@@ -313,6 +313,34 @@ public class OneTrust extends ReactContextBaseJavaModule {
+         promise.resolve(googleConsentData.toString());
+     }
+ 
++    @ReactMethod
++    public void getPreferenceCenterData(Promise promise){
++        try {
++            Object prefData = ot.getPreferenceCenterData();
++            if (prefData == null) {
++                promise.resolve(null);
++                return;
++            }
++            promise.resolve(prefData.toString());
++        } catch (Exception e) {
++            promise.reject("OT_GET_PREFERENCE_CENTER_DATA", e.getMessage(), e);
++        }
++    }
++
++    @ReactMethod
++    public void getBannerData(Promise promise){
++        try {
++            Object bannerData = ot.getBannerData();
++            if (bannerData == null) {
++                promise.resolve(null);
++                return;
++            }
++            promise.resolve(bannerData.toString());
++        } catch (Exception e) {
++            promise.reject("OT_GET_BANNER_DATA", e.getMessage(), e);
++        }
++    }
++
+     @ReactMethod
+     public void showConsentPurposesUI(){
+         final Activity currentActivity = getCurrentActivity();
+diff --git a/node_modules/react-native-onetrust-cmp/iOS/OneTrust.m b/node_modules/react-native-onetrust-cmp/iOS/OneTrust.m
+index 2c1a676..630a711 100644
+--- a/node_modules/react-native-onetrust-cmp/iOS/OneTrust.m
++++ b/node_modules/react-native-onetrust-cmp/iOS/OneTrust.m
+@@ -36,6 +36,16 @@ + (BOOL)requiresMainQueueSetup{
+                   rejecter:(RCTPromiseRejectBlock)reject
+                   )
+ 
++RCT_EXTERN_METHOD(getPreferenceCenterData:
++                  (RCTPromiseResolveBlock)resolve
++                  rejecter:(RCTPromiseRejectBlock)reject
++                  )
++
++RCT_EXTERN_METHOD(getBannerData:
++                  (RCTPromiseResolveBlock)resolve
++                  rejecter:(RCTPromiseRejectBlock)reject
++                  )
++
+ RCT_EXTERN_METHOD(shouldShowBanner:
+                   (RCTPromiseResolveBlock)resolve
+                   rejecter:(RCTPromiseRejectBlock)reject
+diff --git a/node_modules/react-native-onetrust-cmp/iOS/OneTrust.swift b/node_modules/react-native-onetrust-cmp/iOS/OneTrust.swift
+index 0030d64..dd789e7 100644
+--- a/node_modules/react-native-onetrust-cmp/iOS/OneTrust.swift
++++ b/node_modules/react-native-onetrust-cmp/iOS/OneTrust.swift
+@@ -108,6 +108,32 @@ import AppTrackingTransparency
+            
+     }
+     
++    @objc(getPreferenceCenterData:rejecter:)
++    public func getPreferenceCenterData(_ resolve:@escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock){
++        let data = OTPublishersHeadlessSDK.shared.getPreferenceCenterData()
++        if let jsonData = try? JSONSerialization.data(withJSONObject: data),
++           let jsonString = String(data: jsonData, encoding: .utf8) {
++            resolve(jsonString)
++        } else if let jsonString = data as? String {
++            resolve(jsonString)
++        } else {
++            reject("Error parsing preference center data","OneTrust getPreferenceCenterData returned unsupported type.",nil)
++        }
++    }
++
++    @objc(getBannerData:rejecter:)
++    public func getBannerData(_ resolve:@escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock){
++        let data = OTPublishersHeadlessSDK.shared.getBannerData()
++        if let jsonData = try? JSONSerialization.data(withJSONObject: data),
++           let jsonString = String(data: jsonData, encoding: .utf8) {
++            resolve(jsonString)
++        } else if let jsonString = data as? String {
++            resolve(jsonString)
++        } else {
++            reject("Error parsing banner data","OneTrust getBannerData returned unsupported type.",nil)
++        }
++    }
++    
+     @objc(shouldShowBanner:rejecter:)
+     public func shouldShowBanner(_ resolve:@escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void{
+         let shouldShowBanner = OTPublishersHeadlessSDK.shared.shouldShowBanner()
+diff --git a/node_modules/react-native-onetrust-cmp/index.ts b/node_modules/react-native-onetrust-cmp/index.ts
+index f99e8c5..2facf15 100644
+--- a/node_modules/react-native-onetrust-cmp/index.ts
++++ b/node_modules/react-native-onetrust-cmp/index.ts
+@@ -149,6 +149,28 @@ export default class OTPublishersNativeSDK{
+       return JSON.parse(googleConsentModeData);
+     }
+ 
++  /**
++   * @returns Promise object is a dictionary of the preference center data
++   */
++  static async getPreferenceCenterData():Promise<JSON | null>{
++    let preferenceCenterData = await OneTrust.getPreferenceCenterData()
++    if (preferenceCenterData == null) {
++      return null;
++    }
++    return JSON.parse(preferenceCenterData);
++  }
++
++  /**
++   * @returns Promise object is a dictionary of the banner data
++   */
++  static async getBannerData():Promise<JSON | null>{
++    let bannerData = await OneTrust.getBannerData()
++    if (bannerData == null) {
++      return null;
++    }
++    return JSON.parse(bannerData);
++  }
++
+   /**
+    * [iOS Only] Show consent for device-level permission.
+    * Promise resolved immediately on Android

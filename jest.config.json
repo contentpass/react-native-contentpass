@@ -13,11 +13,10 @@
     "^.+\\.(ts|tsx)$": "babel-jest"
   },
   "modulePathIgnorePatterns": [
-    "./example/node_modules",
-    "./expoExample/node_modules",
-    "./lib/",
-    "./ios/",
-    "./android/"
+    "./examples/*/node_modules",
+    "./packages/*/lib/",
+    "./packages/*/ios/",
+    "./packages/*/android/"
   ]
 }
 

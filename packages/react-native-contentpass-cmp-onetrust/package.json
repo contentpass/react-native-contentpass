@@ -1,0 +1,88 @@
+{
+  "name": "@contentpass/react-native-contentpass-cmp-onetrust",
+  "version": "0.0.0",
+  "description": "Contentpass OneTrust CMP adapter",
+  "source": "./src/index.ts",
+  "main": "./lib/commonjs/index.js",
+  "module": "./lib/module/index.js",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./lib/typescript/react-native-contentpass-cmp-onetrust/src/index.d.ts",
+        "default": "./lib/module/index.js"
+      },
+      "require": {
+        "types": "./lib/typescript/react-native-contentpass-cmp-onetrust/src/index.d.ts",
+        "default": "./lib/commonjs/index.js"
+      }
+    }
+  },
+  "types": "./lib/typescript/react-native-contentpass-cmp-onetrust/src/index.d.ts",
+  "files": [
+    "lib",
+    "!**/*.test.ts",
+    "!**/*.test.tsx",
+    "!**/__tests__",
+    "!**/__fixtures__",
+    "!**/__mocks__",
+    "!**/.*"
+  ],
+  "scripts": {
+    "test": "jest --coverage",
+    "typecheck": "tsc",
+    "prepare": "bob build"
+  },
+  "keywords": [
+    "contentpass",
+    "react-native",
+    "cmp",
+    "onetrust"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/contentpass/react-native-contentpass.git"
+  },
+  "author": "contentpass <dev@contentpass.de> (https://github.com/contentpass)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/contentpass/react-native-contentpass/issues"
+  },
+  "homepage": "https://github.com/contentpass/react-native-contentpass#readme",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "peerDependencies": {
+    "@contentpass/react-native-contentpass": "*",
+    "react-native-onetrust-cmp": "*"
+  },
+  "devDependencies": {
+    "@contentpass/react-native-contentpass": "workspace:*",
+    "@react-native-community/cli": "20.1.1",
+    "@react-native/babel-preset": "0.83.1",
+    "@types/jest": "^30.0.0",
+    "@types/react": "^19.2.10",
+    "jest": "^30.2.0",
+    "react": "19.2.4",
+    "react-native": "0.83.1",
+    "react-native-builder-bob": "^0.40.17",
+    "react-native-onetrust-cmp": "^202601.1.0",
+    "react-test-renderer": "19.2.4",
+    "typescript": "^5.9.3"
+  },
+  "react-native-builder-bob": {
+    "source": "src",
+    "exclude": "**/{__tests__,__fixtures__,__mocks__}/**",
+    "output": "lib",
+    "targets": [
+      "commonjs",
+      "module",
+      [
+        "typescript",
+        {
+          "project": "tsconfig.build.json"
+        }
+      ]
+    ]
+  }
+}

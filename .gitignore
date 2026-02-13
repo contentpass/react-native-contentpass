@@ -42,12 +42,10 @@ android.iml
 
 # Cocoapods
 #
-example/ios/Pods
-expoExample/ios/Pods
+examples/*/ios/Pods
 
 # Ruby
-example/vendor/
-expoExample/vendor/
+examples/*/vendor/
 
 # node.js
 #
@@ -84,6 +82,7 @@ ios/generated
 android/generated
 
 /coverage/
+coverage/
 
 # to not commit NPM token
 .npmrc

@@ -1,9 +1,8 @@
-// const THEME = 'classic';
-// const THEME = 'classic-app';
-const THEME = 'steps';
+import packageJson from '../../package.json';
 
-// FIXME pass something from this SDK?
-const SDK_VERSION = '20260203105802-ef26e7d899';
+const THEME = 'classic-app';
+
+const SDK_VERSION = `react-native-contentpass-ui@${packageJson.version}`;
 
 export default function buildFirstLayerUrl({
   baseUrl,

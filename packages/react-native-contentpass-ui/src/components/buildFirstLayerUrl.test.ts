@@ -1,3 +1,4 @@
+import packageJson from '../../package.json';
 import buildFirstLayerUrl from './buildFirstLayerUrl';
 
 describe('buildFirstLayerUrl', () => {
@@ -34,6 +35,9 @@ describe('buildFirstLayerUrl', () => {
     const parsed = new URL(url);
 
     expect(parsed.searchParams.get('v')).toBeTruthy();
+    expect(parsed.searchParams.get('v')).toBe(
+      `react-native-contentpass-ui@${packageJson.version}`
+    );
   });
 
   it('should set locale to en-US', () => {

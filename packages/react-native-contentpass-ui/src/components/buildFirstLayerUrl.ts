@@ -1,6 +1,4 @@
-// const THEME = 'classic';
-// const THEME = 'classic-app';
-const THEME = 'steps';
+const THEME = 'classic-app';
 
 // FIXME pass something from this SDK?
 const SDK_VERSION = '20260203105802-ef26e7d899';

@@ -26,7 +26,7 @@ describe('buildFirstLayerUrl', () => {
     const url = buildFirstLayerUrl(defaultParams);
     const parsed = new URL(url);
 
-    expect(parsed.searchParams.get('theme')).toBe('steps');
+    expect(parsed.searchParams.get('theme')).toBe('classic-app');
   });
 
   it('should include the SDK version parameter', () => {

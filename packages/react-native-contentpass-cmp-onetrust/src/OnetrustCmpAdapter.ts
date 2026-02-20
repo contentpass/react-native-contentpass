@@ -9,11 +9,9 @@ export async function createOnetrustCmpAdapter(
 ): Promise<OnetrustCmpAdapter> {
   try {
     const bannerData = await sdk.getBannerData();
-    console.log('Banner data', bannerData);
 
     const preferenceCenterData: PreferenceCenterData =
       await sdk.getPreferenceCenterData();
-    console.log('Preference center data', preferenceCenterData);
 
     return new OnetrustCmpAdapter(sdk, bannerData, preferenceCenterData);
   } catch (error: any) {

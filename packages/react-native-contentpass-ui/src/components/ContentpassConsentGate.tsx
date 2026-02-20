@@ -132,13 +132,6 @@ export default function ContentpassConsentGate({
       cpAuthState.state === ContentpassStateType.AUTHENTICATED ||
       hasFullConsent;
     const visible = !isFine;
-    console.log(
-      '>>> Changing visibility to',
-      visible,
-      isFine,
-      cpAuthState.state,
-      hasFullConsent
-    );
     if (visible !== isVisible) {
       onVisibilityChange?.(visible);
     }

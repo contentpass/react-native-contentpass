@@ -92,7 +92,7 @@ export default function ContentpassLayer({
     }
 
     if (!msg || msg.protocol !== MESSAGE_PROTOCOL) {
-      console.log('WebView message with unknown protocol', msg.protocol, msg);
+      console.warn('WebView message with unknown protocol', msg.protocol, msg);
       return;
     }
 

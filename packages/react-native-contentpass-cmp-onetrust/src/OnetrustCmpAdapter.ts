@@ -8,6 +8,8 @@ export async function createOnetrustCmpAdapter(
   sdk: OTPublishersNativeSDK
 ): Promise<OnetrustCmpAdapter> {
   try {
+    await sdk.fetchPreferencesCmpApiData();
+
     const bannerData = await sdk.getBannerData();
 
     const preferenceCenterData: PreferenceCenterData =

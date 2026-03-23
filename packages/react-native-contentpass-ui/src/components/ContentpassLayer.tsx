@@ -9,7 +9,7 @@ const MESSAGE_PROTOCOL = 'contentpass-first-layer';
 const buildGlueCodeJs = (firstLayerUrl: string) => `
   (function () {
     try {
-      if (window.location.href === 'about:blank') {
+      if (!window.location.href || window.location.href === 'about:blank') {
         var encodedUrl = '${encodeURIComponent(firstLayerUrl)}';
         var decodedUrl = decodeURIComponent(encodedUrl);
         window.location.href = decodedUrl;
@@ -35,11 +35,11 @@ const buildGlueCodeJs = (firstLayerUrl: string) => `
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: 'transparent',
   },
   webview: {
     flex: 1,
-    backgroundColor: 'red',
+    backgroundColor: 'transparent',
   },
   error: {
     flex: 1,
@@ -153,7 +153,7 @@ export default function ContentpassLayer({
   return (
     <View style={styles.container}>
       <WebView
-        source={{ uri: 'about:blank' }}
+        source={{ html: '' }}
         style={styles.webview}
         originWhitelist={['*']}
         startInLoadingState

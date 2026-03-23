@@ -14,7 +14,7 @@ Monorepo for the Contentpass React Native SDK and related packages.
 
 | Example | Description |
 |---------|-------------|
-| [`examples/onetrust`](./examples/onetrust) | Integration using OneTrust as the CMP. |
+| [`examples/onetrust`](./examples/onetrust) | Integration using OneTrust as the CMP (Expo). |
 | [`examples/sourcepoint`](./examples/sourcepoint) | Integration using Sourcepoint as the CMP (bare React Native). |
 | [`examples/sourcepoint-expo`](./examples/sourcepoint-expo) | Integration using Sourcepoint as the CMP (Expo). |
 

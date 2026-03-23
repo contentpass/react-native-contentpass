@@ -3141,12 +3141,15 @@ __metadata:
     "@contentpass/react-native-contentpass": "workspace:*"
     "@contentpass/react-native-contentpass-cmp-onetrust": "workspace:*"
     "@contentpass/react-native-contentpass-ui": "workspace:*"
-    "@react-native-community/cli": ^20.1.1
-    "@react-native-community/cli-platform-android": ^20.1.1
-    "@react-native-community/cli-platform-ios": ^20.1.1
+    "@react-native-community/cli": 20.1.1
+    "@react-native-community/cli-platform-android": 20.1.1
+    "@react-native-community/cli-platform-ios": 20.1.1
     "@react-native/babel-preset": 0.83.1
     "@react-native/metro-config": 0.83.1
     "@react-native/typescript-config": 0.83.1
+    babel-preset-expo: ^54.0.10
+    expo: ~54.0.33
+    expo-status-bar: ~3.0.9
     patch-package: ^8.0.1
     postinstall-postinstall: ^2.1.0
     react: 19.2.4

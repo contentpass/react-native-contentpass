@@ -1,20 +1,19 @@
 {
   "name": "@contentpass/examples-onetrust",
   "version": "0.0.1",
-  "private": true,
+  "main": "index.ts",
   "scripts": {
-    "android": "react-native run-android",
-    "ios": "react-native run-ios",
-    "start": "react-native start",
-    "build:android": "react-native build-android --extra-params \"--no-daemon --console=plain -PreactNativeArchitectures=arm64-v8a\"",
-    "build:ios": "react-native build-ios --scheme ContentpassOnetrustExample --mode Debug",
+    "start": "expo start",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "postinstall": "patch-package"
   },
   "dependencies": {
-    "@babel/runtime": "^7.28.6",
     "@contentpass/react-native-contentpass": "workspace:*",
     "@contentpass/react-native-contentpass-cmp-onetrust": "workspace:*",
     "@contentpass/react-native-contentpass-ui": "workspace:*",
+    "expo": "~54.0.33",
+    "expo-status-bar": "~3.0.9",
     "react": "19.2.4",
     "react-native": "0.83.1",
     "react-native-app-auth": "^8.1.0",
@@ -25,17 +24,17 @@
   "devDependencies": {
     "@babel/core": "^7.29.0",
     "@babel/preset-env": "^7.29.0",
-    "@react-native-community/cli": "^20.1.1",
-    "@react-native-community/cli-platform-android": "^20.1.1",
-    "@react-native-community/cli-platform-ios": "^20.1.1",
+    "@babel/runtime": "^7.28.6",
+    "@react-native-community/cli": "20.1.1",
+    "@react-native-community/cli-platform-android": "20.1.1",
+    "@react-native-community/cli-platform-ios": "20.1.1",
     "@react-native/babel-preset": "0.83.1",
     "@react-native/metro-config": "0.83.1",
     "@react-native/typescript-config": "0.83.1",
+    "babel-preset-expo": "^54.0.10",
     "patch-package": "^8.0.1",
     "postinstall-postinstall": "^2.1.0",
     "react-native-builder-bob": "^0.40.17"
   },
-  "engines": {
-    "node": ">=18"
-  }
+  "private": true
 }

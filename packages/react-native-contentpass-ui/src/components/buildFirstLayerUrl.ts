@@ -25,10 +25,7 @@ export default function buildFirstLayerUrl({
   url.searchParams.set('locale', 'en-US');
   url.searchParams.set('planId', planId);
   url.searchParams.set('propertyId', propertyId);
-  url.searchParams.set(
-    'purposesList',
-    encodeURIComponent(purposesList.join(','))
-  );
+  url.searchParams.set('purposesList', purposesList.join(','));
   url.searchParams.set('vendorCount', vendorCount.toString());
   // url.searchParams.set('config', 'undefined');
   // FIXME why is it not able to handle the start=true parameter?

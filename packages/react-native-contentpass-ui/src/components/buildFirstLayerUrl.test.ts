@@ -73,8 +73,7 @@ describe('buildFirstLayerUrl', () => {
     const parsed = new URL(url);
     const purposesList = parsed.searchParams.get('purposesList');
 
-    // The value is double-encoded: encodeURIComponent is called before set()
-    expect(purposesList).toBe(encodeURIComponent('analytics,marketing'));
+    expect(purposesList).toBe('analytics,marketing');
   });
 
   it('should handle a single purpose in the list', () => {
@@ -84,9 +83,7 @@ describe('buildFirstLayerUrl', () => {
     });
     const parsed = new URL(url);
 
-    expect(parsed.searchParams.get('purposesList')).toBe(
-      encodeURIComponent('analytics')
-    );
+    expect(parsed.searchParams.get('purposesList')).toBe('analytics');
   });
 
   it('should handle an empty purposes list', () => {
@@ -96,9 +93,7 @@ describe('buildFirstLayerUrl', () => {
     });
     const parsed = new URL(url);
 
-    expect(parsed.searchParams.get('purposesList')).toBe(
-      encodeURIComponent('')
-    );
+    expect(parsed.searchParams.get('purposesList')).toBe('');
   });
 
   it('should handle vendorCount of 0', () => {

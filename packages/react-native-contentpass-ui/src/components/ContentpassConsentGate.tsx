@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import {
   ContentpassStateType,
   useContentpassSdk,
@@ -35,6 +35,7 @@ export default function ContentpassConsentGate({
   const [isShowingSecondLayer, setIsShowingSecondLayer] = useState(false);
   const [isShowingContentpass, setIsShowingContentpass] = useState(false);
 
+  const [consentResolved, setConsentResolved] = useState(false);
   const [purposesList, setPurposesList] = useState<string[]>([]);
   const [vendorCount, setVendorCount] = useState(0);
 
@@ -136,6 +137,7 @@ export default function ContentpassConsentGate({
       onVisibilityChange?.(visible);
     }
     setIsVisible(visible);
+    setConsentResolved(true);
   }, [
     cmpReady,
     cpAuthState,
@@ -145,6 +147,14 @@ export default function ContentpassConsentGate({
     isVisible,
     onVisibilityChange,
   ]);
+
+  if (!consentResolved) {
+    return (
+      <View style={styles.loading}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
 
   if (!isVisible) {
     return <>{children}</>;
@@ -176,6 +186,11 @@ export default function ContentpassConsentGate({
 }
 
 const styles = StyleSheet.create({
+  loading: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   overlayContainer: {
     flex: 1,
   },

@@ -6,6 +6,16 @@ import { useMemo, useState } from 'react';
 
 const MESSAGE_PROTOCOL = 'contentpass-first-layer';
 
+const DISABLE_ANIMATIONS_JS = `
+  (function () {
+    var style = document.createElement('style');
+    style.textContent = '*, *::before, *::after { animation-duration: 0s !important; transition-duration: 0s !important; } main, .backdrop { visibility: visible !important; transform: none !important; }';
+    (document.head || document.documentElement).appendChild(style);
+
+    true;
+  })();
+`;
+
 const GLUE_CODE_JS = `
   (function () {
     const originalPostMessage = window.postMessage;
@@ -150,9 +160,10 @@ export default function ContentpassLayer({
         source={{ uri: firstLayerUrl }}
         style={[styles.webview, !ready && { opacity: 0 }]}
         originWhitelist={['*']}
-        startInLoadingState
         javaScriptEnabled
         domStorageEnabled
+        automaticallyAdjustContentInsets={false}
+        injectedJavaScriptBeforeContentLoaded={DISABLE_ANIMATIONS_JS}
         injectedJavaScript={GLUE_CODE_JS}
         onMessage={(event) => {
           handleMessage(event);

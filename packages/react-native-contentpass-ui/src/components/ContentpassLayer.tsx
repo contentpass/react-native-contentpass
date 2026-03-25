@@ -6,16 +6,8 @@ import { useMemo } from 'react';
 
 const MESSAGE_PROTOCOL = 'contentpass-first-layer';
 
-const buildGlueCodeJs = (firstLayerUrl: string) => `
+const GLUE_CODE_JS = `
   (function () {
-    try {
-      if (!window.location.href || window.location.href === 'about:blank') {
-        var encodedUrl = '${encodeURIComponent(firstLayerUrl)}';
-        var decodedUrl = decodeURIComponent(encodedUrl);
-        window.location.href = decodedUrl;
-      }
-    } catch (e) {}
-
     const originalPostMessage = window.postMessage;
     window.postMessage = function (data) {
       try {
@@ -77,10 +69,6 @@ export default function ContentpassLayer({
       vendorCount,
     });
   }, [baseUrl, planId, propertyId, purposesList, vendorCount]);
-
-  const glueCodeJs = useMemo(() => {
-    return buildGlueCodeJs(firstLayerUrl);
-  }, [firstLayerUrl]);
 
   function handleMessage(event: WebViewMessageEvent) {
     let msg: any;
@@ -153,13 +141,13 @@ export default function ContentpassLayer({
   return (
     <View style={styles.container}>
       <WebView
-        source={{ html: '' }}
+        source={{ uri: firstLayerUrl }}
         style={styles.webview}
         originWhitelist={['*']}
         startInLoadingState
         javaScriptEnabled
         domStorageEnabled
-        injectedJavaScript={glueCodeJs}
+        injectedJavaScript={GLUE_CODE_JS}
         onMessage={(event) => {
           handleMessage(event);
         }}

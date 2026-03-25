@@ -2,7 +2,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import type { ContentpassLayerEvents } from './ContentpassLayerEvents';
 import buildFirstLayerUrl from './buildFirstLayerUrl';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 const MESSAGE_PROTOCOL = 'contentpass-first-layer';
 
@@ -70,6 +70,8 @@ export default function ContentpassLayer({
     });
   }, [baseUrl, planId, propertyId, purposesList, vendorCount]);
 
+  const [ready, setReady] = useState(false);
+
   function handleMessage(event: WebViewMessageEvent) {
     let msg: any;
     try {
@@ -92,8 +94,12 @@ export default function ContentpassLayer({
     console.debug('WebView message', msg);
 
     switch (msg.action) {
+      case 'FIRST_LAYER_READY':
+        setReady(true);
+        break;
       case 'ENABLE_SCROLL_ON_PROPERTY':
-        // Ignore this message
+      case 'DISABLE_SCROLL_ON_PROPERTY':
+        // ignore these messages
         break;
       case 'GO_TO':
         switch (msg.payload?.options?.page) {
@@ -142,7 +148,7 @@ export default function ContentpassLayer({
     <View style={styles.container}>
       <WebView
         source={{ uri: firstLayerUrl }}
-        style={styles.webview}
+        style={[styles.webview, !ready && { opacity: 0 }]}
         originWhitelist={['*']}
         startInLoadingState
         javaScriptEnabled

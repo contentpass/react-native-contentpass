@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import type { ContentpassLayerEvents } from './ContentpassLayerEvents';
 import buildFirstLayerUrl from './buildFirstLayerUrl';
@@ -6,19 +6,13 @@ import { useMemo, useState } from 'react';
 
 const MESSAGE_PROTOCOL = 'contentpass-first-layer';
 
-const DISABLE_ANIMATIONS_JS = `
+const EARLY_INJECT_JS = `
   (function () {
     var style = document.createElement('style');
     style.textContent = '*, *::before, *::after { animation-duration: 0s !important; transition-duration: 0s !important; } main, .backdrop { visibility: visible !important; transform: none !important; }';
     (document.head || document.documentElement).appendChild(style);
 
-    true;
-  })();
-`;
-
-const GLUE_CODE_JS = `
-  (function () {
-    const originalPostMessage = window.postMessage;
+    var originalPostMessage = window.postMessage;
     window.postMessage = function (data) {
       try {
         window.ReactNativeWebView.postMessage(
@@ -37,7 +31,7 @@ const GLUE_CODE_JS = `
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'transparent',
+    backgroundColor: '#fff',
   },
   webview: {
     flex: 1,
@@ -52,6 +46,11 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 14,
     textAlign: 'center',
+  },
+  loading: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 
@@ -163,8 +162,7 @@ export default function ContentpassLayer({
         javaScriptEnabled
         domStorageEnabled
         automaticallyAdjustContentInsets={false}
-        injectedJavaScriptBeforeContentLoaded={DISABLE_ANIMATIONS_JS}
-        injectedJavaScript={GLUE_CODE_JS}
+        injectedJavaScriptBeforeContentLoaded={EARLY_INJECT_JS}
         onMessage={(event) => {
           handleMessage(event);
         }}
@@ -195,6 +193,11 @@ export default function ContentpassLayer({
           </View>
         )}
       />
+      {!ready && (
+        <View style={styles.loading}>
+          <ActivityIndicator size="large" />
+        </View>
+      )}
     </View>
   );
 }

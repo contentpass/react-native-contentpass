@@ -75,14 +75,14 @@
     "react-native-uuid": "^2.0.3"
   },
   "devDependencies": {
-    "@react-native-community/cli": "20.1.1",
-    "@react-native/babel-preset": "0.83.1",
+    "@react-native-community/cli": "19.1.2",
+    "@react-native/babel-preset": "0.81.5",
     "@types/jest": "^30.0.0",
     "@types/lodash": "^4.17.23",
     "@types/react": "^19.2.10",
     "jest": "^30.2.0",
     "react": "19.2.4",
-    "react-native": "0.83.1",
+    "react-native": "0.81.5",
     "react-native-app-auth": "^8.1.0",
     "react-native-builder-bob": "^0.40.17",
     "react-native-encrypted-storage": "^4.0.3",

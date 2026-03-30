@@ -1,5 +1,11 @@
 # @contentpass/react-native-contentpass-cmp-onetrust
 
+## 0.2.0
+
+### Minor Changes
+
+- [#52](https://github.com/contentpass/react-native-contentpass/pull/52) [`347e72d`](https://github.com/contentpass/react-native-contentpass/commit/347e72d5bd7cc19e796cb0992f4a1873a6ef11c4) Thanks [@0x7f](https://github.com/0x7f)! - Improve OneTrust integration
+
 ## 0.1.1
 
 ### Patch Changes

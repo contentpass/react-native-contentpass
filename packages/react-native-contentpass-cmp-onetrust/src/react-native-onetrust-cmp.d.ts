@@ -15,6 +15,7 @@ declare module 'react-native-onetrust-cmp' {
   }
 
   export default interface OTPublishersNativeSDK {
+    fetchPreferencesCmpApiData(): Promise<void>;
     getBannerData(): Promise<any>;
     getPreferenceCenterData(): Promise<any>;
     saveConsent(interaction: OTConsentInteraction): Promise<void>;

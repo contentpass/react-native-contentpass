@@ -1,22 +1,18 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import type { ContentpassLayerEvents } from './ContentpassLayerEvents';
 import buildFirstLayerUrl from './buildFirstLayerUrl';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 const MESSAGE_PROTOCOL = 'contentpass-first-layer';
 
-const buildGlueCodeJs = (firstLayerUrl: string) => `
+const EARLY_INJECT_JS = `
   (function () {
-    try {
-      if (window.location.href === 'about:blank') {
-        var encodedUrl = '${encodeURIComponent(firstLayerUrl)}';
-        var decodedUrl = decodeURIComponent(encodedUrl);
-        window.location.href = decodedUrl;
-      }
-    } catch (e) {}
+    var style = document.createElement('style');
+    style.textContent = '*, *::before, *::after { animation-duration: 0s !important; transition-duration: 0s !important; } main, .backdrop { visibility: visible !important; transform: none !important; }';
+    (document.head || document.documentElement).appendChild(style);
 
-    const originalPostMessage = window.postMessage;
+    var originalPostMessage = window.postMessage;
     window.postMessage = function (data) {
       try {
         window.ReactNativeWebView.postMessage(
@@ -35,11 +31,11 @@ const buildGlueCodeJs = (firstLayerUrl: string) => `
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: '#fff',
   },
   webview: {
     flex: 1,
-    backgroundColor: 'red',
+    backgroundColor: 'transparent',
   },
   error: {
     flex: 1,
@@ -50,6 +46,11 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 14,
     textAlign: 'center',
+  },
+  loading: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 
@@ -78,9 +79,7 @@ export default function ContentpassLayer({
     });
   }, [baseUrl, planId, propertyId, purposesList, vendorCount]);
 
-  const glueCodeJs = useMemo(() => {
-    return buildGlueCodeJs(firstLayerUrl);
-  }, [firstLayerUrl]);
+  const [ready, setReady] = useState(false);
 
   function handleMessage(event: WebViewMessageEvent) {
     let msg: any;
@@ -104,8 +103,12 @@ export default function ContentpassLayer({
     console.debug('WebView message', msg);
 
     switch (msg.action) {
+      case 'FIRST_LAYER_READY':
+        setReady(true);
+        break;
       case 'ENABLE_SCROLL_ON_PROPERTY':
-        // Ignore this message
+      case 'DISABLE_SCROLL_ON_PROPERTY':
+        // ignore these messages
         break;
       case 'GO_TO':
         switch (msg.payload?.options?.page) {
@@ -153,13 +156,13 @@ export default function ContentpassLayer({
   return (
     <View style={styles.container}>
       <WebView
-        source={{ uri: 'about:blank' }}
-        style={styles.webview}
+        source={{ uri: firstLayerUrl }}
+        style={[styles.webview, !ready && { opacity: 0 }]}
         originWhitelist={['*']}
-        startInLoadingState
         javaScriptEnabled
         domStorageEnabled
-        injectedJavaScript={glueCodeJs}
+        automaticallyAdjustContentInsets={false}
+        injectedJavaScriptBeforeContentLoaded={EARLY_INJECT_JS}
         onMessage={(event) => {
           handleMessage(event);
         }}
@@ -190,6 +193,11 @@ export default function ContentpassLayer({
           </View>
         )}
       />
+      {!ready && (
+        <View style={styles.loading}>
+          <ActivityIndicator size="large" />
+        </View>
+      )}
     </View>
   );
 }

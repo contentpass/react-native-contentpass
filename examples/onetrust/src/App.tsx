@@ -5,12 +5,13 @@ import { ContentpassSdkProvider } from '@contentpass/react-native-contentpass';
 import { ContentpassConsentGate } from '@contentpass/react-native-contentpass-ui';
 import type { CmpAdapter } from '@contentpass/react-native-contentpass';
 import { createOnetrustCmpAdapter } from '@contentpass/react-native-contentpass-cmp-onetrust';
-import { contentpassConfigTesting as contentpassConfig } from './contentpassConfig';
+import {
+  CONTENTPASS_CONFIG,
+  ONETRUST_CDN_LOCATION,
+  ONETRUST_APP_ID,
+  ONETRUST_LANGUAGE_CODE,
+} from './Config';
 import Content from './Content';
-
-const ONETRUST_CDN_LOCATION = 'cdn.cookielaw.org';
-const ONETRUST_APP_ID = '019beb25-2008-72e0-8788-da1eec1f18dc-test';
-const ONETRUST_LANGUAGE_CODE = 'en';
 
 const styles = StyleSheet.create({
   container: {
@@ -72,10 +73,10 @@ export default function App() {
   }
 
   return (
-    <ContentpassSdkProvider contentpassConfig={contentpassConfig}>
+    <ContentpassSdkProvider contentpassConfig={CONTENTPASS_CONFIG}>
       <ContentpassConsentGate
         cmpAdapter={cmpAdapter!}
-        contentpassConfig={contentpassConfig}
+        contentpassConfig={CONTENTPASS_CONFIG}
         hideAppWhenVisible={false}
       >
         <View style={styles.container}>

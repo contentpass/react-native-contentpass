@@ -15,6 +15,38 @@ yarn add @contentpass/react-native-contentpass-cmp-onetrust
 - `@contentpass/react-native-contentpass`
 - `react-native-onetrust-cmp` — the OneTrust React Native SDK must be installed and configured in your project
 
+### Required patch for `react-native-onetrust-cmp`
+
+The upstream `react-native-onetrust-cmp` package does not expose `getPreferenceCenterData` and `getBannerData` as native methods, which this adapter requires. You need to apply a patch using [patch-package](https://github.com/ds300/patch-package).
+
+1. Install `patch-package`:
+   ```bash
+   npm install --save-dev patch-package postinstall-postinstall
+   ```
+2. Add a `postinstall` script to your `package.json`:
+   ```json
+   "scripts": {
+     "postinstall": "patch-package"
+   }
+   ```
+3. Copy the patch file from [`examples/onetrust/patches/`](../../examples/onetrust/patches/) into a `patches/` directory in your project root.
+4. Run `npm install` (or `yarn`) to apply the patch.
+
+### Expo config plugin
+
+This package ships an Expo config plugin that fixes a compatibility issue between `react-native-app-auth` and Expo SDK 55+. To use it, add both plugins to your `app.json`:
+
+```json
+{
+  "expo": {
+    "plugins": [
+      "react-native-app-auth",
+      "@contentpass/react-native-contentpass-cmp-onetrust"
+    ]
+  }
+}
+```
+
 ## Usage
 
 First, initialize the OneTrust SDK, then create the adapter using `createOnetrustCmpAdapter`:

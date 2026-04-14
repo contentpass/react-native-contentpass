@@ -3,7 +3,12 @@
   "compilerOptions": {
     "rootDir": ".",
     "paths": {
-      "@contentpass/react-native-contentpass": ["./packages/react-native-contentpass/src/index"]
+      "@contentpass/react-native-contentpass": ["./packages/react-native-contentpass/src/index"],
+      "@contentpass/react-native-contentpass-ui": ["./packages/react-native-contentpass-ui/src/index"],
+      "@contentpass/react-native-contentpass-cmp-onetrust": ["./packages/react-native-contentpass-cmp-onetrust/src/index"],
+      "react-native-onetrust-cmp": ["./packages/react-native-contentpass-cmp-onetrust/src/react-native-onetrust-cmp.d.ts"]
     }
-  }
+  },
+  "include": ["packages/*/src/**/*"],
+  "exclude": ["**/node_modules/**"]
 }

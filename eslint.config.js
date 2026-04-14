@@ -19,6 +19,7 @@ module.exports = [
       '**/coverage/**',
       '**/*.config.js',
       '**/babel.config.js',
+      '.yarn/**',
     ],
   },
   ...compat.extends('@react-native', 'prettier'),

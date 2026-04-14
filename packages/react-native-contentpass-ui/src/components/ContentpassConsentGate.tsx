@@ -165,6 +165,7 @@ export default function ContentpassConsentGate({
       <ContentpassLayer
         eventHandler={layerEvents}
         baseUrl={contentpassConfig.apiUrl}
+        instanceId={sdk.instanceId}
         planId={contentpassConfig.planId}
         propertyId={contentpassConfig.propertyId}
         purposesList={purposesList}

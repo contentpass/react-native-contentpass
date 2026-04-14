@@ -100,11 +100,7 @@ export default class OnetrustCmpAdapter implements CmpAdapter {
         }
       });
 
-      if (view === 'vendor') {
-        this.sdk.showPreferenceCenterUI();
-      } else {
-        this.sdk.showConsentPurposesUI();
-      }
+      this.sdk.showPreferenceCenterUI();
     });
   }
 

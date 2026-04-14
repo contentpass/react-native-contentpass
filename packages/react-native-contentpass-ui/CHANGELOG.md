@@ -1,5 +1,11 @@
 # @contentpass/react-native-contentpass-ui
 
+## 0.3.0
+
+### Minor Changes
+
+- Improve external links in first-layer
+
 ## 0.2.0
 
 ### Minor Changes

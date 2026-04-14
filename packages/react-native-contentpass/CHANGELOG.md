@@ -1,5 +1,11 @@
 # @contentpass/react-native-contentpass
 
+## 0.6.0
+
+### Minor Changes
+
+- Improve external links in first-layer
+
 ## 0.5.0
 
 ### Minor Changes

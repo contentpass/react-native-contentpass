@@ -1,8 +1,15 @@
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import type { ContentpassLayerEvents } from './ContentpassLayerEvents';
 import buildFirstLayerUrl from './buildFirstLayerUrl';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 const MESSAGE_PROTOCOL = 'contentpass-first-layer';
 
@@ -52,11 +59,36 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  popupContainer: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  popupHeader: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#ccc',
+  },
+  popupClose: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  popupCloseText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#007AFF',
+  },
+  popupWebview: {
+    flex: 1,
+  },
 });
 
 export default function ContentpassLayer({
   baseUrl,
   eventHandler,
+  instanceId,
   planId,
   propertyId,
   purposesList,
@@ -64,6 +96,7 @@ export default function ContentpassLayer({
 }: {
   baseUrl: string;
   eventHandler: ContentpassLayerEvents;
+  instanceId: string;
   planId: string;
   propertyId: string;
   purposesList: string[];
@@ -80,6 +113,13 @@ export default function ContentpassLayer({
   }, [baseUrl, planId, propertyId, purposesList, vendorCount]);
 
   const [ready, setReady] = useState(false);
+  const [popupUrl, setPopupUrl] = useState<string | null>(null);
+
+  const closePopup = useCallback(() => setPopupUrl(null), []);
+
+  function buildFaqUrl(): string {
+    return `${baseUrl}/auth/login?instanceId=${encodeURIComponent(instanceId)}&propertyId=${encodeURIComponent(propertyId)}&planId=${encodeURIComponent(planId)}&route=faq`;
+  }
 
   function handleMessage(event: WebViewMessageEvent) {
     let msg: any;
@@ -117,6 +157,19 @@ export default function ContentpassLayer({
             eventHandler.contentpass(
               msg.payload?.options?.page as 'login' | 'signup'
             );
+            break;
+          case 'faq':
+            setPopupUrl(buildFaqUrl());
+            break;
+          case 'url':
+            if (msg.payload?.options?.url) {
+              setPopupUrl(msg.payload?.options?.url);
+            } else {
+              console.warn(
+                'WebView message with unknown URL',
+                msg.payload?.options?.url
+              );
+            }
             break;
           default:
             console.warn(
@@ -167,8 +220,16 @@ export default function ContentpassLayer({
           handleMessage(event);
         }}
         onShouldStartLoadWithRequest={(request) => {
-          console.debug('WebView request', request.url);
-          return true;
+          // Prevent accidental redirects to external URLs
+          const firstLayerHostname = new URL(firstLayerUrl).hostname;
+          const requestedHostname = new URL(request.url).hostname;
+          const allowed = requestedHostname === firstLayerHostname;
+          console.debug('WebView request', request.url, {
+            allowed,
+            firstLayerHostname,
+            requestedHostname,
+          });
+          return allowed;
         }}
         onLoadStart={() => {
           console.debug('WebView load start');
@@ -198,6 +259,34 @@ export default function ContentpassLayer({
           <ActivityIndicator size="large" />
         </View>
       )}
+      <Modal
+        visible={popupUrl !== null}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={closePopup}
+      >
+        <View style={styles.popupContainer}>
+          <View style={styles.popupHeader}>
+            <Pressable onPress={closePopup} style={styles.popupClose}>
+              <Text style={styles.popupCloseText}>Close</Text>
+            </Pressable>
+          </View>
+          {popupUrl && (
+            <WebView
+              source={{ uri: popupUrl }}
+              style={styles.popupWebview}
+              javaScriptEnabled
+              domStorageEnabled
+              onShouldStartLoadWithRequest={(request) => {
+                console.debug('WebView popup request', request.url);
+                // Allow any request to load in the popup, otherwise
+                // we would block redirects to external URLs.
+                return true;
+              }}
+            />
+          )}
+        </View>
+      </Modal>
     </View>
   );
 }

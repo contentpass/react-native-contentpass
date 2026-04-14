@@ -44,7 +44,11 @@ export default class Contentpass implements ContentpassInterface {
   private authStateStorage: OidcAuthStateStorage;
   private readonly config: ContentpassConfig;
   private readonly samplingRate: number;
-  private instanceId: string;
+  private _instanceId: string;
+
+  get instanceId(): string {
+    return this._instanceId;
+  }
 
   private contentpassState: ContentpassState = {
     state: ContentpassStateType.INITIALISING,
@@ -59,7 +63,7 @@ export default class Contentpass implements ContentpassInterface {
     }
 
     this.config = config;
-    this.instanceId = uuid.v4();
+    this._instanceId = uuid.v4();
     logger.debug('Contentpass initialised with config', config);
     if (
       config.samplingRate &&
@@ -130,7 +134,7 @@ export default class Contentpass implements ContentpassInterface {
       ea: eventAction,
       ec: eventCategory,
       el: eventLabel,
-      cpabid: this.instanceId,
+      cpabid: this._instanceId,
       cppid: publicId,
       cpsr: activeSamplingRate,
     };
@@ -180,7 +184,7 @@ export default class Contentpass implements ContentpassInterface {
   public countImpression = async () => {
     // Generate a new impression id to be used per impression
     // This mimics the behaviour of the web SDK when in SPA mode
-    this.instanceId = uuid.v4();
+    this._instanceId = uuid.v4();
     await Promise.all([
       this.countPaidImpressionWhenUserHasValidSub(),
       this.countSampledImpression(),
@@ -197,7 +201,7 @@ export default class Contentpass implements ContentpassInterface {
     try {
       await sendPageViewEvent(this.config.apiUrl, {
         propertyId: this.config.propertyId,
-        impressionId: this.instanceId,
+        impressionId: this._instanceId,
         accessToken: this.oidcAuthState!.accessToken,
       });
     } catch (err: any) {

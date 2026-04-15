@@ -1,5 +1,11 @@
 # @contentpass/react-native-contentpass-ui
 
+## 0.3.1
+
+### Patch Changes
+
+- Fix loading state during login
+
 ## 0.3.0
 
 ### Minor Changes

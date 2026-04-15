@@ -148,7 +148,7 @@ export default function ContentpassConsentGate({
     onVisibilityChange,
   ]);
 
-  if (!consentResolved) {
+  if (!consentResolved || isShowingContentpass || isShowingSecondLayer) {
     return (
       <View style={styles.loading}>
         <ActivityIndicator size="large" />

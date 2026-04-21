@@ -93,6 +93,7 @@ export default function ContentpassLayer({
   propertyId,
   purposesList,
   vendorCount,
+  locale,
 }: {
   baseUrl: string;
   eventHandler: ContentpassLayerEvents;
@@ -101,6 +102,7 @@ export default function ContentpassLayer({
   propertyId: string;
   purposesList: string[];
   vendorCount: number;
+  locale?: string;
 }) {
   const firstLayerUrl = useMemo(() => {
     return buildFirstLayerUrl({
@@ -109,8 +111,9 @@ export default function ContentpassLayer({
       planId,
       purposesList,
       vendorCount,
+      locale,
     });
-  }, [baseUrl, planId, propertyId, purposesList, vendorCount]);
+  }, [baseUrl, planId, propertyId, purposesList, vendorCount, locale]);
 
   const [ready, setReady] = useState(false);
   const [popupUrl, setPopupUrl] = useState<string | null>(null);

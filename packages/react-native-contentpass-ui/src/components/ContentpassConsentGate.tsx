@@ -17,6 +17,7 @@ type ContentpassConsentGateProps = {
   cmpAdapter: CmpAdapter;
   contentpassConfig: ContentpassConfig;
   hideAppWhenVisible?: boolean;
+  locale?: string;
   onVisibilityChange?: (visible: boolean) => void;
 };
 
@@ -25,6 +26,7 @@ export default function ContentpassConsentGate({
   cmpAdapter,
   contentpassConfig,
   hideAppWhenVisible = true,
+  locale,
   onVisibilityChange,
 }: ContentpassConsentGateProps) {
   const sdk = useContentpassSdk();
@@ -170,6 +172,7 @@ export default function ContentpassConsentGate({
         propertyId={contentpassConfig.propertyId}
         purposesList={purposesList}
         vendorCount={vendorCount}
+        locale={locale}
       />
     );
   }

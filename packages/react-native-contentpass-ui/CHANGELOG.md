@@ -1,5 +1,11 @@
 # @contentpass/react-native-contentpass-ui
 
+## 0.4.0
+
+### Minor Changes
+
+- Allow defining preferred layer language
+
 ## 0.3.1
 
 ### Patch Changes

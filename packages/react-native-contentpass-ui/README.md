@@ -35,6 +35,7 @@ A gate component that wraps your app content. It automatically shows the Content
 | `cmpAdapter` | `CmpAdapter` | Yes | — | A CMP adapter instance (e.g. from `@contentpass/react-native-contentpass-cmp-onetrust`). |
 | `contentpassConfig` | `ContentpassConfig` | Yes | — | The Contentpass SDK configuration object. |
 | `hideAppWhenVisible` | `boolean` | No | `true` | When `true`, the app content is completely replaced by the consent layer. When `false`, the consent layer is rendered as an overlay on top of the app content. |
+| `locale` | `string` | No | — | Forces the consent layer to be displayed in the given locale (e.g. `"de"`, `"es"`). When omitted, the layer picks the locale from the user's browser/device preferences and falls back to English. Unsupported values are ignored by the layer. |
 | `onVisibilityChange` | `(visible: boolean) => void` | No | — | Callback invoked when the consent layer visibility changes. |
 
 ## Usage

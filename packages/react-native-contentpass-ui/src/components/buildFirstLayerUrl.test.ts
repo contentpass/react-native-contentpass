@@ -40,11 +40,25 @@ describe('buildFirstLayerUrl', () => {
     );
   });
 
-  it('should set locale to en-US', () => {
+  it('should omit the locale parameter when no locale is provided', () => {
     const url = buildFirstLayerUrl(defaultParams);
     const parsed = new URL(url);
 
-    expect(parsed.searchParams.get('locale')).toBe('en-US');
+    expect(parsed.searchParams.has('locale')).toBe(false);
+  });
+
+  it('should include the locale parameter when provided', () => {
+    const url = buildFirstLayerUrl({ ...defaultParams, locale: 'es' });
+    const parsed = new URL(url);
+
+    expect(parsed.searchParams.get('locale')).toBe('es');
+  });
+
+  it('should omit the locale parameter when an empty string is provided', () => {
+    const url = buildFirstLayerUrl({ ...defaultParams, locale: '' });
+    const parsed = new URL(url);
+
+    expect(parsed.searchParams.has('locale')).toBe(false);
   });
 
   it('should include the planId parameter', () => {

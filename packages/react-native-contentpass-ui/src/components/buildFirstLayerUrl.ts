@@ -10,19 +10,23 @@ export default function buildFirstLayerUrl({
   planId,
   purposesList,
   vendorCount,
+  locale,
 }: {
   baseUrl: string;
   propertyId: string;
   planId: string;
   purposesList: string[];
   vendorCount: number;
+  locale?: string;
 }): string {
   // FIXME handle trailing slash in baseUrl
   const url = new URL(`${baseUrl}/first-layer/`);
   url.searchParams.set('start', 'true');
   url.searchParams.set('theme', THEME);
   url.searchParams.set('v', SDK_VERSION);
-  url.searchParams.set('locale', 'en-US');
+  if (locale) {
+    url.searchParams.set('locale', locale);
+  }
   url.searchParams.set('planId', planId);
   url.searchParams.set('propertyId', propertyId);
   url.searchParams.set('purposesList', purposesList.join(','));

@@ -1,0 +1,15 @@
+{
+  "preset": "react-native",
+  "setupFilesAfterEnv": ["./jest-setup.ts"],
+  "transform": {
+    "^.+\\.(js|ts|tsx)$": "babel-jest"
+  },
+  "modulePathIgnorePatterns": [
+    "./lib/",
+    "./ios/",
+    "./android/"
+  ],
+  "moduleNameMapper": {
+    "^cm-sdk-react-native-v3$": "<rootDir>/src/__mocks__/cm-sdk-react-native-v3.ts"
+  }
+}

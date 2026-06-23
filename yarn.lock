@@ -3199,7 +3199,7 @@ __metadata:
     react-native-app-auth: ^8.1.0
     react-native-builder-bob: ^0.40.17
     react-native-encrypted-storage: ^4.0.3
-    react-native-onetrust-cmp: 202601.1.0
+    react-native-onetrust-cmp: 202602.1.2
     react-native-webview: ^13.15.0
   languageName: unknown
   linkType: soft
@@ -3306,7 +3306,7 @@ __metadata:
     react: 19.1.0
     react-native: 0.81.5
     react-native-builder-bob: ^0.40.17
-    react-native-onetrust-cmp: 202601.1.0
+    react-native-onetrust-cmp: 202602.1.2
     react-test-renderer: 19.1.0
     typescript: ^5.9.3
   peerDependencies:
@@ -13381,13 +13381,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-onetrust-cmp@npm:202601.1.0":
-  version: 202601.1.0
-  resolution: "react-native-onetrust-cmp@npm:202601.1.0"
+"react-native-onetrust-cmp@npm:202602.1.2":
+  version: 202602.1.2
+  resolution: "react-native-onetrust-cmp@npm:202602.1.2"
   peerDependencies:
     react: ">=16.8.1"
     react-native: ">=0.60.0-rc.0 <1.0.x"
-  checksum: e8429a9b01ab95ff428c070ab3a1977293b76fc2de7b043f7554378638b354de89d906ea9fb980a2b23f93b323d4ee8f73e82d64dbd880f232ed7294a30f32ab
+  checksum: 24d6a48be6aad4c8030d235bd59eb31f0158bb4eb148a0ee598995832cf2d0e2a72df539eca777ea12665b239f5f55fe58af014bcdea567b71bc572677fb45f7
   languageName: node
   linkType: hard
 

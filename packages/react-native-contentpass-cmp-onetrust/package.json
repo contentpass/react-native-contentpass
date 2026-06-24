@@ -1,6 +1,6 @@
 {
   "name": "@contentpass/react-native-contentpass-cmp-onetrust",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Contentpass OneTrust CMP adapter",
   "source": "./src/index.ts",
   "main": "./lib/commonjs/index.js",
@@ -58,16 +58,16 @@
   },
   "devDependencies": {
     "@contentpass/react-native-contentpass": "workspace:*",
-    "@react-native-community/cli": "19.1.2",
-    "@react-native/babel-preset": "0.81.5",
+    "@react-native-community/cli": "20.1.3",
+    "@react-native/babel-preset": "0.83.6",
     "@types/jest": "^30.0.0",
     "@types/react": "^19.2.10",
     "jest": "^30.2.0",
-    "react": "19.1.0",
-    "react-native": "0.81.5",
+    "react": "19.2.0",
+    "react-native": "0.83.6",
     "react-native-builder-bob": "^0.40.17",
-    "react-native-onetrust-cmp": "202601.1.0",
-    "react-test-renderer": "19.1.0",
+    "react-native-onetrust-cmp": "202602.1.2",
+    "react-test-renderer": "19.2.0",
     "typescript": "^5.9.3"
   },
   "react-native-builder-bob": {

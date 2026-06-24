@@ -32,20 +32,21 @@ The upstream `react-native-onetrust-cmp` package does not expose `getPreferenceC
 3. Copy the patch file from [`examples/onetrust/patches/`](../../examples/onetrust/patches/) into a `patches/` directory in your project root.
 4. Run `npm install` (or `yarn`) to apply the patch.
 
-### Expo config plugin
+### Expo config plugin (`react-native-app-auth`)
 
-This package ships an Expo config plugin that fixes a compatibility issue between `react-native-app-auth` and Expo SDK 55+. To use it, add both plugins to your `app.json`:
+The Contentpass login flow uses `react-native-app-auth`, which requires the iOS `AppDelegate` to conform to the `RNAppAuthAuthorizationFlowManager` protocol. On Expo SDK 55+ the `AppDelegate` is generated in Swift, and only `react-native-app-auth` **≥ 8.3.0** adds this conformance correctly via its own config plugin. Make sure you are on a compatible version and register its plugin in your `app.json`:
 
 ```json
 {
   "expo": {
     "plugins": [
-      "react-native-app-auth",
-      "@contentpass/react-native-contentpass-cmp-onetrust"
+      "react-native-app-auth"
     ]
   }
 }
 ```
+
+> If login crashes with `does not conform to RNAppAuthAuthorizationFlowManager`, upgrade `react-native-app-auth` to `>= 8.3.0` and re-run `expo prebuild --clean`.
 
 ## Usage
 

@@ -1,5 +1,5 @@
 diff --git a/node_modules/react-native-onetrust-cmp/android/src/main/java/com/onetrust/OneTrust.java b/node_modules/react-native-onetrust-cmp/android/src/main/java/com/onetrust/OneTrust.java
-index 199531c..c3cfd17 100644
+index 23e6beb..8c85220 100644
 --- a/node_modules/react-native-onetrust-cmp/android/src/main/java/com/onetrust/OneTrust.java
 +++ b/node_modules/react-native-onetrust-cmp/android/src/main/java/com/onetrust/OneTrust.java
 @@ -313,6 +313,39 @@ public class OneTrust extends ReactContextBaseJavaModule {
@@ -43,7 +43,7 @@ index 199531c..c3cfd17 100644
      public void showConsentPurposesUI(){
          final Activity currentActivity = getCurrentActivity();
 diff --git a/node_modules/react-native-onetrust-cmp/iOS/OneTrust.m b/node_modules/react-native-onetrust-cmp/iOS/OneTrust.m
-index 2c1a676..c20f76a 100644
+index 2c1a676..c84294f 100644
 --- a/node_modules/react-native-onetrust-cmp/iOS/OneTrust.m
 +++ b/node_modules/react-native-onetrust-cmp/iOS/OneTrust.m
 @@ -36,6 +36,21 @@ + (BOOL)requiresMainQueueSetup{
@@ -68,14 +68,53 @@ index 2c1a676..c20f76a 100644
  RCT_EXTERN_METHOD(shouldShowBanner:
                    (RCTPromiseResolveBlock)resolve
                    rejecter:(RCTPromiseRejectBlock)reject
+@@ -65,6 +80,11 @@ + (BOOL)requiresMainQueueSetup{
+                   rejecter:(RCTPromiseRejectBlock)reject
+                   )
+ 
++RCT_EXTERN_METHOD(logATTConsent:
++                  (RCTPromiseResolveBlock)resolve
++                  rejecter:(RCTPromiseRejectBlock)reject
++                  )
++
+ //Universal Consent Methods
+ RCT_EXTERN_METHOD(showConsentPurposesUI)
+ 
 diff --git a/node_modules/react-native-onetrust-cmp/iOS/OneTrust.swift b/node_modules/react-native-onetrust-cmp/iOS/OneTrust.swift
-index 0030d64..c9c97f0 100644
+index 0030d64..894862f 100644
 --- a/node_modules/react-native-onetrust-cmp/iOS/OneTrust.swift
 +++ b/node_modules/react-native-onetrust-cmp/iOS/OneTrust.swift
-@@ -108,6 +108,62 @@ import AppTrackingTransparency
-            
-     }
-     
+@@ -81,31 +81,64 @@ import AppTrackingTransparency
+ 
+     @objc(getOTGoogleConsentModeData:rejecter:)
+     public func getOTGoogleConsentModeData(_ resolve:@escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock){
+-            let gcmOTData = OTPublishersHeadlessSDK.shared.getOTGoogleConsentModeData()
+-            let analyticsStorageValue = gcmOTData.consentType.analyticsStorage == .granted ? "granted" : "denied"
+-            let addStorageValue = gcmOTData.consentType.adStorage == .granted ? "granted" : "denied"
+-            let adUserDataValue = gcmOTData.consentType.adUserData == .granted ? "granted" : "denied"
+-            let adPersonalizationValue = gcmOTData.consentType.adPersonalization == .granted ? "granted" : "denied"
+-            let functionalityStorageValue = gcmOTData.consentType.functionalityStorage == .granted ? "granted" : "denied"
+-            let personalizationStorageValue = gcmOTData.consentType.personalizationStorage == .granted ? "granted" : "denied"
+-            let securityStorageValue = gcmOTData.consentType.securityStorage == .granted ? "granted" : "denied"
+-        
+-            let gcmOTDataJSONObject: [String: String] = [ 
+-                "analytics_storage": analyticsStorageValue,
+-                "ad_storage": addStorageValue,
+-                "ad_user_data": adUserDataValue,
+-                "ad_personalization": adPersonalizationValue,
+-                "functionality_storage": functionalityStorageValue,
+-                "personalization_storage": personalizationStorageValue,
+-                "security_storage": securityStorageValue
+-            ] 
+-            let encoder = JSONEncoder()
+-            if let jsonData = try? encoder.encode(gcmOTDataJSONObject) {
+-              if let jsonString = String(data: jsonData, encoding: .utf8) {
+-                  resolve(jsonString)
+-                  } 
++        // OTGoogleConsentMode not used in this app - stubbed to avoid linker errors
++        resolve(nil)
++    }
++
 +    private func serializeToJSON(_ data: [String: Any]) -> String? {
 +        guard JSONSerialization.isValidJSONObject(data),
 +              let jsonData = try? JSONSerialization.data(withJSONObject: data),
@@ -99,7 +138,7 @@ index 0030d64..c9c97f0 100644
 +                resolve(json)
 +            } else {
 +                reject("OT_GET_PREFERENCE_CENTER_DATA","OneTrust getPreferenceCenterData returned unsupported type.",nil)
-+            }
+             }
 +            return
 +        }
 +        OTPublishersHeadlessSDK.shared.fetchPreferencesCmpApiData { [weak self] _ in
@@ -111,7 +150,7 @@ index 0030d64..c9c97f0 100644
 +            resolve(json)
 +        }
 +    }
-+
+ 
 +    @objc(getBannerData:rejecter:)
 +    public func getBannerData(_ resolve:@escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock){
 +        if let data = OTPublishersHeadlessSDK.shared.getBannerData() {
@@ -130,11 +169,47 @@ index 0030d64..c9c97f0 100644
 +            }
 +            resolve(json)
 +        }
-+    }
-+    
+     }
+     
      @objc(shouldShowBanner:rejecter:)
-     public func shouldShowBanner(_ resolve:@escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void{
-         let shouldShowBanner = OTPublishersHeadlessSDK.shared.shouldShowBanner()
+@@ -153,6 +186,28 @@ import AppTrackingTransparency
+     public func getATTStatus(_ resolve:@escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock){
+         resolve(getATTStatusAsString())
+     }
++
++    /// Logs the current ATT status to OneTrust without showing any UI.
++    /// This allows the SDK to persist consent to the server for ATT-linked categories.
++    @objc(logATTConsent:rejecter:)
++    public func logATTConsent(_ resolve:@escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock){
++        guard #available(iOS 14, *) else {
++            resolve(nil)
++            return
++        }
++        let interactionType: ConsentInteractionType
++        switch ATTrackingManager.trackingAuthorizationStatus {
++        case .authorized:
++            interactionType = .appTrackingConfirm
++        case .denied, .restricted:
++            interactionType = .appTrackingOptOut
++        default:
++            interactionType = .appTrackingNotGiven
++        }
++        OTPublishersHeadlessSDK.shared.saveConsent(type: interactionType) {
++            resolve(nil)
++        }
++    }
+     #endif
+ 
+     @objc(showConsentUI:resolve:rejecter:)
+@@ -177,6 +232,8 @@ import AppTrackingTransparency
+                 OTPublishersHeadlessSDK.shared.showConsentUI(for: type, from: vc, completion: {
+                     resolve(nil)
+                 })
++            } else {
++                resolve(nil)
+             }
+         }
+     }
 diff --git a/node_modules/react-native-onetrust-cmp/index.ts b/node_modules/react-native-onetrust-cmp/index.ts
 index f99e8c5..33c48c8 100644
 --- a/node_modules/react-native-onetrust-cmp/index.ts

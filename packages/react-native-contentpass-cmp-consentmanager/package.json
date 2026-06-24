@@ -1,6 +1,6 @@
 {
   "name": "@contentpass/react-native-contentpass-cmp-consentmanager",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Contentpass Consentmanager CMP adapter",
   "source": "./src/index.ts",
   "main": "./lib/commonjs/index.js",
@@ -58,13 +58,13 @@
   },
   "devDependencies": {
     "@contentpass/react-native-contentpass": "workspace:*",
-    "@react-native-community/cli": "20.1.1",
-    "@react-native/babel-preset": "0.83.1",
+    "@react-native-community/cli": "20.1.3",
+    "@react-native/babel-preset": "0.83.6",
     "@types/jest": "^30.0.0",
     "@types/react": "^19.2.10",
     "jest": "^30.2.0",
-    "react": "19.2.4",
-    "react-native": "0.83.1",
+    "react": "19.2.0",
+    "react-native": "0.83.6",
     "react-native-builder-bob": "^0.40.17",
     "typescript": "^5.9.3"
   },

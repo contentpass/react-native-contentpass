@@ -1,5 +1,11 @@
 # @contentpass/react-native-contentpass-cmp-onetrust
 
+## 0.3.0
+
+### Minor Changes
+
+- Bump versions
+
 ## 0.2.1
 
 ### Patch Changes

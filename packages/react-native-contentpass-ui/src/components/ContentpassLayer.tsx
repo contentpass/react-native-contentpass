@@ -9,9 +9,24 @@ import {
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import type { ContentpassLayerEvents } from './ContentpassLayerEvents';
 import buildFirstLayerUrl from './buildFirstLayerUrl';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 const MESSAGE_PROTOCOL = 'contentpass-first-layer';
+const POPUP_URL_PROTOCOLS = new Set(['http:', 'https:']);
+
+function normalizePathname(pathname: string): string {
+  return pathname.replace(/\/+$/, '');
+}
+
+function isSameOrNestedPath(pathname: string, basePathname: string): boolean {
+  const normalizedPathname = normalizePathname(pathname);
+  const normalizedBasePathname = normalizePathname(basePathname);
+
+  return (
+    normalizedPathname === normalizedBasePathname ||
+    normalizedPathname.startsWith(`${normalizedBasePathname}/`)
+  );
+}
 
 const EARLY_INJECT_JS = `
   (function () {
@@ -116,9 +131,55 @@ export default function ContentpassLayer({
   }, [baseUrl, planId, propertyId, purposesList, vendorCount, locale]);
 
   const [ready, setReady] = useState(false);
+  const [layerUrl, setLayerUrl] = useState(firstLayerUrl);
   const [popupUrl, setPopupUrl] = useState<string | null>(null);
 
+  useEffect(() => {
+    setLayerUrl(firstLayerUrl);
+    setReady(false);
+  }, [firstLayerUrl]);
+
   const closePopup = useCallback(() => setPopupUrl(null), []);
+
+  const isFirstLayerUrl = useCallback(
+    (url: URL) => {
+      const firstLayer = new URL(firstLayerUrl);
+
+      return (
+        url.origin === firstLayer.origin &&
+        isSameOrNestedPath(url.pathname, firstLayer.pathname)
+      );
+    },
+    [firstLayerUrl]
+  );
+
+  const loadLayerUrl = useCallback((url: URL) => {
+    setReady(false);
+    setLayerUrl(url.toString());
+  }, []);
+
+  const openPopup = useCallback(
+    (url: unknown) => {
+      if (typeof url !== 'string' || url.length === 0) {
+        console.warn('Unable to open popup with unknown URL', url);
+        return;
+      }
+
+      try {
+        const popupUrl = new URL(url, baseUrl);
+
+        if (!POPUP_URL_PROTOCOLS.has(popupUrl.protocol)) {
+          console.warn('Unable to open popup with unsupported URL', url);
+          return;
+        }
+
+        setPopupUrl(popupUrl.toString());
+      } catch (error) {
+        console.warn('Unable to open popup with invalid URL', url, error);
+      }
+    },
+    [baseUrl]
+  );
 
   function buildFaqUrl(): string {
     return `${baseUrl}/auth/login?instanceId=${encodeURIComponent(instanceId)}&propertyId=${encodeURIComponent(propertyId)}&planId=${encodeURIComponent(planId)}&route=faq`;
@@ -162,17 +223,10 @@ export default function ContentpassLayer({
             );
             break;
           case 'faq':
-            setPopupUrl(buildFaqUrl());
+            openPopup(buildFaqUrl());
             break;
           case 'url':
-            if (msg.payload?.options?.url) {
-              setPopupUrl(msg.payload?.options?.url);
-            } else {
-              console.warn(
-                'WebView message with unknown URL',
-                msg.payload?.options?.url
-              );
-            }
+            openPopup(msg.payload?.options?.url);
             break;
           default:
             console.warn(
@@ -212,27 +266,67 @@ export default function ContentpassLayer({
   return (
     <View style={styles.container}>
       <WebView
-        source={{ uri: firstLayerUrl }}
+        source={{ uri: layerUrl }}
         style={[styles.webview, !ready && { opacity: 0 }]}
         originWhitelist={['*']}
         javaScriptEnabled
         domStorageEnabled
         automaticallyAdjustContentInsets={false}
         injectedJavaScriptBeforeContentLoaded={EARLY_INJECT_JS}
+        setSupportMultipleWindows={false}
         onMessage={(event) => {
           handleMessage(event);
         }}
         onShouldStartLoadWithRequest={(request) => {
-          // Prevent accidental redirects to external URLs
-          const firstLayerHostname = new URL(firstLayerUrl).hostname;
-          const requestedHostname = new URL(request.url).hostname;
-          const allowed = requestedHostname === firstLayerHostname;
-          console.debug('WebView request', request.url, {
-            allowed,
-            firstLayerHostname,
-            requestedHostname,
-          });
-          return allowed;
+          if (request.isTopFrame === false) {
+            return true;
+          }
+
+          try {
+            const requested = new URL(request.url, firstLayerUrl);
+            const allowed = isFirstLayerUrl(requested);
+
+            console.debug('WebView request', request.url, {
+              allowed,
+              firstLayerUrl,
+              layerUrl,
+              requestedUrl: requested.toString(),
+            });
+
+            if (!allowed) {
+              openPopup(requested.toString());
+            }
+
+            return allowed;
+          } catch (error) {
+            console.warn(
+              'Unable to handle WebView request',
+              request.url,
+              error
+            );
+            return false;
+          }
+        }}
+        onOpenWindow={(event) => {
+          try {
+            const targetUrl = new URL(
+              event.nativeEvent.targetUrl,
+              firstLayerUrl
+            );
+
+            if (isFirstLayerUrl(targetUrl)) {
+              loadLayerUrl(targetUrl);
+              return;
+            }
+
+            openPopup(targetUrl.toString());
+          } catch (error) {
+            console.warn(
+              'Unable to handle WebView open window request',
+              event.nativeEvent.targetUrl,
+              error
+            );
+          }
         }}
         onLoadStart={() => {
           console.debug('WebView load start');
@@ -280,11 +374,15 @@ export default function ContentpassLayer({
               style={styles.popupWebview}
               javaScriptEnabled
               domStorageEnabled
+              setSupportMultipleWindows={false}
               onShouldStartLoadWithRequest={(request) => {
                 console.debug('WebView popup request', request.url);
                 // Allow any request to load in the popup, otherwise
                 // we would block redirects to external URLs.
                 return true;
+              }}
+              onOpenWindow={(event) => {
+                openPopup(event.nativeEvent.targetUrl);
               }}
             />
           )}

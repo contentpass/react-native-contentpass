@@ -24,10 +24,19 @@ export default function Content({ cmpAdapter }: { cmpAdapter: CmpAdapter }) {
     });
   }, [sdk]);
 
+  async function openOneTrustSettings() {
+    try {
+      await cmpAdapter.showSecondLayer('purpose');
+    } catch (error) {
+      console.error('Failed to open OneTrust settings', error);
+    }
+  }
+
   return (
     <View>
       <Text>Hello World!</Text>
       <Text>Has full consent: {hasFullConsent ? 'Yes' : 'No'}</Text>
+      <Button title="OneTrust Settings" onPress={openOneTrustSettings} />
       {hasFullConsent && (
         <Button
           title="Deny All"

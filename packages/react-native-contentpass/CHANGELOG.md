@@ -1,5 +1,11 @@
 # @contentpass/react-native-contentpass
 
+## 0.7.1
+
+### Patch Changes
+
+- Improve OneTrust integration and handling of first layer links
+
 ## 0.7.0
 
 ### Minor Changes

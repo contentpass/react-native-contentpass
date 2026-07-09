@@ -4,6 +4,13 @@ import type { CmpAdapter } from '@contentpass/react-native-contentpass';
 import type { BannerData, PreferenceCenterData } from './types';
 import { getTcfPurposes } from './purposes';
 
+const CONSENT_CHANGE_EVENTS = new Set<OTEventName>([
+  OTEventName.preferenceCenterAcceptAll,
+  OTEventName.preferenceCenterRejectAll,
+  OTEventName.preferenceCenterConfirmChoices,
+  OTEventName.vendorConfirmChoices,
+]);
+
 export async function createOnetrustCmpAdapter(
   sdk: OTPublishersNativeSDK
 ): Promise<OnetrustCmpAdapter> {
@@ -148,6 +155,10 @@ export default class OnetrustCmpAdapter implements CmpAdapter {
   }
 
   private emitEvent(eventName: OTEventName, data?: any): void {
+    if (CONSENT_CHANGE_EVENTS.has(eventName)) {
+      this.emitCurrentConsentStatus();
+    }
+
     this.eventListeners.forEach((listener) => {
       try {
         listener(eventName, data);
@@ -155,6 +166,17 @@ export default class OnetrustCmpAdapter implements CmpAdapter {
         console.error('[OnetrustCmpAdapter::onEvent] listener failed', error);
       }
     });
+  }
+
+  private emitCurrentConsentStatus(): void {
+    this.hasFullConsent()
+      .then((fullConsent) => this.emitConsentStatusChange(fullConsent))
+      .catch((error) => {
+        console.error(
+          '[OnetrustCmpAdapter::emitCurrentConsentStatus] failed',
+          error
+        );
+      });
   }
 
   private emitConsentStatusChange(fullConsent: boolean): void {

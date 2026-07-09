@@ -1,5 +1,11 @@
 # @contentpass/react-native-contentpass-ui
 
+## 0.6.0
+
+### Minor Changes
+
+- Improve OneTrust integration and handling of first layer links
+
 ## 0.5.0
 
 ### Minor Changes

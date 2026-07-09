@@ -1,5 +1,11 @@
 # @contentpass/react-native-contentpass-cmp-onetrust
 
+## 0.3.1
+
+### Patch Changes
+
+- Improve OneTrust integration and handling of first layer links
+
 ## 0.3.0
 
 ### Minor Changes

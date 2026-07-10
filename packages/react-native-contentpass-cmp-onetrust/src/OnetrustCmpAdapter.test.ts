@@ -81,6 +81,7 @@ function createMockSdk(overrides: Partial<OTPublishersNativeSDK> = {}): {
       .fn()
       .mockResolvedValue(createPreferenceCenterData()),
     saveConsent: jest.fn().mockResolvedValue(undefined),
+    shouldShowBanner: jest.fn().mockResolvedValue(false),
     getConsentStatusForCategory: jest.fn().mockResolvedValue(1),
     addEventListener: jest.fn(
       (eventName: OTEventName, handler: EventHandler) => {
@@ -112,6 +113,22 @@ describe('createOnetrustCmpAdapter', () => {
 });
 
 describe('OnetrustCmpAdapter', () => {
+  it('should report full consent when all purposes are accepted and no banner is required', async () => {
+    const { sdk } = createMockSdk();
+    const adapter = await createOnetrustCmpAdapter(sdk);
+
+    await expect(adapter.hasFullConsent()).resolves.toBe(true);
+  });
+
+  it('should report missing consent when OneTrust requires reconsent', async () => {
+    const { sdk } = createMockSdk({
+      shouldShowBanner: jest.fn().mockResolvedValue(true),
+    });
+    const adapter = await createOnetrustCmpAdapter(sdk);
+
+    await expect(adapter.hasFullConsent()).resolves.toBe(false);
+  });
+
   it('should emit consent status when OneTrust confirms preference-center choices', async () => {
     const { sdk, eventHandlers } = createMockSdk({
       getConsentStatusForCategory: jest

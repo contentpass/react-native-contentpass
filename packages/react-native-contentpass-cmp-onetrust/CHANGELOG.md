@@ -1,5 +1,11 @@
 # @contentpass/react-native-contentpass-cmp-onetrust
 
+## 0.3.2
+
+### Patch Changes
+
+- Handle reconsent in OneTrust adapter
+
 ## 0.3.1
 
 ### Patch Changes

@@ -111,17 +111,20 @@ export default class OnetrustCmpAdapter implements CmpAdapter {
     });
   }
 
-  // FIXME handle reconsent scenarios
   hasFullConsent = async (): Promise<boolean> => {
     console.debug('[OnetrustCmpAdapter::hasFullConsent]');
-    const consentStatuses = await Promise.all(
-      this.groupIds.map((groupId) =>
-        this.sdk.getConsentStatusForCategory(groupId)
-      )
-    );
+    const [shouldShowBanner, consentStatuses] = await Promise.all([
+      this.sdk.shouldShowBanner(),
+      Promise.all(
+        this.groupIds.map((groupId) =>
+          this.sdk.getConsentStatusForCategory(groupId)
+        )
+      ),
+    ]);
 
-    return consentStatuses.every(
-      (consentStatus: number) => consentStatus === 1
+    return (
+      !shouldShowBanner &&
+      consentStatuses.every((consentStatus: number) => consentStatus === 1)
     );
   };
 

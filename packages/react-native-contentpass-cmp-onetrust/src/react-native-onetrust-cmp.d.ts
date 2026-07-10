@@ -19,6 +19,7 @@ declare module 'react-native-onetrust-cmp' {
     getBannerData(): Promise<any>;
     getPreferenceCenterData(): Promise<any>;
     saveConsent(interaction: OTConsentInteraction): Promise<void>;
+    shouldShowBanner(): Promise<boolean>;
     getConsentStatusForCategory(categoryId: string): Promise<number>;
     addEventListener(
       eventName: OTEventName,

@@ -116,17 +116,47 @@ For a complete working example, see the [`examples/onetrust`](../../examples/one
 
 ## API
 
-### `createOnetrustCmpAdapter(sdk)`
+### `createOnetrustCmpAdapter(sdk, options)`
 
 Factory function that creates a `CmpAdapter` from an initialized OneTrust SDK instance.
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `sdk` | `OTPublishersNativeSDK` | An initialized OneTrust SDK instance (after `startSDK` has resolved). |
+| `options.attGroupIds` | `string[]` | OneTrust group IDs linked to iOS App Tracking Transparency (ATT). These groups are logged but do not keep the Contentpass consent layer open. |
 
 Returns `Promise<CmpAdapter>`.
 
 The adapter fetches banner and preference center data from the OneTrust SDK during creation, and automatically extracts TCF purpose IDs and the vendor count.
+
+### App Tracking Transparency (ATT)
+
+ATT is an Apple system permission, not a Contentpass consent decision. The adapter never presents the ATT prompt or attempts to set the ATT status. Configure OneTrust to manage any ATT pre- and post-prompt, and let the application decide when to request ATT.
+
+If OneTrust has categories linked to ATT, pass their group IDs when creating the adapter. A denied or unresolved ATT permission can leave an ATT-linked OneTrust category disabled even after the user accepts all CMP purposes. Those categories must not keep the Contentpass layer open.
+
+```tsx
+const cmpAdapter = await createOnetrustCmpAdapter(OTPublishersNativeSDK, {
+  // Use the ATT-linked OptanonGroupIds from the client's OneTrust configuration.
+  attGroupIds: ['C0004'],
+});
+```
+
+The adapter logs every group and marks configured ATT groups as `isAttGroup: true`, making the configuration verifiable in device logs. It warns when a configured group ID is absent from the OneTrust preference-center data.
+
+Clients that want ATT before Contentpass must handle it before constructing the adapter:
+
+1. Configure the iOS `NSUserTrackingUsageDescription` purpose string.
+2. Initialize OneTrust on every app launch.
+3. Present OneTrust's ATT flow (`showConsentUI(OTDevicePermission.IDFA)`) at the client's chosen point in the app journey.
+4. Synchronize the resulting system status with OneTrust using its native `checkAndLogConsent(for: .idfa)` API. The current React Native OneTrust bridge does not expose that API, so clients need to expose it in their native bridge or obtain an upstream version that does.
+5. Create the Contentpass adapter with the ATT-linked `attGroupIds` as shown above.
+
+Do not run a second OneTrust `saveConsent` call for ATT from `acceptAll()`. The ATT system status and CMP consent are separate operations.
+
+### Diagnostic logs
+
+The adapter emits structured `console.debug` logs for CMP initialization, OneTrust events, consent actions, group statuses, ATT status (when the installed bridge exposes it), and stale asynchronous reads. After `acceptAll()` or `denyAll()`, it records immediate snapshots and rechecks consent after 100, 500, and 1000 milliseconds. This makes native persistence delays, re-consent, and ATT-linked group states visible without changing the user's consent.
 
 ### `CmpAdapter` methods provided
 

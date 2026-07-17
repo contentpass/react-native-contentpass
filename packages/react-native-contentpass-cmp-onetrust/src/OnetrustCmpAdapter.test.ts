@@ -23,6 +23,18 @@ jest.mock('react-native-onetrust-cmp', () => ({
 
 type EventHandler = (data?: any) => void;
 
+function createDeferred<T>(): {
+  promise: Promise<T>;
+  resolve: (value: T) => void;
+} {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((promiseResolve) => {
+    resolve = promiseResolve;
+  });
+
+  return { promise, resolve };
+}
+
 function createBannerData(description = 'We use 42 vendors'): BannerData {
   return {
     otConsentString: '',
@@ -127,6 +139,50 @@ describe('OnetrustCmpAdapter', () => {
     const adapter = await createOnetrustCmpAdapter(sdk);
 
     await expect(adapter.hasFullConsent()).resolves.toBe(false);
+  });
+
+  it('should ignore an initial status read that resolves after accept all', async () => {
+    jest.useFakeTimers();
+    try {
+      const initialShouldShowBanner = createDeferred<boolean>();
+      const shouldShowBanner = jest
+        .fn()
+        .mockReturnValueOnce(initialShouldShowBanner.promise)
+        .mockResolvedValue(false);
+      const { sdk } = createMockSdk({ shouldShowBanner });
+      const adapter = await createOnetrustCmpAdapter(sdk);
+      const listener = jest.fn();
+
+      adapter.onConsentStatusChange(listener);
+      jest.advanceTimersByTime(0);
+      await Promise.resolve();
+
+      await adapter.acceptAll();
+      expect(listener).toHaveBeenCalledWith(true);
+      listener.mockClear();
+
+      initialShouldShowBanner.resolve(true);
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(listener).not.toHaveBeenCalled();
+    } finally {
+      jest.clearAllTimers();
+      jest.useRealTimers();
+    }
+  });
+
+  it('should not require ATT-linked groups for full Contentpass consent', async () => {
+    const { sdk } = createMockSdk({
+      getConsentStatusForCategory: jest.fn((groupId: string) =>
+        Promise.resolve(groupId === 'C0002' ? 0 : 1)
+      ),
+    });
+    const adapter = await createOnetrustCmpAdapter(sdk, {
+      attGroupIds: ['C0002'],
+    });
+
+    await expect(adapter.hasFullConsent()).resolves.toBe(true);
   });
 
   it('should emit consent status when OneTrust confirms preference-center choices', async () => {

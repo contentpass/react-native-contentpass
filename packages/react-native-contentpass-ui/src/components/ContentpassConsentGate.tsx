@@ -45,7 +45,13 @@ export default function ContentpassConsentGate({
     return {
       acceptAll: async () => {
         try {
+          console.debug(
+            '[ContentpassConsentGate::acceptAll] forwarding to CMP'
+          );
           await cmpAdapter.acceptAll();
+          console.debug(
+            '[ContentpassConsentGate::acceptAll] CMP action resolved'
+          );
         } catch (error) {
           console.error('Failed to accept all in CMP', error);
         }
@@ -98,10 +104,33 @@ export default function ContentpassConsentGate({
       return;
     }
 
-    cmpAdapter?.onConsentStatusChange?.((v: boolean) => setHasFullConsent(v));
-    cmpAdapter.getRequiredPurposes().then((v: string[]) => setPurposesList(v));
-    cmpAdapter.getNumberOfVendors().then((v: number) => setVendorCount(v));
-  }, [cmpReady, cmpAdapter, onVisibilityChange, isVisible]);
+    let active = true;
+    const unsubscribe = cmpAdapter.onConsentStatusChange((v: boolean) => {
+      console.debug('[ContentpassConsentGate::onConsentStatusChange]', {
+        fullConsent: v,
+        active,
+      });
+      if (active) {
+        setHasFullConsent(v);
+      }
+    });
+    cmpAdapter.getRequiredPurposes().then((v: string[]) => {
+      if (active) {
+        setPurposesList(v);
+      }
+    });
+    cmpAdapter.getNumberOfVendors().then((v: number) => {
+      if (active) {
+        setVendorCount(v);
+      }
+    });
+
+    return () => {
+      active = false;
+      console.debug('[ContentpassConsentGate::onConsentStatusChange] cleanup');
+      unsubscribe?.();
+    };
+  }, [cmpReady, cmpAdapter]);
 
   // Monitor the contentpass auth state
   useEffect(() => {
@@ -135,6 +164,14 @@ export default function ContentpassConsentGate({
       cpAuthState.state === ContentpassStateType.AUTHENTICATED ||
       hasFullConsent;
     const visible = !isFine;
+    console.debug('[ContentpassConsentGate::visibility]', {
+      cmpReady,
+      contentpassState: cpAuthState.state,
+      hasFullConsent,
+      isShowingContentpass,
+      isShowingSecondLayer,
+      visible,
+    });
     if (visible !== isVisible) {
       onVisibilityChange?.(visible);
     }

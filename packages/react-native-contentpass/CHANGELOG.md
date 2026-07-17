@@ -1,5 +1,11 @@
 # @contentpass/react-native-contentpass
 
+## 0.7.2
+
+### Patch Changes
+
+- Harden OneTrust consent status
+
 ## 0.7.1
 
 ### Patch Changes

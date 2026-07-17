@@ -1,5 +1,11 @@
 # @contentpass/react-native-contentpass-cmp-onetrust
 
+## 0.4.0
+
+### Minor Changes
+
+- Harden OneTrust consent status
+
 ## 0.3.2
 
 ### Patch Changes

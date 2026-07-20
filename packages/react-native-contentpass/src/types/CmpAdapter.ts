@@ -7,7 +7,9 @@ export type CmpAdapter = {
   getNumberOfVendors: () => Promise<number>;
   getRequiredPurposes: () => Promise<string[]>;
   hasFullConsent: () => Promise<boolean>;
-  onConsentStatusChange: (callback: (fullConsent: boolean) => void) => void;
+  onConsentStatusChange: (
+    callback: (fullConsent: boolean) => void
+  ) => void | (() => void);
   onAdapterEvent?: (
     eventName: string,
     callback: (data?: any) => void

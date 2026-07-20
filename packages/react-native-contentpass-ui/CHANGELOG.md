@@ -1,5 +1,11 @@
 # @contentpass/react-native-contentpass-ui
 
+## 0.6.1
+
+### Patch Changes
+
+- Harden OneTrust consent status
+
 ## 0.6.0
 
 ### Minor Changes

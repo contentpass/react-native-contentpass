@@ -141,6 +141,65 @@ describe('OnetrustCmpAdapter', () => {
     await expect(adapter.hasFullConsent()).resolves.toBe(false);
   });
 
+  it('should accept consent during the banner settlement period', async () => {
+    jest.useFakeTimers();
+    try {
+      const { sdk } = createMockSdk({
+        shouldShowBanner: jest.fn().mockResolvedValue(true),
+      });
+      const adapter = await createOnetrustCmpAdapter(sdk);
+
+      await expect(adapter.hasFullConsent()).resolves.toBe(false);
+
+      await adapter.acceptAll();
+
+      await expect(adapter.hasFullConsent()).resolves.toBe(true);
+    } finally {
+      jest.clearAllTimers();
+      jest.useRealTimers();
+    }
+  });
+
+  it('should require consent when the banner remains visible after the settlement period', async () => {
+    jest.useFakeTimers();
+    try {
+      const now = new Date('2026-07-20T12:00:00.000Z');
+      jest.setSystemTime(now);
+      const { sdk } = createMockSdk({
+        shouldShowBanner: jest.fn().mockResolvedValue(true),
+      });
+      const adapter = await createOnetrustCmpAdapter(sdk);
+
+      await adapter.acceptAll();
+      await expect(adapter.hasFullConsent()).resolves.toBe(true);
+
+      jest.setSystemTime(new Date(now.getTime() + 10_001));
+      await expect(adapter.hasFullConsent()).resolves.toBe(false);
+    } finally {
+      jest.clearAllTimers();
+      jest.useRealTimers();
+    }
+  });
+
+  it('should require consent again after rejecting the Contentpass banner', async () => {
+    jest.useFakeTimers();
+    try {
+      const { sdk } = createMockSdk({
+        shouldShowBanner: jest.fn().mockResolvedValue(true),
+      });
+      const adapter = await createOnetrustCmpAdapter(sdk);
+
+      await adapter.acceptAll();
+      await expect(adapter.hasFullConsent()).resolves.toBe(true);
+
+      await adapter.denyAll();
+      await expect(adapter.hasFullConsent()).resolves.toBe(false);
+    } finally {
+      jest.clearAllTimers();
+      jest.useRealTimers();
+    }
+  });
+
   it('should ignore an initial status read that resolves after accept all', async () => {
     jest.useFakeTimers();
     try {

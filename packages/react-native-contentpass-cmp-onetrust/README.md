@@ -156,7 +156,7 @@ Do not run a second OneTrust `saveConsent` call for ATT from `acceptAll()`. The 
 
 ### Diagnostic logs
 
-The adapter emits structured `console.debug` logs for CMP initialization, OneTrust events, consent actions, group statuses, ATT status (when the installed bridge exposes it), and stale asynchronous reads. After `acceptAll()` or `denyAll()`, it records immediate snapshots and rechecks consent after 100, 500, and 1000 milliseconds. This makes native persistence delays, re-consent, and ATT-linked group states visible without changing the user's consent.
+The adapter emits structured `console.debug` logs for CMP initialization, OneTrust events, consent actions, group statuses, ATT status (when the installed bridge exposes it), and stale asynchronous reads. After `acceptAll()` or `denyAll()`, it records immediate snapshots and rechecks consent after 100, 500, and 1000 milliseconds. After a successful `acceptAll()`, the adapter allows OneTrust up to 10 seconds to settle `shouldShowBanner`; the temporary acknowledgement clears as soon as OneTrust returns `false`. This makes native persistence delays, re-consent, and ATT-linked group states visible without changing the user's consent.
 
 ### `CmpAdapter` methods provided
 

@@ -12,6 +12,7 @@ const CONSENT_CHANGE_EVENTS = new Set<OTEventName>([
 ]);
 
 const CONSENT_STATUS_REFRESH_DELAYS_MS = [100, 500, 1000];
+const BANNER_SETTLEMENT_TIMEOUT_MS = 10_000;
 
 export type OnetrustCmpAdapterOptions = {
   /**
@@ -33,6 +34,12 @@ type ConsentStatus = {
 type ConsentState = {
   shouldShowBanner: boolean;
   consentStatuses: ConsentStatus[];
+};
+
+type FullConsentDecision = {
+  fullConsent: boolean;
+  bannerSettlementActive: boolean;
+  bannerAcknowledgedUntil: number | null;
 };
 
 export async function createOnetrustCmpAdapter(
@@ -83,6 +90,7 @@ export default class OnetrustCmpAdapter implements CmpAdapter {
     (fullConsent: boolean) => void
   >();
   private consentStatusRevision = 0;
+  private bannerAcknowledgedUntil = 0;
 
   constructor(
     private readonly sdk: OTPublishersNativeSDK,
@@ -139,6 +147,7 @@ export default class OnetrustCmpAdapter implements CmpAdapter {
       console.debug('[OnetrustCmpAdapter::acceptAll] saveConsent resolved', {
         revision,
       });
+      this.bannerAcknowledgedUntil = Date.now() + BANNER_SETTLEMENT_TIMEOUT_MS;
       this.logConsentSnapshot('acceptAll: after saveConsent');
       this.scheduleConsentStatusRefreshes(revision, 'acceptAll');
       await this.emitConsentStatusForRevision(revision, 'acceptAll');
@@ -163,6 +172,7 @@ export default class OnetrustCmpAdapter implements CmpAdapter {
       console.debug('[OnetrustCmpAdapter::denyAll] saveConsent resolved', {
         revision,
       });
+      this.bannerAcknowledgedUntil = 0;
       this.logConsentSnapshot('denyAll: after saveConsent');
       this.scheduleConsentStatusRefreshes(revision, 'denyAll');
       await this.emitConsentStatusForRevision(revision, 'denyAll');
@@ -219,14 +229,14 @@ export default class OnetrustCmpAdapter implements CmpAdapter {
 
   hasFullConsent = async (): Promise<boolean> => {
     const consentState = await this.getConsentState();
-    const fullConsent = this.hasFullConsentForState(consentState);
+    const consentDecision = this.getFullConsentDecision(consentState);
 
     console.debug('[OnetrustCmpAdapter::hasFullConsent]', {
-      fullConsent,
+      ...consentDecision,
       ...consentState,
     });
 
-    return fullConsent;
+    return consentDecision.fullConsent;
   };
 
   onConsentStatusChange(callback: (fullConsent: boolean) => void): () => void {
@@ -402,16 +412,30 @@ export default class OnetrustCmpAdapter implements CmpAdapter {
     return { shouldShowBanner, consentStatuses: statuses };
   }
 
-  private hasFullConsentForState({
+  private getFullConsentDecision({
     shouldShowBanner,
     consentStatuses,
-  }: ConsentState): boolean {
-    return (
-      !shouldShowBanner &&
+  }: ConsentState): FullConsentDecision {
+    const now = Date.now();
+    if (
+      !shouldShowBanner ||
+      (this.bannerAcknowledgedUntil > 0 && now >= this.bannerAcknowledgedUntil)
+    ) {
+      this.bannerAcknowledgedUntil = 0;
+    }
+
+    const bannerSettlementActive = this.bannerAcknowledgedUntil > 0;
+    const fullConsent =
+      (!shouldShowBanner || bannerSettlementActive) &&
       consentStatuses
         .filter(({ isAttGroup }) => !isAttGroup)
-        .every(({ status }) => status === 1)
-    );
+        .every(({ status }) => status === 1);
+
+    return {
+      fullConsent,
+      bannerSettlementActive,
+      bannerAcknowledgedUntil: this.bannerAcknowledgedUntil || null,
+    };
   }
 
   private async logConsentSnapshot(context: string): Promise<void> {
@@ -420,10 +444,11 @@ export default class OnetrustCmpAdapter implements CmpAdapter {
         this.getConsentState(),
         this.getAttStatus(),
       ]);
+      const consentDecision = this.getFullConsentDecision(consentState);
       console.debug('[OnetrustCmpAdapter::consentSnapshot]', {
         context,
         timestamp: new Date().toISOString(),
-        fullConsent: this.hasFullConsentForState(consentState),
+        ...consentDecision,
         attStatus,
         ...consentState,
       });

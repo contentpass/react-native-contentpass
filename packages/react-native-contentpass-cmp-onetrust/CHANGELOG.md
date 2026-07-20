@@ -1,5 +1,11 @@
 # @contentpass/react-native-contentpass-cmp-onetrust
 
+## 0.4.2
+
+### Patch Changes
+
+- Handle OneTrust's short banner-state delay after accepting all consent from either the Contentpass layer or the OneTrust preference center.
+
 ## 0.4.1
 
 ### Patch Changes

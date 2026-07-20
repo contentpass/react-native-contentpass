@@ -1,5 +1,11 @@
 # @contentpass/react-native-contentpass-cmp-onetrust
 
+## 0.4.1
+
+### Patch Changes
+
+- Handle the short delay before OneTrust clears its banner state after accepting all consent, preventing the Contentpass layer from remaining open on cold start.
+
 ## 0.4.0
 
 ### Minor Changes

@@ -5,6 +5,7 @@
 ### Patch Changes
 
 - Handle OneTrust's short banner-state delay after accepting all consent from either the Contentpass layer or the OneTrust preference center.
+- Fetch Android preference-center data before creating the adapter.
 
 ## 0.4.1
 

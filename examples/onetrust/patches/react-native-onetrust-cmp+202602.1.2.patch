@@ -2,13 +2,26 @@ diff --git a/node_modules/react-native-onetrust-cmp/android/src/main/java/com/on
 index 23e6beb..8c85220 100644
 --- a/node_modules/react-native-onetrust-cmp/android/src/main/java/com/onetrust/OneTrust.java
 +++ b/node_modules/react-native-onetrust-cmp/android/src/main/java/com/onetrust/OneTrust.java
-@@ -313,6 +313,39 @@ public class OneTrust extends ReactContextBaseJavaModule {
+@@ -313,6 +313,52 @@ public class OneTrust extends ReactContextBaseJavaModule {
          promise.resolve(googleConsentData.toString());
      }
  
 +    @ReactMethod
 +    public void fetchPreferencesCmpApiData(Promise promise){
-+        promise.resolve(null);
++        ot.fetchPreferencesCmpApiData(new OTCallback() {
++            @Override
++            public void onSuccess(@NonNull OTResponse otResponse) {
++                promise.resolve(null);
++            }
++
++            @Override
++            public void onFailure(@NonNull OTResponse otResponse) {
++                promise.reject(
++                    "OT_FETCH_PREFERENCE_CENTER_DATA",
++                    otResponse.getResponseMessage()
++                );
++            }
++        });
 +    }
 +
 +    @ReactMethod

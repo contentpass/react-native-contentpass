@@ -52,8 +52,14 @@ export async function createOnetrustCmpAdapter(
     await sdk.fetchPreferencesCmpApiData();
 
     const bannerData = await sdk.getBannerData();
-    const preferenceCenterData: PreferenceCenterData =
+    const preferenceCenterData: PreferenceCenterData | null =
       await sdk.getPreferenceCenterData();
+
+    if (!Array.isArray(preferenceCenterData?.purposes)) {
+      throw new Error(
+        'OneTrust returned no preference center data after fetching CMP API data'
+      );
+    }
 
     console.debug('[OnetrustCmpAdapter::create] CMP API data fetched', {
       purposeCount: preferenceCenterData?.purposes?.length ?? 0,

@@ -122,6 +122,16 @@ describe('createOnetrustCmpAdapter', () => {
     expect(sdk.getBannerData).toHaveBeenCalled();
     expect(sdk.getPreferenceCenterData).toHaveBeenCalled();
   });
+
+  it('should fail clearly when OneTrust returns no preference center data', async () => {
+    const { sdk } = createMockSdk({
+      getPreferenceCenterData: jest.fn().mockResolvedValue(null),
+    });
+
+    await expect(createOnetrustCmpAdapter(sdk)).rejects.toThrow(
+      'OneTrust returned no preference center data after fetching CMP API data'
+    );
+  });
 });
 
 describe('OnetrustCmpAdapter', () => {

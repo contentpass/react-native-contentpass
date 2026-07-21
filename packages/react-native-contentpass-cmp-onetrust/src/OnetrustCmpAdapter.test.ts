@@ -122,6 +122,16 @@ describe('createOnetrustCmpAdapter', () => {
     expect(sdk.getBannerData).toHaveBeenCalled();
     expect(sdk.getPreferenceCenterData).toHaveBeenCalled();
   });
+
+  it('should fail clearly when OneTrust returns no preference center data', async () => {
+    const { sdk } = createMockSdk({
+      getPreferenceCenterData: jest.fn().mockResolvedValue(null),
+    });
+
+    await expect(createOnetrustCmpAdapter(sdk)).rejects.toThrow(
+      'OneTrust returned no preference center data after fetching CMP API data'
+    );
+  });
 });
 
 describe('OnetrustCmpAdapter', () => {
@@ -264,6 +274,55 @@ describe('OnetrustCmpAdapter', () => {
     await flushPromises();
 
     expect(listener).toHaveBeenCalledWith(false);
+  });
+
+  it('should accept consent during the banner settlement period after accepting all in the preference center', async () => {
+    const { sdk, eventHandlers } = createMockSdk({
+      shouldShowBanner: jest.fn().mockResolvedValue(true),
+    });
+    const adapter = await createOnetrustCmpAdapter(sdk);
+    const listener = jest.fn();
+
+    adapter.onConsentStatusChange(listener);
+    await flushPromises();
+    listener.mockClear();
+
+    eventHandlers.get(OTEventName.preferenceCenterAcceptAll)?.();
+    await flushPromises();
+
+    expect(listener).toHaveBeenCalledWith(true);
+  });
+
+  it('should refresh consent after the preference center closes', async () => {
+    jest.useFakeTimers();
+    try {
+      let bannerReads = 0;
+      let statusReads = 0;
+      const { sdk, eventHandlers } = createMockSdk({
+        shouldShowBanner: jest.fn(() =>
+          Promise.resolve(bannerReads++ >= 3 ? false : true)
+        ),
+        getConsentStatusForCategory: jest.fn(() =>
+          Promise.resolve(Math.floor(statusReads++ / 2) >= 3 ? 1 : 0)
+        ),
+      });
+      const adapter = await createOnetrustCmpAdapter(sdk);
+      const listener = jest.fn();
+
+      adapter.onConsentStatusChange(listener);
+      await jest.advanceTimersByTimeAsync(0);
+      listener.mockClear();
+
+      const secondLayer = adapter.showSecondLayer('purpose');
+      eventHandlers.get(OTEventName.preferenceCenterConfirmChoices)?.();
+      await secondLayer;
+      await jest.advanceTimersByTimeAsync(100);
+
+      expect(listener).toHaveBeenCalledWith(true);
+    } finally {
+      jest.clearAllTimers();
+      jest.useRealTimers();
+    }
   });
 
   it('should emit consent status when OneTrust rejects all in the preference center', async () => {

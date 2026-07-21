@@ -52,8 +52,14 @@ export async function createOnetrustCmpAdapter(
     await sdk.fetchPreferencesCmpApiData();
 
     const bannerData = await sdk.getBannerData();
-    const preferenceCenterData: PreferenceCenterData =
+    const preferenceCenterData: PreferenceCenterData | null =
       await sdk.getPreferenceCenterData();
+
+    if (!Array.isArray(preferenceCenterData?.purposes)) {
+      throw new Error(
+        'OneTrust returned no preference center data after fetching CMP API data'
+      );
+    }
 
     console.debug('[OnetrustCmpAdapter::create] CMP API data fetched', {
       purposeCount: preferenceCenterData?.purposes?.length ?? 0,
@@ -216,6 +222,18 @@ export default class OnetrustCmpAdapter implements CmpAdapter {
               eventName,
             });
             remove();
+            const revision = this.beginConsentStatusOperation(
+              `showSecondLayer: closed:${eventName}`
+            );
+            this.logConsentSnapshot(`showSecondLayer: closed:${eventName}`);
+            this.scheduleConsentStatusRefreshes(
+              revision,
+              `showSecondLayer: closed:${eventName}`
+            );
+            this.emitConsentStatusForRevision(
+              revision,
+              `showSecondLayer: closed:${eventName}`
+            );
             resolve();
             break;
           default:
@@ -304,6 +322,17 @@ export default class OnetrustCmpAdapter implements CmpAdapter {
     });
     if (CONSENT_CHANGE_EVENTS.has(eventName)) {
       const revision = this.beginConsentStatusOperation(`event:${eventName}`);
+      if (eventName === OTEventName.preferenceCenterAcceptAll) {
+        this.bannerAcknowledgedUntil =
+          Date.now() + BANNER_SETTLEMENT_TIMEOUT_MS;
+        console.debug(
+          '[OnetrustCmpAdapter::onEvent] started banner settlement',
+          {
+            eventName,
+            bannerAcknowledgedUntil: this.bannerAcknowledgedUntil,
+          }
+        );
+      }
       this.emitConsentStatusForRevision(revision, `event:${eventName}`);
     }
 

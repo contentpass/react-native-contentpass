@@ -12,6 +12,11 @@ jest.mock('react-native-encrypted-storage', () => ({
   clear: jest.fn(() => Promise.resolve()),
 }));
 
+jest.mock('@sentry/react', () => ({
+  defaultStackParser: jest.fn(),
+  makeFetchTransport: jest.fn(),
+}));
+
 jest.mock('@sentry/react-native', () => ({
   ReactNativeClient: jest.fn().mockReturnValue({
     init: jest.fn(),

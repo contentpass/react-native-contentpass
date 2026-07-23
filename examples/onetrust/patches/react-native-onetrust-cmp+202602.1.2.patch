@@ -1,8 +1,21 @@
 diff --git a/node_modules/react-native-onetrust-cmp/android/src/main/java/com/onetrust/OneTrust.java b/node_modules/react-native-onetrust-cmp/android/src/main/java/com/onetrust/OneTrust.java
-index 23e6beb..8c85220 100644
+index 23e6beb..74a8398 100644
 --- a/node_modules/react-native-onetrust-cmp/android/src/main/java/com/onetrust/OneTrust.java
 +++ b/node_modules/react-native-onetrust-cmp/android/src/main/java/com/onetrust/OneTrust.java
-@@ -313,6 +313,52 @@ public class OneTrust extends ReactContextBaseJavaModule {
+@@ -245,6 +245,12 @@ public class OneTrust extends ReactContextBaseJavaModule {
+         promise.resolve(consentValue);
+     }
+ 
++    @ReactMethod
++    public void getPurposeConsentLocal(String categoryId, Promise promise){
++        Integer consentValue = ot.getPurposeConsentLocal(categoryId);
++        promise.resolve(consentValue);
++    }
++
+     @ReactMethod
+     public void getConsentStatusForSDKId(String SDKId, Promise promise){
+         Integer consentValue = ot.getConsentStatusForSDKId(SDKId);
+@@ -313,6 +319,52 @@ public class OneTrust extends ReactContextBaseJavaModule {
          promise.resolve(googleConsentData.toString());
      }
  
@@ -56,7 +69,7 @@ index 23e6beb..8c85220 100644
      public void showConsentPurposesUI(){
          final Activity currentActivity = getCurrentActivity();
 diff --git a/node_modules/react-native-onetrust-cmp/iOS/OneTrust.m b/node_modules/react-native-onetrust-cmp/iOS/OneTrust.m
-index 2c1a676..c84294f 100644
+index 2c1a676..ba9c9b3 100644
 --- a/node_modules/react-native-onetrust-cmp/iOS/OneTrust.m
 +++ b/node_modules/react-native-onetrust-cmp/iOS/OneTrust.m
 @@ -36,6 +36,21 @@ + (BOOL)requiresMainQueueSetup{
@@ -81,7 +94,19 @@ index 2c1a676..c84294f 100644
  RCT_EXTERN_METHOD(shouldShowBanner:
                    (RCTPromiseResolveBlock)resolve
                    rejecter:(RCTPromiseRejectBlock)reject
-@@ -65,6 +80,11 @@ + (BOOL)requiresMainQueueSetup{
+@@ -46,6 +61,11 @@ + (BOOL)requiresMainQueueSetup{
+                   resolve:(RCTPromiseResolveBlock)resolve
+                   rejecter:(RCTPromiseRejectBlock)reject)
+ 
++RCT_EXTERN_METHOD(getPurposeConsentLocal:
++                  (NSString*)categoryId
++                  resolve:(RCTPromiseResolveBlock)resolve
++                  rejecter:(RCTPromiseRejectBlock)reject)
++
+ RCT_EXTERN_METHOD(getConsentStatusForSDKId:
+                   (NSString*)sdkId
+                   resolve:(RCTPromiseResolveBlock)resolve
+@@ -65,6 +85,11 @@ + (BOOL)requiresMainQueueSetup{
                    rejecter:(RCTPromiseRejectBlock)reject
                    )
  
@@ -94,7 +119,7 @@ index 2c1a676..c84294f 100644
  RCT_EXTERN_METHOD(showConsentPurposesUI)
  
 diff --git a/node_modules/react-native-onetrust-cmp/iOS/OneTrust.swift b/node_modules/react-native-onetrust-cmp/iOS/OneTrust.swift
-index 0030d64..894862f 100644
+index 0030d64..7d4cb67 100644
 --- a/node_modules/react-native-onetrust-cmp/iOS/OneTrust.swift
 +++ b/node_modules/react-native-onetrust-cmp/iOS/OneTrust.swift
 @@ -81,31 +81,64 @@ import AppTrackingTransparency
@@ -151,7 +176,7 @@ index 0030d64..894862f 100644
 +                resolve(json)
 +            } else {
 +                reject("OT_GET_PREFERENCE_CENTER_DATA","OneTrust getPreferenceCenterData returned unsupported type.",nil)
-             }
++            }
 +            return
 +        }
 +        OTPublishersHeadlessSDK.shared.fetchPreferencesCmpApiData { [weak self] _ in
@@ -159,11 +184,11 @@ index 0030d64..894862f 100644
 +                  let json = self?.serializeToJSON(data) else {
 +                resolve(nil)
 +                return
-+            }
+             }
 +            resolve(json)
 +        }
 +    }
- 
+            
 +    @objc(getBannerData:rejecter:)
 +    public func getBannerData(_ resolve:@escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock){
 +        if let data = OTPublishersHeadlessSDK.shared.getBannerData() {
@@ -185,7 +210,20 @@ index 0030d64..894862f 100644
      }
      
      @objc(shouldShowBanner:rejecter:)
-@@ -153,6 +186,28 @@ import AppTrackingTransparency
+@@ -119,6 +152,12 @@ import AppTrackingTransparency
+         let consentStatus = OTPublishersHeadlessSDK.shared.getConsentStatus(forCategory: categoryId as String)
+         resolve(consentStatus)
+     }
++
++    @objc(getPurposeConsentLocal:resolve:rejecter:)
++    public func getPurposeConsentLocal(_ categoryId:NSString, resolve:@escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void{
++        let consentStatus = OTPublishersHeadlessSDK.shared.getPurposeConsentLocal(forCustomGroupId: categoryId as String)
++        resolve(consentStatus)
++    }
+     
+     @objc(getConsentStatusForSDKId:resolve:rejecter:)
+     public func getConsentStatusForSDKId(_ sdkId:NSString, resolve:@escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) -> Void{
+@@ -153,6 +192,28 @@ import AppTrackingTransparency
      public func getATTStatus(_ resolve:@escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock){
          resolve(getATTStatusAsString())
      }
@@ -214,7 +252,7 @@ index 0030d64..894862f 100644
      #endif
  
      @objc(showConsentUI:resolve:rejecter:)
-@@ -177,6 +232,8 @@ import AppTrackingTransparency
+@@ -177,6 +238,8 @@ import AppTrackingTransparency
                  OTPublishersHeadlessSDK.shared.showConsentUI(for: type, from: vc, completion: {
                      resolve(nil)
                  })
@@ -223,11 +261,32 @@ index 0030d64..894862f 100644
              }
          }
      }
+@@ -464,4 +527,4 @@ extension OneTrust: OTEventListener {
+         let params: [String: Any] = ["sdkId": sdkId, "consentStatus": consentStatus]
+         sendEventToJS("onSDKListSDKConsentChanged", params)
+     }
+-}
++}
+\ No newline at end of file
 diff --git a/node_modules/react-native-onetrust-cmp/index.ts b/node_modules/react-native-onetrust-cmp/index.ts
-index f99e8c5..33c48c8 100644
+index f99e8c5..5ab246a 100644
 --- a/node_modules/react-native-onetrust-cmp/index.ts
 +++ b/node_modules/react-native-onetrust-cmp/index.ts
-@@ -149,6 +149,36 @@ export default class OTPublishersNativeSDK{
+@@ -73,6 +73,13 @@ export default class OTPublishersNativeSDK{
+     return OneTrust.getConsentStatusForCategory(categoryId);
+   }
+ 
++  /**
++   * Gets the latest local consent status for a category.
++   */
++  static getPurposeConsentLocal(categoryId:string):Promise<number | null> {
++    return OneTrust.getPurposeConsentLocal(categoryId);
++  }
++
+   /**
+    * Get the current consent status for the given category
+    * @param {string} SDKId String of the SDK GUID for which you'd like to retrieve consent
+@@ -149,6 +156,36 @@ export default class OTPublishersNativeSDK{
        return JSON.parse(googleConsentModeData);
      }
  

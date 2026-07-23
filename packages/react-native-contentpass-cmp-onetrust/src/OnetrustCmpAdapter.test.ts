@@ -142,6 +142,41 @@ describe('OnetrustCmpAdapter', () => {
     await expect(adapter.hasFullConsent()).resolves.toBe(true);
   });
 
+  it('should prefer the latest local purpose consent status', async () => {
+    const { sdk } = createMockSdk({
+      getConsentStatusForCategory: jest.fn().mockResolvedValue(0),
+      getPurposeConsentLocal: jest.fn().mockResolvedValue(1),
+    });
+    const adapter = await createOnetrustCmpAdapter(sdk);
+
+    await expect(adapter.hasFullConsent()).resolves.toBe(true);
+  });
+
+  it('should wait for local purpose consent to settle during initialization', async () => {
+    jest.useFakeTimers();
+    try {
+      const { sdk } = createMockSdk({
+        shouldShowBanner: jest.fn().mockResolvedValue(false),
+        getConsentStatusForCategory: jest.fn().mockResolvedValue(0),
+        getPurposeConsentLocal: jest
+          .fn()
+          .mockResolvedValueOnce(0)
+          .mockResolvedValueOnce(0)
+          .mockResolvedValue(1),
+      });
+      const adapter = await createOnetrustCmpAdapter(sdk);
+
+      const initialization = adapter.waitForInit();
+      await jest.runAllTimersAsync();
+
+      await expect(initialization).resolves.toBeUndefined();
+      await expect(adapter.hasFullConsent()).resolves.toBe(true);
+    } finally {
+      jest.clearAllTimers();
+      jest.useRealTimers();
+    }
+  });
+
   it('should report missing consent when OneTrust requires reconsent', async () => {
     const { sdk } = createMockSdk({
       shouldShowBanner: jest.fn().mockResolvedValue(true),

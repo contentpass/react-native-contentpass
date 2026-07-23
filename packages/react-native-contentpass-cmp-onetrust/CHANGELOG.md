@@ -1,5 +1,11 @@
 # @contentpass/react-native-contentpass-cmp-onetrust
 
+## 0.4.4
+
+### Patch Changes
+
+- Read local OneTrust consent
+
 ## 0.4.3
 
 ### Patch Changes

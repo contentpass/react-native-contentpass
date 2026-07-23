@@ -12,6 +12,7 @@ const CONSENT_CHANGE_EVENTS = new Set<OTEventName>([
 ]);
 
 const CONSENT_STATUS_REFRESH_DELAYS_MS = [100, 500, 1000];
+const INITIAL_CONSENT_STATUS_REFRESH_DELAYS_MS = [0, 100, 500, 1000];
 const BANNER_SETTLEMENT_TIMEOUT_MS = 10_000;
 
 export type OnetrustCmpAdapterOptions = {
@@ -28,6 +29,9 @@ export type OnetrustCmpAdapterOptions = {
 type ConsentStatus = {
   groupId: string;
   status: number;
+  savedStatus: number;
+  localStatus: number | null;
+  statusSource: 'saved' | 'local';
   isAttGroup: boolean;
 };
 
@@ -69,6 +73,17 @@ export async function createOnetrustCmpAdapter(
       showBanner: preferenceCenterData?.appConfig?.showBanner,
       bannerReason: preferenceCenterData?.appConfig?.bannerReason,
       bannerReasonCode: preferenceCenterData?.appConfig?.bannerReasonCode,
+      preferenceCenterGroupConsents:
+        preferenceCenterData?.storageKeys?.OT_GroupConsents,
+      preferenceCenterPurposeStates: Object.fromEntries(
+        preferenceCenterData.purposes.map(
+          ({ consentStatus, consentToggleStatus, groupId }) => [
+            groupId,
+            { consentStatus, consentToggleStatus },
+          ]
+        )
+      ),
+      bannerGroupConsents: bannerData?.storageKeys?.OT_GroupConsents,
     });
 
     return new OnetrustCmpAdapter(
@@ -97,6 +112,7 @@ export default class OnetrustCmpAdapter implements CmpAdapter {
   >();
   private consentStatusRevision = 0;
   private bannerAcknowledgedUntil = 0;
+  private initialConsentStatusReady: Promise<void> | null = null;
 
   constructor(
     private readonly sdk: OTPublishersNativeSDK,
@@ -138,7 +154,11 @@ export default class OnetrustCmpAdapter implements CmpAdapter {
   }
 
   async waitForInit(): Promise<void> {
-    console.debug('[OnetrustCmpAdapter::waitForInit] already initialized');
+    if (!this.initialConsentStatusReady) {
+      this.initialConsentStatusReady = this.waitForInitialConsentStatus();
+    }
+
+    await this.initialConsentStatusReady;
   }
 
   async acceptAll(): Promise<void> {
@@ -428,17 +448,71 @@ export default class OnetrustCmpAdapter implements CmpAdapter {
     const [shouldShowBanner, statuses] = await Promise.all([
       this.sdk.shouldShowBanner(),
       Promise.all(
-        this.groupIds.map((groupId) =>
-          this.sdk.getConsentStatusForCategory(groupId).then((status) => ({
-            groupId,
-            status,
-            isAttGroup: this.attGroupIds.has(groupId),
-          }))
-        )
+        this.groupIds.map((groupId) => this.getConsentStatus(groupId))
       ),
     ]);
 
     return { shouldShowBanner, consentStatuses: statuses };
+  }
+
+  private async getConsentStatus(groupId: string): Promise<ConsentStatus> {
+    const savedStatusPromise = this.sdk.getConsentStatusForCategory(groupId);
+    const localStatusPromise = this.sdk.getPurposeConsentLocal
+      ? this.sdk.getPurposeConsentLocal(groupId).catch((error) => {
+          console.warn(
+            '[OnetrustCmpAdapter::getConsentStatus] local status unavailable',
+            { groupId, error }
+          );
+          return null;
+        })
+      : Promise.resolve(null);
+    const [savedStatus, localStatus] = await Promise.all([
+      savedStatusPromise,
+      localStatusPromise,
+    ]);
+    const hasLocalStatus = localStatus !== null && localStatus >= 0;
+
+    return {
+      groupId,
+      status: hasLocalStatus ? localStatus : savedStatus,
+      savedStatus,
+      localStatus,
+      statusSource: hasLocalStatus ? 'local' : 'saved',
+      isAttGroup: this.attGroupIds.has(groupId),
+    };
+  }
+
+  private async waitForInitialConsentStatus(): Promise<void> {
+    const startedAt = Date.now();
+
+    for (const delay of INITIAL_CONSENT_STATUS_REFRESH_DELAYS_MS) {
+      const remainingDelay = Math.max(0, delay - (Date.now() - startedAt));
+      if (remainingDelay > 0) {
+        await new Promise<void>((resolve) =>
+          setTimeout(resolve, remainingDelay)
+        );
+      }
+
+      try {
+        const consentState = await this.getConsentState();
+        const consentDecision = this.getFullConsentDecision(consentState);
+        console.debug('[OnetrustCmpAdapter::waitForInit] consent status', {
+          delay,
+          ...consentDecision,
+          ...consentState,
+        });
+
+        if (consentState.shouldShowBanner || consentDecision.fullConsent) {
+          return;
+        }
+      } catch (error) {
+        console.error('[OnetrustCmpAdapter::waitForInit] status check failed', {
+          delay,
+          error,
+        });
+        return;
+      }
+    }
   }
 
   private getFullConsentDecision({

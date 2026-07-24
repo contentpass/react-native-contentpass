@@ -14,6 +14,8 @@ yarn add @contentpass/react-native-contentpass
 
 The following peer dependencies must be installed:
 
+- [@sentry/react-native](https://github.com/getsentry/sentry-react-native) — error reporting; install a compatible
+  8.x version selected by your app
 - [react](https://github.com/facebook/react)
 - [react-native](https://github.com/facebook/react-native)
 - [react-native-app-auth](https://github.com/FormidableLabs/react-native-app-auth) — OAuth 2.0 authentication

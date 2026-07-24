@@ -1,5 +1,11 @@
 # @contentpass/react-native-contentpass
 
+## 0.8.0
+
+### Minor Changes
+
+- Convert Sentry into a peer dependency
+
 ## 0.7.2
 
 ### Patch Changes

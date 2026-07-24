@@ -1,5 +1,14 @@
 # @contentpass/examples-consentmanager
 
+## 0.0.5
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @contentpass/react-native-contentpass@0.8.0
+  - @contentpass/react-native-contentpass-cmp-consentmanager@0.1.1
+  - @contentpass/react-native-contentpass-ui@0.6.1
+
 ## 0.0.4
 
 ### Patch Changes

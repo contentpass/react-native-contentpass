@@ -11,6 +11,7 @@
     "@contentpass/react-native-contentpass": "workspace:*",
     "@contentpass/react-native-contentpass-cmp-consentmanager": "workspace:*",
     "@contentpass/react-native-contentpass-ui": "workspace:*",
+    "@sentry/react-native": "^8.19.0",
     "cm-sdk-react-native-v3": "^3.10.0",
     "expo": "~55.0.26",
     "expo-status-bar": "~55.0.6",

@@ -12,6 +12,7 @@
     "@contentpass/react-native-contentpass": "workspace:*",
     "@contentpass/react-native-contentpass-cmp-onetrust": "workspace:*",
     "@contentpass/react-native-contentpass-ui": "workspace:*",
+    "@sentry/react-native": "^8.19.0",
     "expo": "~55.0.26",
     "expo-status-bar": "~55.0.6",
     "react": "19.2.0",

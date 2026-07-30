@@ -3323,6 +3323,7 @@ __metadata:
     "@react-native/babel-preset": 0.83.6
     "@react-native/metro-config": 0.83.6
     "@react-native/typescript-config": 0.83.6
+    "@sentry/react-native": ^8.19.0
     babel-preset-expo: ^55.0.22
     cm-sdk-react-native-v3: ^3.10.0
     expo: ~55.0.26
@@ -3352,6 +3353,7 @@ __metadata:
     "@react-native/babel-preset": 0.83.6
     "@react-native/metro-config": 0.83.6
     "@react-native/typescript-config": 0.83.6
+    "@sentry/react-native": ^8.19.0
     babel-preset-expo: ^55.0.22
     expo: ~55.0.26
     expo-status-bar: ~55.0.6
@@ -3381,6 +3383,7 @@ __metadata:
     "@react-native/babel-preset": 0.83.6
     "@react-native/metro-config": 0.83.6
     "@react-native/typescript-config": 0.83.6
+    "@sentry/react-native": ^8.19.0
     "@sourcepoint/react-native-cmp": ^1.0.13
     babel-preset-expo: ^55.0.22
     expo: ~55.0.26
@@ -3425,6 +3428,7 @@ __metadata:
     "@react-native/babel-preset": 0.83.6
     "@react-native/metro-config": 0.83.6
     "@react-native/typescript-config": 0.83.6
+    "@sentry/react-native": ^8.19.0
     "@sourcepoint/react-native-cmp": ^1.0.13
     patch-package: ^8.0.1
     postinstall-postinstall: ^2.1.0

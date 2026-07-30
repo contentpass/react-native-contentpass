@@ -14,6 +14,7 @@
     "@contentpass/examples-sourcepoint-shared": "workspace:*",
     "@contentpass/react-native-contentpass": "workspace:*",
     "@contentpass/react-native-contentpass-ui": "workspace:*",
+    "@sentry/react-native": "^8.19.0",
     "@sourcepoint/react-native-cmp": "^1.0.13",
     "react": "19.2.0",
     "react-native": "0.83.6",

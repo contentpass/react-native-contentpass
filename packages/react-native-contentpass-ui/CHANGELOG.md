@@ -1,5 +1,11 @@
 # @contentpass/react-native-contentpass-ui
 
+## 0.7.0
+
+### Minor Changes
+
+- Fix race in Layer init
+
 ## 0.6.1
 
 ### Patch Changes

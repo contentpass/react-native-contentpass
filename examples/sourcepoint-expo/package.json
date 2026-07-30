@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@contentpass/examples-sourcepoint-shared": "workspace:*",
+    "@sentry/react-native": "^8.19.0",
     "@sourcepoint/react-native-cmp": "^1.0.13",
     "expo": "~55.0.26",
     "expo-status-bar": "~55.0.6",

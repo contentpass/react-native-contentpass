@@ -28,26 +28,80 @@ function isSameOrNestedPath(pathname: string, basePathname: string): boolean {
   );
 }
 
-const EARLY_INJECT_JS = `
+export const EARLY_INJECT_JS = `
   (function () {
-    var style = document.createElement('style');
-    style.textContent = '*, *::before, *::after { animation-duration: 0s !important; transition-duration: 0s !important; } main, .backdrop { visibility: visible !important; transform: none !important; }';
-    (document.head || document.documentElement).appendChild(style);
-
     var originalPostMessage = window.postMessage;
+    var pendingMessages = [];
+
+    function postToReactNative(message) {
+      var bridge = window.ReactNativeWebView;
+
+      if (!bridge || typeof bridge.postMessage !== 'function') {
+        return false;
+      }
+
+      try {
+        bridge.postMessage(message);
+        return true;
+      } catch (error) {
+        return false;
+      }
+    }
+
     window.postMessage = function (data) {
       try {
-        window.ReactNativeWebView.postMessage(
-          typeof data === 'string' ? data : JSON.stringify(data)
-        );
-      } catch (e) {}
+        var message =
+          typeof data === 'string' ? data : JSON.stringify(data);
+
+        if (
+          typeof message === 'string' &&
+          !postToReactNative(message)
+        ) {
+          pendingMessages.push(message);
+        }
+      } catch (error) {}
+
       if (originalPostMessage) {
         originalPostMessage.apply(window, arguments);
       }
     };
 
-    true;
+    var bridgeInterval = setInterval(function () {
+      while (
+        pendingMessages.length > 0 &&
+        postToReactNative(pendingMessages[0])
+      ) {
+        pendingMessages.shift();
+      }
+
+      if (
+        pendingMessages.length === 0 &&
+        window.ReactNativeWebView &&
+        typeof window.ReactNativeWebView.postMessage === 'function'
+      ) {
+        clearInterval(bridgeInterval);
+      }
+    }, 10);
+
+    function injectStyle() {
+      var parent = document.head || document.documentElement;
+
+      if (!parent) {
+        return;
+      }
+
+      var style = document.createElement('style');
+      style.textContent = '*, *::before, *::after { animation-duration: 0s !important; transition-duration: 0s !important; } main, .backdrop { visibility: visible !important; transform: none !important; }';
+      parent.appendChild(style);
+    }
+
+    if (document.head || document.documentElement) {
+      injectStyle();
+    } else {
+      document.addEventListener('DOMContentLoaded', injectStyle, false);
+    }
   })();
+  true;
 `;
 
 const styles = StyleSheet.create({
@@ -330,6 +384,7 @@ export default function ContentpassLayer({
         }}
         onLoadStart={() => {
           console.debug('WebView load start');
+          setReady(false);
         }}
         onLoadEnd={() => {
           console.debug('WebView load end');

@@ -195,9 +195,14 @@ export default function ContentpassConsentGate({
 
   // Monitor the contentpass auth state
   useEffect(() => {
-    sdk.registerObserver((state) => {
+    const observer = (state: ContentpassState) => {
       setCpAuthState(state);
-    });
+    };
+    sdk.registerObserver(observer);
+
+    return () => {
+      sdk.unregisterObserver(observer);
+    };
   }, [sdk]);
 
   useEffect(() => {

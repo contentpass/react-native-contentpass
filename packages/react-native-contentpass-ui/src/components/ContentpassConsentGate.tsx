@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, AppState, StyleSheet, View } from 'react-native';
 import {
   ContentpassStateType,
@@ -15,6 +15,8 @@ import {
   loadCmpMetadata,
   observeCmpConsentStatus,
   type CmpMetadata,
+  UI_OPERATION_TIMEOUT_MS,
+  withTimeout,
 } from './ContentpassConsentGateStartup';
 import {
   isConsentGateWaitingForAuth,
@@ -46,6 +48,7 @@ export default function ContentpassConsentGate({
   const [isShowingContentpass, setIsShowingContentpass] = useState(false);
 
   const [consentResolved, setConsentResolved] = useState(false);
+  const [failedOpen, setFailedOpen] = useState(false);
   const [cmpMetadata, setCmpMetadata] = useState<
     (CmpMetadata & { adapter: CmpAdapter }) | null
   >(null);
@@ -57,6 +60,10 @@ export default function ContentpassConsentGate({
   } | null>(null);
   const currentCmpConsentStatus =
     cmpConsentStatus?.adapter === cmpAdapter ? cmpConsentStatus : null;
+  const failOpen = useCallback((message: string, error?: unknown) => {
+    console.error(message, error);
+    setFailedOpen(true);
+  }, []);
 
   const layerEvents = useMemo(() => {
     return {
@@ -110,16 +117,26 @@ export default function ContentpassConsentGate({
       return;
     }
 
-    cmpAdapter?.waitForInit?.().then(
-      () => {
-        setCmpReady(true);
-      },
-      (error) => {
-        console.error('Failed to wait for CMP init', error);
-        setCmpReady(true);
-      }
-    );
-  }, [cmpReady, cmpAdapter]);
+    let active = true;
+    withTimeout(
+      cmpAdapter.waitForInit(),
+      'Timed out while waiting for CMP initialization'
+    )
+      .then(() => {
+        if (active) {
+          setCmpReady(true);
+        }
+      })
+      .catch((error) => {
+        if (active) {
+          failOpen('Failed to initialize CMP', error);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [cmpReady, cmpAdapter, failOpen]);
 
   // Listen for consent status changes
   useEffect(() => {
@@ -141,20 +158,18 @@ export default function ContentpassConsentGate({
         setCmpConsentStatus({ adapter: cmpAdapter, hasFullConsent: false });
       }
     );
-    loadCmpMetadata(cmpAdapter)
+    withTimeout(
+      loadCmpMetadata(cmpAdapter),
+      'Timed out while loading CMP metadata'
+    )
       .then((metadata) => {
         if (active) {
           setCmpMetadata({ ...metadata, adapter: cmpAdapter });
         }
       })
       .catch((error) => {
-        console.error('Failed to load CMP metadata', error);
         if (active) {
-          setCmpMetadata({
-            purposesList: [],
-            vendorCount: 0,
-            adapter: cmpAdapter,
-          });
+          failOpen('Failed to load CMP metadata', error);
         }
       });
 
@@ -163,7 +178,7 @@ export default function ContentpassConsentGate({
       console.debug('[ContentpassConsentGate::onConsentStatusChange] cleanup');
       stopObservingConsent();
     };
-  }, [cmpReady, cmpAdapter]);
+  }, [cmpReady, cmpAdapter, failOpen]);
 
   // Monitor the contentpass auth state
   useEffect(() => {
@@ -181,6 +196,26 @@ export default function ContentpassConsentGate({
 
     return () => subscription.remove();
   }, [cpAuthState?.state, sdk]);
+
+  useEffect(() => {
+    if (cpAuthState?.state === ContentpassStateType.ERROR) {
+      failOpen('Contentpass initialization failed', cpAuthState.error);
+      return;
+    }
+
+    if (
+      cpAuthState &&
+      cpAuthState.state !== ContentpassStateType.INITIALISING
+    ) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      failOpen('Timed out while initializing Contentpass');
+    }, UI_OPERATION_TIMEOUT_MS);
+
+    return () => clearTimeout(timeout);
+  }, [cpAuthState, failOpen]);
 
   // Policy for setting the visibility of the consent layer
   useEffect(() => {
@@ -228,6 +263,10 @@ export default function ContentpassConsentGate({
     isVisible,
     onVisibilityChange,
   ]);
+
+  if (failedOpen) {
+    return <>{children}</>;
+  }
 
   if (!consentResolved || isShowingContentpass || isShowingSecondLayer) {
     return (

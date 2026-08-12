@@ -11,6 +11,11 @@ import type {
 } from '@contentpass/react-native-contentpass';
 import ContentpassLayer from './ContentpassLayer';
 import type { ContentpassLayerEvents } from './ContentpassLayerEvents';
+import {
+  loadCmpMetadata,
+  observeCmpConsentStatus,
+  type CmpMetadata,
+} from './ContentpassConsentGateStartup';
 
 type ContentpassConsentGateProps = {
   children: React.ReactNode;
@@ -31,15 +36,23 @@ export default function ContentpassConsentGate({
 }: ContentpassConsentGateProps) {
   const sdk = useContentpassSdk();
   const [cmpReady, setCmpReady] = useState(false);
-  const [hasFullConsent, setHasFullConsent] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [cpAuthState, setCpAuthState] = useState<ContentpassState | null>(null);
   const [isShowingSecondLayer, setIsShowingSecondLayer] = useState(false);
   const [isShowingContentpass, setIsShowingContentpass] = useState(false);
 
   const [consentResolved, setConsentResolved] = useState(false);
-  const [purposesList, setPurposesList] = useState<string[]>([]);
-  const [vendorCount, setVendorCount] = useState(0);
+  const [cmpMetadata, setCmpMetadata] = useState<
+    (CmpMetadata & { adapter: CmpAdapter }) | null
+  >(null);
+  const currentCmpMetadata =
+    cmpMetadata?.adapter === cmpAdapter ? cmpMetadata : null;
+  const [cmpConsentStatus, setCmpConsentStatus] = useState<{
+    adapter: CmpAdapter;
+    hasFullConsent: boolean;
+  } | null>(null);
+  const currentCmpConsentStatus =
+    cmpConsentStatus?.adapter === cmpAdapter ? cmpConsentStatus : null;
 
   const layerEvents = useMemo(() => {
     return {
@@ -105,30 +118,33 @@ export default function ContentpassConsentGate({
     }
 
     let active = true;
-    const unsubscribe = cmpAdapter.onConsentStatusChange((v: boolean) => {
-      console.debug('[ContentpassConsentGate::onConsentStatusChange]', {
-        fullConsent: v,
-        active,
+    const stopObservingConsent = observeCmpConsentStatus(
+      cmpAdapter,
+      (hasFullConsent) => {
+        console.debug('[ContentpassConsentGate::onConsentStatusChange]', {
+          fullConsent: hasFullConsent,
+        });
+        setCmpConsentStatus({ adapter: cmpAdapter, hasFullConsent });
+      },
+      (error) => {
+        console.error('Failed to load initial CMP consent status', error);
+        setCmpConsentStatus({ adapter: cmpAdapter, hasFullConsent: false });
+      }
+    );
+    loadCmpMetadata(cmpAdapter)
+      .then((metadata) => {
+        if (active) {
+          setCmpMetadata({ ...metadata, adapter: cmpAdapter });
+        }
+      })
+      .catch((error) => {
+        console.error('Failed to load CMP metadata', error);
       });
-      if (active) {
-        setHasFullConsent(v);
-      }
-    });
-    cmpAdapter.getRequiredPurposes().then((v: string[]) => {
-      if (active) {
-        setPurposesList(v);
-      }
-    });
-    cmpAdapter.getNumberOfVendors().then((v: number) => {
-      if (active) {
-        setVendorCount(v);
-      }
-    });
 
     return () => {
       active = false;
       console.debug('[ContentpassConsentGate::onConsentStatusChange] cleanup');
-      unsubscribe?.();
+      stopObservingConsent();
     };
   }, [cmpReady, cmpAdapter]);
 
@@ -147,6 +163,8 @@ export default function ContentpassConsentGate({
     ];
     if (
       !cmpReady ||
+      !currentCmpMetadata ||
+      !currentCmpConsentStatus ||
       !cpAuthState ||
       invalidStates.includes(cpAuthState.state)
     ) {
@@ -162,12 +180,12 @@ export default function ContentpassConsentGate({
 
     const isFine =
       cpAuthState.state === ContentpassStateType.AUTHENTICATED ||
-      hasFullConsent;
+      currentCmpConsentStatus.hasFullConsent;
     const visible = !isFine;
     console.debug('[ContentpassConsentGate::visibility]', {
       cmpReady,
       contentpassState: cpAuthState.state,
-      hasFullConsent,
+      hasFullConsent: currentCmpConsentStatus.hasFullConsent,
       isShowingContentpass,
       isShowingSecondLayer,
       visible,
@@ -179,8 +197,9 @@ export default function ContentpassConsentGate({
     setConsentResolved(true);
   }, [
     cmpReady,
+    currentCmpMetadata,
+    currentCmpConsentStatus,
     cpAuthState,
-    hasFullConsent,
     isShowingContentpass,
     isShowingSecondLayer,
     isVisible,
@@ -207,8 +226,8 @@ export default function ContentpassConsentGate({
         instanceId={sdk.instanceId}
         planId={contentpassConfig.planId}
         propertyId={contentpassConfig.propertyId}
-        purposesList={purposesList}
-        vendorCount={vendorCount}
+        purposesList={currentCmpMetadata?.purposesList ?? []}
+        vendorCount={currentCmpMetadata?.vendorCount ?? 0}
         locale={locale}
       />
     );

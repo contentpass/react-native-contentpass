@@ -9,10 +9,26 @@ import {
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import type { ContentpassLayerEvents } from './ContentpassLayerEvents';
 import buildFirstLayerUrl from './buildFirstLayerUrl';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 
 const MESSAGE_PROTOCOL = 'contentpass-first-layer';
 const POPUP_URL_PROTOCOLS = new Set(['http:', 'https:']);
+
+type LayerReadyAction = 'first-layer-ready' | 'load-started' | 'url-changed';
+
+export function layerReadyReducer(
+  ready: boolean,
+  action: LayerReadyAction
+): boolean {
+  switch (action) {
+    case 'first-layer-ready':
+      return true;
+    case 'url-changed':
+      return false;
+    case 'load-started':
+      return ready;
+  }
+}
 
 function normalizePathname(pathname: string): string {
   return pathname.replace(/\/+$/, '');
@@ -184,13 +200,13 @@ export default function ContentpassLayer({
     });
   }, [baseUrl, planId, propertyId, purposesList, vendorCount, locale]);
 
-  const [ready, setReady] = useState(false);
+  const [ready, updateReady] = useReducer(layerReadyReducer, false);
   const [layerUrl, setLayerUrl] = useState(firstLayerUrl);
   const [popupUrl, setPopupUrl] = useState<string | null>(null);
 
   useEffect(() => {
     setLayerUrl(firstLayerUrl);
-    setReady(false);
+    updateReady('url-changed');
   }, [firstLayerUrl]);
 
   const closePopup = useCallback(() => setPopupUrl(null), []);
@@ -208,7 +224,7 @@ export default function ContentpassLayer({
   );
 
   const loadLayerUrl = useCallback((url: URL) => {
-    setReady(false);
+    updateReady('url-changed');
     setLayerUrl(url.toString());
   }, []);
 
@@ -262,7 +278,7 @@ export default function ContentpassLayer({
 
     switch (msg.action) {
       case 'FIRST_LAYER_READY':
-        setReady(true);
+        updateReady('first-layer-ready');
         break;
       case 'ENABLE_SCROLL_ON_PROPERTY':
       case 'DISABLE_SCROLL_ON_PROPERTY':
@@ -384,7 +400,7 @@ export default function ContentpassLayer({
         }}
         onLoadStart={() => {
           console.debug('WebView load start');
-          setReady(false);
+          updateReady('load-started');
         }}
         onLoadEnd={() => {
           console.debug('WebView load end');

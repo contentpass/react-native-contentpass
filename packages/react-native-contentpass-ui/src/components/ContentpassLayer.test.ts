@@ -1,5 +1,5 @@
 import { runInNewContext } from 'node:vm';
-import { EARLY_INJECT_JS } from './ContentpassLayer';
+import { EARLY_INJECT_JS, layerReadyReducer } from './ContentpassLayer';
 
 jest.mock('react-native-webview', () => ({
   WebView: 'WebView',
@@ -45,6 +45,19 @@ function executeEarlyInjection({
     clearInterval,
   });
 }
+
+describe('ContentpassLayer', () => {
+  it('stays visible when load-start arrives after the ready message', () => {
+    const readyAfterMessage = layerReadyReducer(false, 'first-layer-ready');
+    const readyAfterLoadStart = layerReadyReducer(
+      readyAfterMessage,
+      'load-started'
+    );
+
+    expect(readyAfterLoadStart).toBe(true);
+    expect(layerReadyReducer(readyAfterLoadStart, 'url-changed')).toBe(false);
+  });
+});
 
 describe('EARLY_INJECT_JS', () => {
   it('queues messages until the Android bridge becomes available', () => {

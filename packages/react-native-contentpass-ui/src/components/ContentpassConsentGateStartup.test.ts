@@ -1,6 +1,7 @@
 // Copyright 2026 Content Pass GmbH. All Rights Reserved.
 import type { CmpAdapter } from '@contentpass/react-native-contentpass';
 import {
+  isConsentGateSatisfied,
   loadCmpMetadata,
   observeCmpConsentStatus,
   withTimeout,
@@ -14,6 +15,14 @@ function deferred<T>() {
 
   return { promise, resolve };
 }
+
+describe('isConsentGateSatisfied', () => {
+  it('requires either a valid subscription or full consent', () => {
+    expect(isConsentGateSatisfied(false, false)).toBe(false);
+    expect(isConsentGateSatisfied(true, false)).toBe(true);
+    expect(isConsentGateSatisfied(false, true)).toBe(true);
+  });
+});
 
 describe('withTimeout', () => {
   it('rejects operations that do not settle in time', async () => {

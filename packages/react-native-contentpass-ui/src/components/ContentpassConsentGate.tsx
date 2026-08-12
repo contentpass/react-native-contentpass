@@ -12,6 +12,7 @@ import type {
 import ContentpassLayer from './ContentpassLayer';
 import type { ContentpassLayerEvents } from './ContentpassLayerEvents';
 import {
+  isConsentGateSatisfied,
   loadCmpMetadata,
   observeCmpConsentStatus,
   type CmpMetadata,
@@ -248,9 +249,13 @@ export default function ContentpassConsentGate({
       return;
     }
 
-    const isFine =
-      cpAuthState.state === ContentpassStateType.AUTHENTICATED ||
-      currentCmpConsentStatus.hasFullConsent;
+    const hasValidSubscription =
+      cpAuthState.state === ContentpassStateType.AUTHENTICATED &&
+      cpAuthState.hasValidSubscription;
+    const isFine = isConsentGateSatisfied(
+      hasValidSubscription,
+      currentCmpConsentStatus.hasFullConsent
+    );
     const visible = !isFine;
     console.debug('[ContentpassConsentGate::visibility]', {
       cmpReady,

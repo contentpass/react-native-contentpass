@@ -8,6 +8,13 @@ export type CmpMetadata = {
   vendorCount: number;
 };
 
+export function isConsentGateSatisfied(
+  hasValidSubscription: boolean,
+  hasFullConsent: boolean
+): boolean {
+  return hasValidSubscription || hasFullConsent;
+}
+
 export function withTimeout<T>(
   operation: Promise<T>,
   message: string,

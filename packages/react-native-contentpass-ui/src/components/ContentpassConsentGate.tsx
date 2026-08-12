@@ -89,9 +89,12 @@ export default function ContentpassConsentGate({
       contentpass: async (route: 'login' | 'signup') => {
         try {
           setIsShowingContentpass(true);
-          await sdk.authenticate(route);
+          await withTimeout(
+            sdk.authenticate(route),
+            'Timed out while authenticating Contentpass'
+          );
         } catch (error) {
-          console.error('Failed to authenticate Contentpass', error);
+          failOpen('Failed to authenticate Contentpass', error);
           sdk.recoverFromError();
         } finally {
           setIsShowingContentpass(false);
@@ -100,9 +103,12 @@ export default function ContentpassConsentGate({
       showSecondLayer: async (view: 'vendor' | 'purpose') => {
         setIsShowingSecondLayer(true);
         try {
-          await cmpAdapter.showSecondLayer(view);
+          await withTimeout(
+            cmpAdapter.showSecondLayer(view),
+            'Timed out while showing the CMP second layer'
+          );
         } catch (error) {
-          console.error('Failed to show second layer in CMP', error);
+          failOpen('Failed to show second layer in CMP', error);
         } finally {
           setIsShowingSecondLayer(false);
         }
@@ -115,7 +121,7 @@ export default function ContentpassConsentGate({
         sdk.event(eventCategory, eventAction, eventLabel);
       },
     } as ContentpassLayerEvents;
-  }, [sdk, cmpAdapter]);
+  }, [sdk, cmpAdapter, failOpen]);
 
   // Wait for the CMP to be ready
   useEffect(() => {

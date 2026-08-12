@@ -1,5 +1,11 @@
 # @contentpass/react-native-contentpass-ui
 
+## 0.7.1
+
+### Patch Changes
+
+- Fix iOS ready race
+
 ## 0.7.0
 
 ### Minor Changes

@@ -11,6 +11,10 @@ import type {
 } from '@contentpass/react-native-contentpass';
 import ContentpassLayer from './ContentpassLayer';
 import type { ContentpassLayerEvents } from './ContentpassLayerEvents';
+import {
+  loadCmpMetadata,
+  type CmpMetadata,
+} from './ContentpassConsentGateStartup';
 
 type ContentpassConsentGateProps = {
   children: React.ReactNode;
@@ -38,8 +42,11 @@ export default function ContentpassConsentGate({
   const [isShowingContentpass, setIsShowingContentpass] = useState(false);
 
   const [consentResolved, setConsentResolved] = useState(false);
-  const [purposesList, setPurposesList] = useState<string[]>([]);
-  const [vendorCount, setVendorCount] = useState(0);
+  const [cmpMetadata, setCmpMetadata] = useState<
+    (CmpMetadata & { adapter: CmpAdapter }) | null
+  >(null);
+  const currentCmpMetadata =
+    cmpMetadata?.adapter === cmpAdapter ? cmpMetadata : null;
 
   const layerEvents = useMemo(() => {
     return {
@@ -114,16 +121,15 @@ export default function ContentpassConsentGate({
         setHasFullConsent(v);
       }
     });
-    cmpAdapter.getRequiredPurposes().then((v: string[]) => {
-      if (active) {
-        setPurposesList(v);
-      }
-    });
-    cmpAdapter.getNumberOfVendors().then((v: number) => {
-      if (active) {
-        setVendorCount(v);
-      }
-    });
+    loadCmpMetadata(cmpAdapter)
+      .then((metadata) => {
+        if (active) {
+          setCmpMetadata({ ...metadata, adapter: cmpAdapter });
+        }
+      })
+      .catch((error) => {
+        console.error('Failed to load CMP metadata', error);
+      });
 
     return () => {
       active = false;
@@ -147,6 +153,7 @@ export default function ContentpassConsentGate({
     ];
     if (
       !cmpReady ||
+      !currentCmpMetadata ||
       !cpAuthState ||
       invalidStates.includes(cpAuthState.state)
     ) {
@@ -179,6 +186,7 @@ export default function ContentpassConsentGate({
     setConsentResolved(true);
   }, [
     cmpReady,
+    currentCmpMetadata,
     cpAuthState,
     hasFullConsent,
     isShowingContentpass,
@@ -207,8 +215,8 @@ export default function ContentpassConsentGate({
         instanceId={sdk.instanceId}
         planId={contentpassConfig.planId}
         propertyId={contentpassConfig.propertyId}
-        purposesList={purposesList}
-        vendorCount={vendorCount}
+        purposesList={currentCmpMetadata?.purposesList ?? []}
+        vendorCount={currentCmpMetadata?.vendorCount ?? 0}
         locale={locale}
       />
     );

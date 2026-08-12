@@ -29,6 +29,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { UI_OPERATION_TIMEOUT_MS } from './ContentpassConsentGateStartup';
 
 const MESSAGE_PROTOCOL = 'contentpass-first-layer';
 const POPUP_URL_PROTOCOLS = new Set(['http:', 'https:']);
@@ -266,6 +267,7 @@ export default function ContentpassLayer({
   purposesList,
   vendorCount,
   locale,
+  onFailure,
 }: {
   baseUrl: string;
   eventHandler: ContentpassLayerEvents;
@@ -275,6 +277,7 @@ export default function ContentpassLayer({
   purposesList: string[];
   vendorCount: number;
   locale?: string;
+  onFailure: (error: unknown) => void;
 }) {
   const androidOverlayNavigationBarInset =
     useAndroidOverlayNavigationBarInset();
@@ -367,6 +370,18 @@ export default function ContentpassLayer({
     };
   }, [firstLayerUrl, hasLoadError, retryLoad]);
 
+  useEffect(() => {
+    if (ready) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      onFailure(new Error('Timed out while loading Contentpass layer'));
+    }, UI_OPERATION_TIMEOUT_MS);
+
+    return () => clearTimeout(timeout);
+  }, [ready, onFailure]);
+
   const closePopup = useCallback(() => setPopupUrl(null), []);
 
   const isFirstLayerUrl = useCallback(
@@ -421,14 +436,14 @@ export default function ContentpassLayer({
       }
 
       try {
-        const popupUrl = new URL(url, baseUrl);
+        const resolvedPopupUrl = new URL(url, baseUrl);
 
-        if (!POPUP_URL_PROTOCOLS.has(popupUrl.protocol)) {
+        if (!POPUP_URL_PROTOCOLS.has(resolvedPopupUrl.protocol)) {
           console.warn('Unable to open popup with unsupported URL', url);
           return;
         }
 
-        setPopupUrl(popupUrl.toString());
+        setPopupUrl(resolvedPopupUrl.toString());
       } catch (error) {
         console.warn('Unable to open popup with invalid URL', url, error);
       }
@@ -612,6 +627,7 @@ export default function ContentpassLayer({
         }}
         onHttpError={(event) => {
           console.debug('WebView HTTP error', event.nativeEvent);
+          onFailure(event.nativeEvent);
         }}
         renderError={() => (
           <View style={styles.error}>

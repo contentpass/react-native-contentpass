@@ -64,6 +64,12 @@ export default function ContentpassConsentGate({
     console.error(message, error);
     setFailedOpen(true);
   }, []);
+  const handleLayerFailure = useCallback(
+    (error: unknown) => {
+      failOpen('Failed to initialize Contentpass layer', error);
+    },
+    [failOpen]
+  );
 
   const layerEvents = useMemo(() => {
     return {
@@ -291,6 +297,7 @@ export default function ContentpassConsentGate({
         purposesList={currentCmpMetadata?.purposesList ?? []}
         vendorCount={currentCmpMetadata?.vendorCount ?? 0}
         locale={locale}
+        onFailure={handleLayerFailure}
       />
     );
   }

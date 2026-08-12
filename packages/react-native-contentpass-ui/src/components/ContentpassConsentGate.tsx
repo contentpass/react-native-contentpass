@@ -13,6 +13,7 @@ import ContentpassLayer from './ContentpassLayer';
 import type { ContentpassLayerEvents } from './ContentpassLayerEvents';
 import {
   loadCmpMetadata,
+  observeCmpConsentStatus,
   type CmpMetadata,
 } from './ContentpassConsentGateStartup';
 
@@ -35,7 +36,6 @@ export default function ContentpassConsentGate({
 }: ContentpassConsentGateProps) {
   const sdk = useContentpassSdk();
   const [cmpReady, setCmpReady] = useState(false);
-  const [hasFullConsent, setHasFullConsent] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [cpAuthState, setCpAuthState] = useState<ContentpassState | null>(null);
   const [isShowingSecondLayer, setIsShowingSecondLayer] = useState(false);
@@ -47,6 +47,12 @@ export default function ContentpassConsentGate({
   >(null);
   const currentCmpMetadata =
     cmpMetadata?.adapter === cmpAdapter ? cmpMetadata : null;
+  const [cmpConsentStatus, setCmpConsentStatus] = useState<{
+    adapter: CmpAdapter;
+    hasFullConsent: boolean;
+  } | null>(null);
+  const currentCmpConsentStatus =
+    cmpConsentStatus?.adapter === cmpAdapter ? cmpConsentStatus : null;
 
   const layerEvents = useMemo(() => {
     return {
@@ -112,15 +118,19 @@ export default function ContentpassConsentGate({
     }
 
     let active = true;
-    const unsubscribe = cmpAdapter.onConsentStatusChange((v: boolean) => {
-      console.debug('[ContentpassConsentGate::onConsentStatusChange]', {
-        fullConsent: v,
-        active,
-      });
-      if (active) {
-        setHasFullConsent(v);
+    const stopObservingConsent = observeCmpConsentStatus(
+      cmpAdapter,
+      (hasFullConsent) => {
+        console.debug('[ContentpassConsentGate::onConsentStatusChange]', {
+          fullConsent: hasFullConsent,
+        });
+        setCmpConsentStatus({ adapter: cmpAdapter, hasFullConsent });
+      },
+      (error) => {
+        console.error('Failed to load initial CMP consent status', error);
+        setCmpConsentStatus({ adapter: cmpAdapter, hasFullConsent: false });
       }
-    });
+    );
     loadCmpMetadata(cmpAdapter)
       .then((metadata) => {
         if (active) {
@@ -134,7 +144,7 @@ export default function ContentpassConsentGate({
     return () => {
       active = false;
       console.debug('[ContentpassConsentGate::onConsentStatusChange] cleanup');
-      unsubscribe?.();
+      stopObservingConsent();
     };
   }, [cmpReady, cmpAdapter]);
 
@@ -154,6 +164,7 @@ export default function ContentpassConsentGate({
     if (
       !cmpReady ||
       !currentCmpMetadata ||
+      !currentCmpConsentStatus ||
       !cpAuthState ||
       invalidStates.includes(cpAuthState.state)
     ) {
@@ -169,12 +180,12 @@ export default function ContentpassConsentGate({
 
     const isFine =
       cpAuthState.state === ContentpassStateType.AUTHENTICATED ||
-      hasFullConsent;
+      currentCmpConsentStatus.hasFullConsent;
     const visible = !isFine;
     console.debug('[ContentpassConsentGate::visibility]', {
       cmpReady,
       contentpassState: cpAuthState.state,
-      hasFullConsent,
+      hasFullConsent: currentCmpConsentStatus.hasFullConsent,
       isShowingContentpass,
       isShowingSecondLayer,
       visible,
@@ -187,8 +198,8 @@ export default function ContentpassConsentGate({
   }, [
     cmpReady,
     currentCmpMetadata,
+    currentCmpConsentStatus,
     cpAuthState,
-    hasFullConsent,
     isShowingContentpass,
     isShowingSecondLayer,
     isVisible,

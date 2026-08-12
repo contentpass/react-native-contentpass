@@ -16,3 +16,37 @@ export async function loadCmpMetadata(
 
   return { purposesList, vendorCount };
 }
+
+export function observeCmpConsentStatus(
+  cmpAdapter: CmpAdapter,
+  onStatus: (hasFullConsent: boolean) => void,
+  onError: (error: unknown) => void
+): () => void {
+  let active = true;
+  let statusRevision = 0;
+  const initialStatusRevision = statusRevision;
+  const unsubscribe = cmpAdapter.onConsentStatusChange((hasFullConsent) => {
+    statusRevision += 1;
+    if (active) {
+      onStatus(hasFullConsent);
+    }
+  });
+
+  cmpAdapter
+    .hasFullConsent()
+    .then((hasFullConsent) => {
+      if (active && statusRevision === initialStatusRevision) {
+        onStatus(hasFullConsent);
+      }
+    })
+    .catch((error) => {
+      if (active && statusRevision === initialStatusRevision) {
+        onError(error);
+      }
+    });
+
+  return () => {
+    active = false;
+    unsubscribe?.();
+  };
+}

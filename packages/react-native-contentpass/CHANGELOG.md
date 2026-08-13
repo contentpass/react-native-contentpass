@@ -1,5 +1,11 @@
 # @contentpass/react-native-contentpass
 
+## 0.8.1
+
+### Patch Changes
+
+- Fix retrying invalid refresh grants
+
 ## 0.8.0
 
 ### Minor Changes

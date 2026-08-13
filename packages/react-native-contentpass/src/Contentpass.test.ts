@@ -205,6 +205,38 @@ describe('Contentpass', () => {
       });
     });
 
+    it('should log out immediately when an expired stored token fails to refresh with invalid_grant', async () => {
+      (oidcAuthStorageMock.getOidcAuthState as jest.Mock).mockResolvedValue({
+        ...EXAMPLE_AUTH_RESULT,
+        accessTokenExpirationDate: '2024-12-02T11:53:56.272Z',
+      });
+      const refreshError = Object.assign(new Error('invalid_grant'), {
+        code: 'invalid_grant',
+      });
+      refreshSpy.mockRejectedValue(refreshError);
+
+      contentpass = new Contentpass(config);
+      const contentpassStates: ContentpassState[] = [];
+      contentpass.registerObserver((state) => {
+        contentpassStates.push(state);
+      });
+
+      await jest.advanceTimersByTimeAsync(100);
+
+      expect(refreshSpy).toHaveBeenCalledTimes(1);
+      expect(oidcAuthStorageMock.clearOidcAuthState).toHaveBeenCalled();
+      expect(reportErrorSpy).toHaveBeenCalledWith(refreshError, {
+        msg: 'Failed to refresh token with a non-retryable error',
+      });
+      expect(contentpassStates[contentpassStates.length - 1]).toEqual({
+        state: 'UNAUTHENTICATED',
+        hasValidSubscription: false,
+      });
+
+      await jest.advanceTimersByTimeAsync(120000);
+      expect(refreshSpy).toHaveBeenCalledTimes(1);
+    });
+
     it('should enable logger if logLevel is set', () => {
       contentpass = new Contentpass({
         ...config,
@@ -385,7 +417,7 @@ describe('Contentpass', () => {
         hasValidSubscription: true,
       });
 
-      // after 6 retries the state should change to error
+      // after 6 retries the state should change to unauthenticated
       await jest.advanceTimersByTimeAsync(120001);
       expect(reportErrorSpy).toHaveBeenCalledTimes(1);
       expect(reportErrorSpy).toHaveBeenCalledWith(refreshError, {
@@ -396,6 +428,39 @@ describe('Contentpass', () => {
         state: 'UNAUTHENTICATED',
         hasValidSubscription: false,
       });
+    });
+
+    it('should log out immediately when refresh fails with invalid_grant', async () => {
+      const contentpassStates: ContentpassState[] = [];
+      contentpass.registerObserver((state) => {
+        contentpassStates.push(state);
+      });
+
+      await contentpass.authenticate();
+
+      const expirationDate = new Date(
+        EXAMPLE_AUTH_RESULT.accessTokenExpirationDate
+      ).getTime();
+      const expectedDelay = expirationDate - NOW;
+      const refreshError = Object.assign(new Error('invalid_grant'), {
+        code: 'invalid_grant',
+      });
+      refreshSpy.mockRejectedValue(refreshError);
+
+      await jest.advanceTimersByTimeAsync(expectedDelay);
+
+      expect(refreshSpy).toHaveBeenCalledTimes(1);
+      expect(oidcAuthStorageMock.clearOidcAuthState).toHaveBeenCalled();
+      expect(reportErrorSpy).toHaveBeenCalledWith(refreshError, {
+        msg: 'Failed to refresh token with a non-retryable error',
+      });
+      expect(contentpassStates[contentpassStates.length - 1]).toEqual({
+        state: 'UNAUTHENTICATED',
+        hasValidSubscription: false,
+      });
+
+      await jest.advanceTimersByTimeAsync(120000);
+      expect(refreshSpy).toHaveBeenCalledTimes(1);
     });
   });
 

@@ -11,7 +11,11 @@ import {
   type AuthorizeResult,
   refresh,
 } from 'react-native-app-auth';
-import { REFRESH_TOKEN_RETRIES, SCOPES } from './consts/oidcConsts';
+import {
+  isNonRetryableRefreshError,
+  REFRESH_TOKEN_RETRIES,
+  SCOPES,
+} from './consts/oidcConsts';
 import { RefreshTokenStrategy } from './types/RefreshTokenStrategy';
 import fetchContentpassToken from './contentpassTokenUtils/fetchContentpassToken';
 import validateSubscription from './contentpassTokenUtils/validateSubscription';
@@ -165,6 +169,11 @@ export default class Contentpass implements ContentpassInterface {
 
   public logout = async () => {
     logger.info('Logging out and clearing auth state');
+    if (this.refreshTimer) {
+      clearTimeout(this.refreshTimer);
+      this.refreshTimer = null;
+    }
+    this.oidcAuthState = null;
     await this.authStateStorage.clearOidcAuthState();
     this.changeContentpassState({
       state: ContentpassStateType.UNAUTHENTICATED,
@@ -323,7 +332,15 @@ export default class Contentpass implements ContentpassInterface {
   };
 
   private onRefreshTokenError = async (counter: number, err: Error) => {
-    // FIXME: add handling for specific error to not retry in every case
+    if (isNonRetryableRefreshError(err)) {
+      logger.warn({ err }, 'Refresh token rejected, logging out');
+      reportError(err, {
+        msg: 'Failed to refresh token with a non-retryable error',
+      });
+      await this.logout();
+      return;
+    }
+
     if (counter < REFRESH_TOKEN_RETRIES) {
       logger.warn({ err, counter }, 'Failed to refresh token, retrying');
       const delay = counter * 1000 * 10;

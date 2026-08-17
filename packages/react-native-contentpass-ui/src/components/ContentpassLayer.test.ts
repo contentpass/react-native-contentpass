@@ -7,9 +7,14 @@ jest.mock('react-native-webview', () => ({
 
 type WindowMock = {
   postMessage: (...args: unknown[]) => void;
+  parent?: {
+    postMessage: (...args: unknown[]) => void;
+  };
   ReactNativeWebView?: {
     postMessage: (message: string) => void;
   };
+  __cpRnPendingMessages?: string[];
+  __cpRnBridgeInterval?: number | null;
 };
 
 type DocumentParentMock = {
@@ -56,6 +61,11 @@ describe('ContentpassLayer', () => {
 
     expect(readyAfterLoadStart).toBe(true);
     expect(layerReadyReducer(readyAfterLoadStart, 'url-changed')).toBe(false);
+  });
+
+  it('becomes visible when load-end fires without a ready message', () => {
+    expect(layerReadyReducer(false, 'load-ended')).toBe(true);
+    expect(layerReadyReducer(true, 'load-started')).toBe(true);
   });
 });
 
@@ -144,5 +154,84 @@ describe('EARLY_INJECT_JS', () => {
     expect(document.createElement).toHaveBeenCalledWith('style');
     expect(style.textContent).toContain('animation-duration: 0s');
     expect(appendChild).toHaveBeenCalledWith(style);
+  });
+
+  it('forwards parent.postMessage when parent is not the same window', () => {
+    const originalWindowPostMessage = jest.fn();
+    const originalParentPostMessage = jest.fn();
+    const parent = { postMessage: originalParentPostMessage };
+    const window: WindowMock = {
+      postMessage: originalWindowPostMessage,
+      parent,
+    };
+    const document: DocumentMock = {
+      head: { appendChild: jest.fn() },
+      documentElement: null,
+      createElement: jest.fn(() => ({ textContent: '' })),
+      addEventListener: jest.fn(),
+    };
+    const intervalCallbacks = new Map<number, () => void>();
+    const setInterval = jest.fn((callback: () => void) => {
+      const intervalId = intervalCallbacks.size + 1;
+      intervalCallbacks.set(intervalId, callback);
+      return intervalId;
+    });
+    const clearInterval = jest.fn((intervalId: number) => {
+      intervalCallbacks.delete(intervalId);
+    });
+
+    executeEarlyInjection({
+      window,
+      document,
+      setInterval,
+      clearInterval,
+    });
+
+    const readyMessage = {
+      protocol: 'contentpass-first-layer',
+      type: 'REQUEST',
+      action: 'FIRST_LAYER_READY',
+    };
+    parent.postMessage(readyMessage, '*');
+
+    expect(originalParentPostMessage).toHaveBeenCalledWith(readyMessage, '*');
+    expect(originalWindowPostMessage).not.toHaveBeenCalled();
+
+    const nativePostMessage = jest.fn();
+    window.ReactNativeWebView = { postMessage: nativePostMessage };
+    intervalCallbacks.get(1)?.();
+
+    expect(nativePostMessage).toHaveBeenCalledWith(
+      JSON.stringify(readyMessage)
+    );
+    expect(clearInterval).toHaveBeenCalledWith(1);
+  });
+
+  it('is safe to inject twice without starting a second bridge interval', () => {
+    const window: WindowMock = { postMessage: jest.fn() };
+    const document: DocumentMock = {
+      head: { appendChild: jest.fn() },
+      documentElement: null,
+      createElement: jest.fn(() => ({ textContent: '' })),
+      addEventListener: jest.fn(),
+    };
+    const setInterval = jest.fn(() => 7);
+    const clearInterval = jest.fn();
+
+    executeEarlyInjection({
+      window,
+      document,
+      setInterval,
+      clearInterval,
+    });
+    executeEarlyInjection({
+      window,
+      document,
+      setInterval,
+      clearInterval,
+    });
+
+    expect(setInterval).toHaveBeenCalledTimes(1);
+    expect(window.__cpRnBridgeInterval).toBe(7);
   });
 });

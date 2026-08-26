@@ -1,15 +1,20 @@
 import {
   ActivityIndicator,
   AppState,
+  Dimensions,
   Modal,
+  Platform,
   Pressable,
+  StatusBar,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import type { ContentpassLayerEvents } from './ContentpassLayerEvents';
 import buildFirstLayerUrl from './buildFirstLayerUrl';
+import { getAndroidOverlayNavigationBarInset } from './ContentpassLayerAndroidInset';
 import {
   canReachLayerUrl,
   getLayerLoadErrorCopy,
@@ -37,6 +42,20 @@ type LayerReadyAction =
   | 'url-changed';
 
 export const LOAD_END_READY_FALLBACK_MS = 500;
+
+function useAndroidOverlayNavigationBarInset(): number {
+  const window = useWindowDimensions();
+
+  if (Platform.OS !== 'android') {
+    return 0;
+  }
+
+  return getAndroidOverlayNavigationBarInset({
+    windowHeight: window.height,
+    screenHeight: Dimensions.get('screen').height,
+    statusBarHeight: StatusBar.currentHeight ?? 0,
+  });
+}
 
 export function layerReadyReducer(
   ready: boolean,
@@ -257,6 +276,8 @@ export default function ContentpassLayer({
   vendorCount: number;
   locale?: string;
 }) {
+  const androidOverlayNavigationBarInset =
+    useAndroidOverlayNavigationBarInset();
   const cacheNonce = useState(() => String(++firstLayerMountNonce))[0];
   const firstLayerUrl = useMemo(() => {
     return buildFirstLayerUrl({
@@ -499,7 +520,14 @@ export default function ContentpassLayer({
   }
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        androidOverlayNavigationBarInset > 0 && {
+          paddingBottom: androidOverlayNavigationBarInset,
+        },
+      ]}
+    >
       <WebView
         key={reloadNonce}
         source={{ uri: layerUrl }}

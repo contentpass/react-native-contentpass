@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, AppState, StyleSheet, View } from 'react-native';
 import {
   ContentpassStateType,
   useContentpassSdk,
@@ -16,6 +16,10 @@ import {
   observeCmpConsentStatus,
   type CmpMetadata,
 } from './ContentpassConsentGateStartup';
+import {
+  isConsentGateWaitingForAuth,
+  shouldRecoverFromErrorOnAppState,
+} from './ContentpassConsentGateRecovery';
 
 type ContentpassConsentGateProps = {
   children: React.ReactNode;
@@ -106,9 +110,15 @@ export default function ContentpassConsentGate({
       return;
     }
 
-    cmpAdapter?.waitForInit?.().then(() => {
-      setCmpReady(true);
-    });
+    cmpAdapter?.waitForInit?.().then(
+      () => {
+        setCmpReady(true);
+      },
+      (error) => {
+        console.error('Failed to wait for CMP init', error);
+        setCmpReady(true);
+      }
+    );
   }, [cmpReady, cmpAdapter]);
 
   // Listen for consent status changes
@@ -139,6 +149,13 @@ export default function ContentpassConsentGate({
       })
       .catch((error) => {
         console.error('Failed to load CMP metadata', error);
+        if (active) {
+          setCmpMetadata({
+            purposesList: [],
+            vendorCount: 0,
+            adapter: cmpAdapter,
+          });
+        }
       });
 
     return () => {
@@ -155,18 +172,24 @@ export default function ContentpassConsentGate({
     });
   }, [sdk]);
 
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextState) => {
+      if (shouldRecoverFromErrorOnAppState(nextState, cpAuthState?.state)) {
+        sdk.recoverFromError();
+      }
+    });
+
+    return () => subscription.remove();
+  }, [cpAuthState?.state, sdk]);
+
   // Policy for setting the visibility of the consent layer
   useEffect(() => {
-    const invalidStates = [
-      ContentpassStateType.INITIALISING,
-      ContentpassStateType.ERROR,
-    ];
     if (
       !cmpReady ||
       !currentCmpMetadata ||
       !currentCmpConsentStatus ||
       !cpAuthState ||
-      invalidStates.includes(cpAuthState.state)
+      isConsentGateWaitingForAuth(cpAuthState.state)
     ) {
       return;
     }

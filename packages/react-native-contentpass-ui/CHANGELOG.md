@@ -1,5 +1,11 @@
 # @contentpass/react-native-contentpass-ui
 
+## 0.8.1
+
+### Patch Changes
+
+- Keep the first-layer footer above the Android system navigation bar so the privacy-policy link stays tappable.
+
 ## 0.8.0
 
 ### Minor Changes

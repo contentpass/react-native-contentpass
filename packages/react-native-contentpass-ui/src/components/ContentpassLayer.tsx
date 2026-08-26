@@ -16,12 +16,27 @@ import {
   LAYER_REACHABILITY_POLL_MS,
   shouldRetryLayerLoadOnAppState,
 } from './ContentpassLayerLoadRecovery';
-import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from 'react';
 
 const MESSAGE_PROTOCOL = 'contentpass-first-layer';
 const POPUP_URL_PROTOCOLS = new Set(['http:', 'https:']);
 
-type LayerReadyAction = 'first-layer-ready' | 'load-started' | 'url-changed';
+let firstLayerMountNonce = 0;
+
+type LayerReadyAction =
+  | 'first-layer-ready'
+  | 'load-started'
+  | 'load-ended'
+  | 'url-changed';
+
+export const LOAD_END_READY_FALLBACK_MS = 500;
 
 export function layerReadyReducer(
   ready: boolean,
@@ -29,6 +44,7 @@ export function layerReadyReducer(
 ): boolean {
   switch (action) {
     case 'first-layer-ready':
+    case 'load-ended':
       return true;
     case 'url-changed':
       return false;
@@ -53,8 +69,11 @@ function isSameOrNestedPath(pathname: string, basePathname: string): boolean {
 
 export const EARLY_INJECT_JS = `
   (function () {
-    var originalPostMessage = window.postMessage;
-    var pendingMessages = [];
+    var pendingMessages = window.__cpRnPendingMessages;
+    if (!pendingMessages) {
+      pendingMessages = [];
+      window.__cpRnPendingMessages = pendingMessages;
+    }
 
     function postToReactNative(message) {
       var bridge = window.ReactNativeWebView;
@@ -71,42 +90,72 @@ export const EARLY_INJECT_JS = `
       }
     }
 
-    window.postMessage = function (data) {
+    function wrapPostMessage(target) {
+      if (!target || typeof target.postMessage !== 'function') {
+        return;
+      }
+
+      if (target.postMessage.__cpRnWrapped) {
+        return;
+      }
+
+      var originalPostMessage = target.postMessage;
+      var wrapped = function (data) {
+        try {
+          var message =
+            typeof data === 'string' ? data : JSON.stringify(data);
+
+          if (
+            typeof message === 'string' &&
+            !postToReactNative(message)
+          ) {
+            pendingMessages.push(message);
+          }
+        } catch (error) {}
+
+        if (originalPostMessage) {
+          originalPostMessage.apply(target, arguments);
+        }
+      };
+      wrapped.__cpRnWrapped = true;
+
       try {
-        var message =
-          typeof data === 'string' ? data : JSON.stringify(data);
+        target.postMessage = wrapped;
+      } catch (error) {}
+    }
+
+    wrapPostMessage(window);
+    try {
+      if (window.parent) {
+        wrapPostMessage(window.parent);
+      }
+    } catch (error) {}
+
+    if (!window.__cpRnBridgeInterval) {
+      window.__cpRnBridgeInterval = setInterval(function () {
+        while (
+          pendingMessages.length > 0 &&
+          postToReactNative(pendingMessages[0])
+        ) {
+          pendingMessages.shift();
+        }
 
         if (
-          typeof message === 'string' &&
-          !postToReactNative(message)
+          pendingMessages.length === 0 &&
+          window.ReactNativeWebView &&
+          typeof window.ReactNativeWebView.postMessage === 'function'
         ) {
-          pendingMessages.push(message);
+          clearInterval(window.__cpRnBridgeInterval);
+          window.__cpRnBridgeInterval = null;
         }
-      } catch (error) {}
-
-      if (originalPostMessage) {
-        originalPostMessage.apply(window, arguments);
-      }
-    };
-
-    var bridgeInterval = setInterval(function () {
-      while (
-        pendingMessages.length > 0 &&
-        postToReactNative(pendingMessages[0])
-      ) {
-        pendingMessages.shift();
-      }
-
-      if (
-        pendingMessages.length === 0 &&
-        window.ReactNativeWebView &&
-        typeof window.ReactNativeWebView.postMessage === 'function'
-      ) {
-        clearInterval(bridgeInterval);
-      }
-    }, 10);
+      }, 10);
+    }
 
     function injectStyle() {
+      if (window.__cpRnStyleInjected) {
+        return;
+      }
+
       var parent = document.head || document.documentElement;
 
       if (!parent) {
@@ -116,11 +165,13 @@ export const EARLY_INJECT_JS = `
       var style = document.createElement('style');
       style.textContent = '*, *::before, *::after { animation-duration: 0s !important; transition-duration: 0s !important; } main, .backdrop { visibility: visible !important; transform: none !important; }';
       parent.appendChild(style);
+      window.__cpRnStyleInjected = true;
     }
 
     if (document.head || document.documentElement) {
       injectStyle();
-    } else {
+    } else if (!window.__cpRnStyleListener) {
+      window.__cpRnStyleListener = true;
       document.addEventListener('DOMContentLoaded', injectStyle, false);
     }
   })();
@@ -206,6 +257,7 @@ export default function ContentpassLayer({
   vendorCount: number;
   locale?: string;
 }) {
+  const cacheNonce = useState(() => String(++firstLayerMountNonce))[0];
   const firstLayerUrl = useMemo(() => {
     return buildFirstLayerUrl({
       baseUrl,
@@ -214,8 +266,17 @@ export default function ContentpassLayer({
       purposesList,
       vendorCount,
       locale,
+      cacheNonce,
     });
-  }, [baseUrl, planId, propertyId, purposesList, vendorCount, locale]);
+  }, [
+    baseUrl,
+    planId,
+    propertyId,
+    purposesList,
+    vendorCount,
+    locale,
+    cacheNonce,
+  ]);
 
   const [ready, updateReady] = useReducer(layerReadyReducer, false);
   const [layerUrl, setLayerUrl] = useState(firstLayerUrl);
@@ -223,18 +284,35 @@ export default function ContentpassLayer({
   const [hasLoadError, setHasLoadError] = useState(false);
   const [reloadNonce, setReloadNonce] = useState(0);
   const errorCopy = getLayerLoadErrorCopy(locale);
+  const loadEndFallbackTimer = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
+
+  const clearLoadEndFallback = useCallback(() => {
+    if (loadEndFallbackTimer.current) {
+      clearTimeout(loadEndFallbackTimer.current);
+      loadEndFallbackTimer.current = null;
+    }
+  }, []);
+
+  useEffect(() => clearLoadEndFallback, [clearLoadEndFallback]);
+
+  const markUrlChanged = useCallback(() => {
+    clearLoadEndFallback();
+    updateReady('url-changed');
+  }, [clearLoadEndFallback]);
 
   const retryLoad = useCallback(() => {
     setHasLoadError(false);
-    updateReady('url-changed');
+    markUrlChanged();
     setReloadNonce((nonce) => nonce + 1);
-  }, []);
+  }, [markUrlChanged]);
 
   useEffect(() => {
     setLayerUrl(firstLayerUrl);
     setHasLoadError(false);
-    updateReady('url-changed');
-  }, [firstLayerUrl]);
+    markUrlChanged();
+  }, [firstLayerUrl, markUrlChanged]);
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (nextState) => {
@@ -282,10 +360,37 @@ export default function ContentpassLayer({
     [firstLayerUrl]
   );
 
-  const loadLayerUrl = useCallback((url: URL) => {
-    updateReady('url-changed');
-    setLayerUrl(url.toString());
-  }, []);
+  const loadLayerUrl = useCallback(
+    (url: URL) => {
+      markUrlChanged();
+      setLayerUrl(url.toString());
+    },
+    [markUrlChanged]
+  );
+
+  const scheduleLoadEndReadyFallback = useCallback(
+    (loadedUrl: string) => {
+      if (!loadedUrl) {
+        return;
+      }
+
+      try {
+        const loaded = new URL(loadedUrl, firstLayerUrl);
+        if (loaded.protocol === 'about:' || !isFirstLayerUrl(loaded)) {
+          return;
+        }
+      } catch {
+        return;
+      }
+
+      clearLoadEndFallback();
+      loadEndFallbackTimer.current = setTimeout(() => {
+        loadEndFallbackTimer.current = null;
+        updateReady('load-ended');
+      }, LOAD_END_READY_FALLBACK_MS);
+    },
+    [clearLoadEndFallback, firstLayerUrl, isFirstLayerUrl]
+  );
 
   const openPopup = useCallback(
     (url: unknown) => {
@@ -337,6 +442,7 @@ export default function ContentpassLayer({
 
     switch (msg.action) {
       case 'FIRST_LAYER_READY':
+        clearLoadEndFallback();
         updateReady('first-layer-ready');
         break;
       case 'ENABLE_SCROLL_ON_PROPERTY':
@@ -402,7 +508,9 @@ export default function ContentpassLayer({
         javaScriptEnabled
         domStorageEnabled
         automaticallyAdjustContentInsets={false}
+        cacheEnabled={false}
         injectedJavaScriptBeforeContentLoaded={EARLY_INJECT_JS}
+        injectedJavaScript={EARLY_INJECT_JS}
         setSupportMultipleWindows={false}
         onMessage={(event) => {
           handleMessage(event);
@@ -463,8 +571,9 @@ export default function ContentpassLayer({
           setHasLoadError(false);
           updateReady('load-started');
         }}
-        onLoadEnd={() => {
+        onLoadEnd={(event) => {
           console.debug('WebView load end');
+          scheduleLoadEndReadyFallback(event.nativeEvent.url);
         }}
         onLoadProgress={(event) => {
           console.debug('WebView progress', event.nativeEvent.progress);

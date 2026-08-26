@@ -40,6 +40,15 @@ describe('buildFirstLayerUrl', () => {
     );
   });
 
+  it('should append a cache nonce to the SDK version parameter', () => {
+    const url = buildFirstLayerUrl({ ...defaultParams, cacheNonce: '42' });
+    const parsed = new URL(url);
+
+    expect(parsed.searchParams.get('v')).toBe(
+      `react-native-contentpass-ui@${packageJson.version}.42`
+    );
+  });
+
   it('should omit the locale parameter when no locale is provided', () => {
     const url = buildFirstLayerUrl(defaultParams);
     const parsed = new URL(url);

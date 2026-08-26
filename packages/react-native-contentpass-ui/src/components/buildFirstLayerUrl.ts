@@ -11,6 +11,7 @@ export default function buildFirstLayerUrl({
   purposesList,
   vendorCount,
   locale,
+  cacheNonce,
 }: {
   baseUrl: string;
   propertyId: string;
@@ -18,12 +19,18 @@ export default function buildFirstLayerUrl({
   purposesList: string[];
   vendorCount: number;
   locale?: string;
+  cacheNonce?: string;
 }): string {
   // FIXME handle trailing slash in baseUrl
   const url = new URL(`${baseUrl}/first-layer/`);
   url.searchParams.set('start', 'true');
   url.searchParams.set('theme', THEME);
-  url.searchParams.set('v', SDK_VERSION);
+  // Unknown start-query keys 400 the first-layer entrypoint, so the per-mount
+  // cache nonce has to ride on the already-allowed `v` param.
+  url.searchParams.set(
+    'v',
+    cacheNonce ? `${SDK_VERSION}.${cacheNonce}` : SDK_VERSION
+  );
   if (locale) {
     url.searchParams.set('locale', locale);
   }

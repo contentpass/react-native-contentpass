@@ -1,5 +1,6 @@
 import {
   ActivityIndicator,
+  AppState,
   Modal,
   Pressable,
   StyleSheet,
@@ -9,6 +10,12 @@ import {
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import type { ContentpassLayerEvents } from './ContentpassLayerEvents';
 import buildFirstLayerUrl from './buildFirstLayerUrl';
+import {
+  canReachLayerUrl,
+  getLayerLoadErrorCopy,
+  LAYER_REACHABILITY_POLL_MS,
+  shouldRetryLayerLoadOnAppState,
+} from './ContentpassLayerLoadRecovery';
 import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 
 const MESSAGE_PROTOCOL = 'contentpass-first-layer';
@@ -139,6 +146,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
   },
+  retryButton: {
+    marginTop: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  retryButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#007AFF',
+  },
   loading: {
     ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
@@ -203,11 +220,53 @@ export default function ContentpassLayer({
   const [ready, updateReady] = useReducer(layerReadyReducer, false);
   const [layerUrl, setLayerUrl] = useState(firstLayerUrl);
   const [popupUrl, setPopupUrl] = useState<string | null>(null);
+  const [hasLoadError, setHasLoadError] = useState(false);
+  const [reloadNonce, setReloadNonce] = useState(0);
+  const errorCopy = getLayerLoadErrorCopy(locale);
+
+  const retryLoad = useCallback(() => {
+    setHasLoadError(false);
+    updateReady('url-changed');
+    setReloadNonce((nonce) => nonce + 1);
+  }, []);
 
   useEffect(() => {
     setLayerUrl(firstLayerUrl);
+    setHasLoadError(false);
     updateReady('url-changed');
   }, [firstLayerUrl]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextState) => {
+      if (shouldRetryLayerLoadOnAppState(nextState, hasLoadError)) {
+        retryLoad();
+      }
+    });
+
+    return () => subscription.remove();
+  }, [hasLoadError, retryLoad]);
+
+  useEffect(() => {
+    if (!hasLoadError) {
+      return;
+    }
+
+    let cancelled = false;
+    const poll = async () => {
+      const reachable = await canReachLayerUrl(firstLayerUrl);
+      if (!cancelled && reachable) {
+        retryLoad();
+      }
+    };
+    const timer = setInterval(() => {
+      poll();
+    }, LAYER_REACHABILITY_POLL_MS);
+
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [firstLayerUrl, hasLoadError, retryLoad]);
 
   const closePopup = useCallback(() => setPopupUrl(null), []);
 
@@ -336,6 +395,7 @@ export default function ContentpassLayer({
   return (
     <View style={styles.container}>
       <WebView
+        key={reloadNonce}
         source={{ uri: layerUrl }}
         style={[styles.webview, !ready && { opacity: 0 }]}
         originWhitelist={['*']}
@@ -400,6 +460,7 @@ export default function ContentpassLayer({
         }}
         onLoadStart={() => {
           console.debug('WebView load start');
+          setHasLoadError(false);
           updateReady('load-started');
         }}
         onLoadEnd={() => {
@@ -410,19 +471,26 @@ export default function ContentpassLayer({
         }}
         onError={(event) => {
           console.debug('WebView error', event.nativeEvent);
+          setHasLoadError(true);
         }}
         onHttpError={(event) => {
           console.debug('WebView HTTP error', event.nativeEvent);
         }}
-        renderError={(errorDomain, errorCode, errorDesc) => (
+        renderError={() => (
           <View style={styles.error}>
-            <Text style={styles.errorText}>
-              {`WebView error (${errorDomain}:${errorCode}) ${errorDesc}`}
-            </Text>
+            <Text style={styles.errorText}>{errorCopy.message}</Text>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={errorCopy.retryLabel}
+              onPress={retryLoad}
+              style={styles.retryButton}
+            >
+              <Text style={styles.retryButtonText}>{errorCopy.retryLabel}</Text>
+            </Pressable>
           </View>
         )}
       />
-      {!ready && (
+      {!ready && !hasLoadError && (
         <View style={styles.loading}>
           <ActivityIndicator size="large" />
         </View>

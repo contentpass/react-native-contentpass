@@ -1,5 +1,11 @@
 # @contentpass/react-native-contentpass-ui
 
+## 0.8.0
+
+### Minor Changes
+
+- e34a7c9: Reload the first layer after a network error and recover the consent gate from SDK ERROR when the app returns to the foreground.
+
 ## 0.7.1
 
 ### Patch Changes

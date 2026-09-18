@@ -15,6 +15,12 @@ describe('ContentpassSdkProvider', () => {
     apiUrl: 'https://cp.propert.com',
   };
 
+  beforeEach(() => {
+    (Contentpass as jest.MockedClass<typeof Contentpass>).mockImplementation(
+      () => ({ destroy: jest.fn() }) as unknown as Contentpass
+    );
+  });
+
   afterEach(() => {
     jest.resetAllMocks();
   });
@@ -28,5 +34,20 @@ describe('ContentpassSdkProvider', () => {
 
     expect(Contentpass).toHaveBeenCalledWith(mockConfig);
     expect(screen.getByTestId('child')).toHaveTextContent('Test Child');
+  });
+
+  it('destroys the Contentpass SDK instance on unmount', () => {
+    const { unmount } = render(
+      <ContentpassSdkProvider contentpassConfig={mockConfig}>
+        <Text testID="child">Test Child</Text>
+      </ContentpassSdkProvider>
+    );
+
+    const [result] = (Contentpass as jest.MockedClass<typeof Contentpass>).mock
+      .results;
+
+    unmount();
+
+    expect(result!.value.destroy).toHaveBeenCalled();
   });
 });

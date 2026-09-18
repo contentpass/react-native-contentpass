@@ -1,3 +1,5 @@
+import fetchWithTimeout from '../fetchWithTimeout';
+
 type StatsPayload = {
   ea: string;
   ec: string;
@@ -8,7 +10,7 @@ type StatsPayload = {
 };
 
 export default async function sendStats(apiUrl: string, payload: StatsPayload) {
-  const response = await fetch(`${apiUrl}/signal`, {
+  const response = await fetchWithTimeout(`${apiUrl}/signal`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json; charset=UTF-8',

@@ -44,6 +44,14 @@ type LayerReadyAction =
 
 export const LOAD_END_READY_FALLBACK_MS = 500;
 
+// The static HTML shell is small and should arrive quickly even on a bad
+// connection; if it doesn't, there's no point waiting for the full budget
+// before failing - something more fundamental (DNS, TLS, no connectivity)
+// is wrong. Once the shell has loaded, the remaining wait is for the page's
+// own JS to finish initialising and report ready, which gets the full
+// UI_OPERATION_TIMEOUT_MS.
+const LAYER_PAGE_LOAD_TIMEOUT_MS = 8_000;
+
 function useAndroidOverlayNavigationBarInset(): number {
   const window = useWindowDimensions();
 
@@ -303,6 +311,7 @@ export default function ContentpassLayer({
   ]);
 
   const [ready, updateReady] = useReducer(layerReadyReducer, false);
+  const [pageLoaded, setPageLoaded] = useState(false);
   const [layerUrl, setLayerUrl] = useState(firstLayerUrl);
   const [popupUrl, setPopupUrl] = useState<string | null>(null);
   const [hasLoadError, setHasLoadError] = useState(false);
@@ -336,6 +345,7 @@ export default function ContentpassLayer({
     setLayerUrl(firstLayerUrl);
     setHasLoadError(false);
     markUrlChanged();
+    setPageLoaded(false);
   }, [firstLayerUrl, markUrlChanged]);
 
   useEffect(() => {
@@ -370,17 +380,36 @@ export default function ContentpassLayer({
     };
   }, [firstLayerUrl, hasLoadError, retryLoad]);
 
+  // Stage 1: the static HTML shell must finish loading quickly.
   useEffect(() => {
-    if (ready) {
+    if (pageLoaded) {
       return;
     }
 
     const timeout = setTimeout(() => {
-      onFailure(new Error('Timed out while loading Contentpass layer'));
+      onFailure(
+        new Error('Timed out while loading the Contentpass layer page')
+      );
+    }, LAYER_PAGE_LOAD_TIMEOUT_MS);
+
+    return () => clearTimeout(timeout);
+  }, [pageLoaded, onFailure]);
+
+  // Stage 2: once the shell has loaded, its own JS has the full budget to
+  // finish initialising and report FIRST_LAYER_READY.
+  useEffect(() => {
+    if (!pageLoaded || ready) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      onFailure(
+        new Error('Timed out while initializing the Contentpass layer')
+      );
     }, UI_OPERATION_TIMEOUT_MS);
 
     return () => clearTimeout(timeout);
-  }, [ready, onFailure]);
+  }, [pageLoaded, ready, onFailure]);
 
   const closePopup = useCallback(() => setPopupUrl(null), []);
 
@@ -399,6 +428,7 @@ export default function ContentpassLayer({
   const loadLayerUrl = useCallback(
     (url: URL) => {
       markUrlChanged();
+      setPageLoaded(false);
       setLayerUrl(url.toString());
     },
     [markUrlChanged]
@@ -616,6 +646,7 @@ export default function ContentpassLayer({
         }}
         onLoadEnd={(event) => {
           console.debug('WebView load end');
+          setPageLoaded(true);
           scheduleLoadEndReadyFallback(event.nativeEvent.url);
         }}
         onLoadProgress={(event) => {

@@ -16,6 +16,7 @@ import {
   loadCmpMetadata,
   observeCmpConsentStatus,
   type CmpMetadata,
+  type ContentpassGateTimeouts,
   UI_OPERATION_TIMEOUT_MS,
   withTimeout,
 } from './ContentpassConsentGateStartup';
@@ -31,6 +32,7 @@ type ContentpassConsentGateProps = {
   hideAppWhenVisible?: boolean;
   locale?: string;
   onVisibilityChange?: (visible: boolean) => void;
+  timeouts?: ContentpassGateTimeouts;
 };
 
 export default function ContentpassConsentGate({
@@ -40,7 +42,18 @@ export default function ContentpassConsentGate({
   hideAppWhenVisible = true,
   locale,
   onVisibilityChange,
+  timeouts = {},
 }: ContentpassConsentGateProps) {
+  const {
+    cmpInitTimeoutMs = UI_OPERATION_TIMEOUT_MS,
+    cmpMetadataTimeoutMs = UI_OPERATION_TIMEOUT_MS,
+    cmpConsentStatusTimeoutMs = UI_OPERATION_TIMEOUT_MS,
+    authenticateTimeoutMs = UI_OPERATION_TIMEOUT_MS,
+    secondLayerTimeoutMs = UI_OPERATION_TIMEOUT_MS,
+    contentpassInitTimeoutMs = UI_OPERATION_TIMEOUT_MS,
+    layerPageLoadTimeoutMs,
+    layerReadyTimeoutMs,
+  } = timeouts;
   const sdk = useContentpassSdk();
   const [cmpReady, setCmpReady] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
@@ -92,7 +105,8 @@ export default function ContentpassConsentGate({
           setIsShowingContentpass(true);
           await withTimeout(
             sdk.authenticate(route),
-            'Timed out while authenticating Contentpass'
+            'Timed out while authenticating Contentpass',
+            authenticateTimeoutMs
           );
         } catch (error) {
           failOpen('Failed to authenticate Contentpass', error);
@@ -106,7 +120,8 @@ export default function ContentpassConsentGate({
         try {
           await withTimeout(
             cmpAdapter.showSecondLayer(view),
-            'Timed out while showing the CMP second layer'
+            'Timed out while showing the CMP second layer',
+            secondLayerTimeoutMs
           );
         } catch (error) {
           failOpen('Failed to show second layer in CMP', error);
@@ -122,7 +137,7 @@ export default function ContentpassConsentGate({
         sdk.event(eventCategory, eventAction, eventLabel);
       },
     } as ContentpassLayerEvents;
-  }, [sdk, cmpAdapter, failOpen]);
+  }, [sdk, cmpAdapter, failOpen, authenticateTimeoutMs, secondLayerTimeoutMs]);
 
   // Wait for the CMP to be ready
   useEffect(() => {
@@ -133,7 +148,8 @@ export default function ContentpassConsentGate({
     let active = true;
     withTimeout(
       cmpAdapter.waitForInit(),
-      'Timed out while waiting for CMP initialization'
+      'Timed out while waiting for CMP initialization',
+      cmpInitTimeoutMs
     )
       .then(() => {
         if (active) {
@@ -149,7 +165,7 @@ export default function ContentpassConsentGate({
     return () => {
       active = false;
     };
-  }, [cmpReady, cmpAdapter, failOpen]);
+  }, [cmpReady, cmpAdapter, failOpen, cmpInitTimeoutMs]);
 
   // Listen for consent status changes
   useEffect(() => {
@@ -169,11 +185,13 @@ export default function ContentpassConsentGate({
       (error) => {
         console.error('Failed to load initial CMP consent status', error);
         setCmpConsentStatus({ adapter: cmpAdapter, hasFullConsent: false });
-      }
+      },
+      cmpConsentStatusTimeoutMs
     );
     withTimeout(
       loadCmpMetadata(cmpAdapter),
-      'Timed out while loading CMP metadata'
+      'Timed out while loading CMP metadata',
+      cmpMetadataTimeoutMs
     )
       .then((metadata) => {
         if (active) {
@@ -191,7 +209,13 @@ export default function ContentpassConsentGate({
       console.debug('[ContentpassConsentGate::onConsentStatusChange] cleanup');
       stopObservingConsent();
     };
-  }, [cmpReady, cmpAdapter, failOpen]);
+  }, [
+    cmpReady,
+    cmpAdapter,
+    failOpen,
+    cmpConsentStatusTimeoutMs,
+    cmpMetadataTimeoutMs,
+  ]);
 
   // Monitor the contentpass auth state
   useEffect(() => {
@@ -230,10 +254,10 @@ export default function ContentpassConsentGate({
 
     const timeout = setTimeout(() => {
       failOpen('Timed out while initializing Contentpass');
-    }, UI_OPERATION_TIMEOUT_MS);
+    }, contentpassInitTimeoutMs);
 
     return () => clearTimeout(timeout);
-  }, [cpAuthState, failOpen]);
+  }, [cpAuthState, failOpen, contentpassInitTimeoutMs]);
 
   // Policy for setting the visibility of the consent layer
   useEffect(() => {
@@ -314,6 +338,8 @@ export default function ContentpassConsentGate({
         vendorCount={currentCmpMetadata?.vendorCount ?? 0}
         locale={locale}
         onFailure={handleLayerFailure}
+        pageLoadTimeoutMs={layerPageLoadTimeoutMs}
+        readyTimeoutMs={layerReadyTimeoutMs}
       />
     );
   }

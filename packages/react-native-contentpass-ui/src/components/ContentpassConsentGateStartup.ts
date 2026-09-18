@@ -3,6 +3,28 @@ import type { CmpAdapter } from '@contentpass/react-native-contentpass';
 
 export const UI_OPERATION_TIMEOUT_MS = 30_000;
 
+// All timeouts below default to UI_OPERATION_TIMEOUT_MS. SDK integrators can
+// override any subset of them, e.g. to give the initial layer page load more
+// slack on a known-slow network, or to fail out of a stuck CMP faster.
+export type ContentpassGateTimeouts = {
+  /** `cmpAdapter.waitForInit()`. */
+  cmpInitTimeoutMs?: number;
+  /** `cmpAdapter.getRequiredPurposes()` / `getNumberOfVendors()`. */
+  cmpMetadataTimeoutMs?: number;
+  /** `cmpAdapter.hasFullConsent()` (initial snapshot only). */
+  cmpConsentStatusTimeoutMs?: number;
+  /** `sdk.authenticate()` when the user starts the Contentpass login/signup flow. */
+  authenticateTimeoutMs?: number;
+  /** `cmpAdapter.showSecondLayer()`. */
+  secondLayerTimeoutMs?: number;
+  /** Waiting for the Contentpass SDK to leave its initial `INITIALISING` state. */
+  contentpassInitTimeoutMs?: number;
+  /** Waiting for the layer's static HTML page to finish loading. */
+  layerPageLoadTimeoutMs?: number;
+  /** Waiting, once the layer page has loaded, for it to report ready. */
+  layerReadyTimeoutMs?: number;
+};
+
 export type CmpMetadata = {
   purposesList: string[];
   vendorCount: number;

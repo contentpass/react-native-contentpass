@@ -103,6 +103,9 @@ describe('Contentpass', () => {
       .mockReturnValue(undefined);
 
     contentpass = new Contentpass(config);
+    // The constructor fires its own `sdk`/`load` event; clear it so tests
+    // asserting on sendStatsSpy start from a clean call history.
+    sendStatsSpy.mockClear();
   });
 
   afterEach(() => {
@@ -134,6 +137,15 @@ describe('Contentpass', () => {
       expect(initSentrySpy).toHaveBeenCalledWith({
         propertyId: config.propertyId,
       });
+    });
+
+    it('should send an sdk/load event', () => {
+      contentpass = new Contentpass(config);
+
+      expect(sendStatsSpy).toHaveBeenCalledWith(
+        config.apiUrl,
+        expect.objectContaining({ ec: 'sdk', ea: 'load' })
+      );
     });
 
     it('should initialise contentpass state', () => {

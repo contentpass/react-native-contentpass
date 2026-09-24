@@ -72,6 +72,43 @@ export function layerReadyReducer(
   }
 }
 
+export type BridgeAnalyticsEvent = {
+  eventCategory: string;
+  eventAction: string;
+  eventLabel?: string;
+};
+
+const GO_TO_ANALYTICS_PAGES = new Set(['login', 'signup', 'faq']);
+
+// The web SDK fires the matching `wall` analytics event as a side effect of
+// handling each of these same bridge messages (see
+// frontend/sdk/src/services/renderFunnel/renderFunnel.js and
+// sendUserToFunnel.ts in contentpass/contentpass). This mirrors that mapping
+// so the React Native layer reaches the same analytics.
+export function deriveBridgeAnalyticsEvent(
+  action: string,
+  payload: any
+): BridgeAnalyticsEvent | null {
+  switch (action) {
+    case 'FIRST_LAYER_READY':
+      return { eventCategory: 'wall', eventAction: 'rendered' };
+    case 'ACCEPT_ALL':
+      return { eventCategory: 'wall', eventAction: 'accept' };
+    case 'SHOW_CMP_TOOL':
+      return { eventCategory: 'wall', eventAction: 'cmp' };
+    case 'SHOW_VENDOR_LIST_TOOL':
+      return { eventCategory: 'wall', eventAction: 'vendorlist' };
+    case 'GO_TO': {
+      const page = payload?.options?.page;
+      return GO_TO_ANALYTICS_PAGES.has(page)
+        ? { eventCategory: 'wall', eventAction: page }
+        : null;
+    }
+    default:
+      return null;
+  }
+}
+
 function normalizePathname(pathname: string): string {
   return pathname.replace(/\/+$/, '');
 }
@@ -460,6 +497,15 @@ export default function ContentpassLayer({
     }
 
     console.debug('WebView message', msg);
+
+    const analyticsEvent = deriveBridgeAnalyticsEvent(msg.action, msg.payload);
+    if (analyticsEvent) {
+      eventHandler.sendEvent(
+        analyticsEvent.eventCategory,
+        analyticsEvent.eventAction,
+        analyticsEvent.eventLabel
+      );
+    }
 
     switch (msg.action) {
       case 'FIRST_LAYER_READY':

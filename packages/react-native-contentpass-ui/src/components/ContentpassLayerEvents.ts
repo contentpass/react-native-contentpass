@@ -4,7 +4,7 @@ export type ContentpassLayerEvents = {
   sendEvent: (
     eventCategory: string,
     eventAction: string,
-    eventLabel: string
+    eventLabel?: string
   ) => void;
   showSecondLayer: (view: 'vendor' | 'purpose') => Promise<void>;
 };

@@ -1,5 +1,9 @@
 import { runInNewContext } from 'node:vm';
-import { EARLY_INJECT_JS, layerReadyReducer } from './ContentpassLayer';
+import {
+  deriveBridgeAnalyticsEvent,
+  EARLY_INJECT_JS,
+  layerReadyReducer,
+} from './ContentpassLayer';
 
 jest.mock('react-native-webview', () => ({
   WebView: 'WebView',
@@ -66,6 +70,57 @@ describe('ContentpassLayer', () => {
   it('becomes visible when load-end fires without a ready message', () => {
     expect(layerReadyReducer(false, 'load-ended')).toBe(true);
     expect(layerReadyReducer(true, 'load-started')).toBe(true);
+  });
+});
+
+describe('deriveBridgeAnalyticsEvent', () => {
+  it('maps FIRST_LAYER_READY to wall/rendered', () => {
+    expect(deriveBridgeAnalyticsEvent('FIRST_LAYER_READY', undefined)).toEqual({
+      eventCategory: 'wall',
+      eventAction: 'rendered',
+    });
+  });
+
+  it('maps ACCEPT_ALL to wall/accept', () => {
+    expect(deriveBridgeAnalyticsEvent('ACCEPT_ALL', undefined)).toEqual({
+      eventCategory: 'wall',
+      eventAction: 'accept',
+    });
+  });
+
+  it('maps SHOW_CMP_TOOL to wall/cmp', () => {
+    expect(deriveBridgeAnalyticsEvent('SHOW_CMP_TOOL', undefined)).toEqual({
+      eventCategory: 'wall',
+      eventAction: 'cmp',
+    });
+  });
+
+  it('maps SHOW_VENDOR_LIST_TOOL to wall/vendorlist', () => {
+    expect(
+      deriveBridgeAnalyticsEvent('SHOW_VENDOR_LIST_TOOL', undefined)
+    ).toEqual({ eventCategory: 'wall', eventAction: 'vendorlist' });
+  });
+
+  it.each(['login', 'signup', 'faq'])(
+    'maps GO_TO with page %s to wall/%s',
+    (page) => {
+      expect(
+        deriveBridgeAnalyticsEvent('GO_TO', { options: { page } })
+      ).toEqual({ eventCategory: 'wall', eventAction: page });
+    }
+  );
+
+  it('does not emit an event for GO_TO with an untracked page', () => {
+    expect(
+      deriveBridgeAnalyticsEvent('GO_TO', { options: { page: 'url' } })
+    ).toBeNull();
+  });
+
+  it('does not emit an event for messages with no analytics mapping', () => {
+    expect(
+      deriveBridgeAnalyticsEvent('ENABLE_SCROLL_ON_PROPERTY', undefined)
+    ).toBeNull();
+    expect(deriveBridgeAnalyticsEvent('SEND_EVENT', undefined)).toBeNull();
   });
 });
 

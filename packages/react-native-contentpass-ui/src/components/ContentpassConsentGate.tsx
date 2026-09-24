@@ -88,6 +88,9 @@ export default function ContentpassConsentGate({
         setIsShowingSecondLayer(true);
         try {
           await cmpAdapter.showSecondLayer(view);
+          if (await cmpAdapter.hasFullConsent()) {
+            sdk.event('wall', 'accept', 'cmp');
+          }
         } catch (error) {
           console.error('Failed to show second layer in CMP', error);
         } finally {
@@ -97,7 +100,7 @@ export default function ContentpassConsentGate({
       sendEvent: (
         eventCategory: string,
         eventAction: string,
-        eventLabel: string
+        eventLabel?: string
       ) => {
         sdk.event(eventCategory, eventAction, eventLabel);
       },
@@ -228,6 +231,16 @@ export default function ContentpassConsentGate({
     isVisible,
     onVisibilityChange,
   ]);
+
+  // The layer is triggered to display whenever it becomes visible, matching
+  // the point the web SDK fires `wall`/`show`: right before mounting the
+  // funnel UI, not once it has actually rendered (see `wall`/`rendered`,
+  // fired natively from ContentpassLayer on `FIRST_LAYER_READY`).
+  useEffect(() => {
+    if (isVisible) {
+      sdk.event('wall', 'show');
+    }
+  }, [isVisible, sdk]);
 
   if (!consentResolved || isShowingContentpass || isShowingSecondLayer) {
     return (

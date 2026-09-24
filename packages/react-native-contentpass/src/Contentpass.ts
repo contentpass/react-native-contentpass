@@ -80,6 +80,7 @@ export default class Contentpass implements ContentpassInterface {
     this.samplingRate = config.samplingRate || DEFAULT_SAMPLING_RATE;
     this.authStateStorage = new OidcAuthStateStorage(config.propertyId);
     initSentry({ propertyId: config.propertyId });
+    this.event('sdk', 'load');
     this.initialiseAuthState().catch((err: any) => {
       reportError(err, { msg: 'Failed to initialise auth state' });
       this.changeContentpassState({

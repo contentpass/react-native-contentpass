@@ -29,6 +29,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { UI_OPERATION_TIMEOUT_MS } from './ContentpassConsentGateStartup';
 
 const MESSAGE_PROTOCOL = 'contentpass-first-layer';
 const POPUP_URL_PROTOCOLS = new Set(['http:', 'https:']);
@@ -42,6 +43,14 @@ type LayerReadyAction =
   | 'url-changed';
 
 export const LOAD_END_READY_FALLBACK_MS = 500;
+
+// The static HTML shell is small and should arrive quickly even on a bad
+// connection; if it doesn't, there's no point waiting for the full budget
+// before failing - something more fundamental (DNS, TLS, no connectivity)
+// is wrong. Once the shell has loaded, the remaining wait is for the page's
+// own JS to finish initialising and report ready, which gets its own,
+// separately configurable budget (see `readyTimeoutMs` below).
+const LAYER_PAGE_LOAD_TIMEOUT_MS = 8_000;
 
 function useAndroidOverlayNavigationBarInset(): number {
   const window = useWindowDimensions();
@@ -266,6 +275,9 @@ export default function ContentpassLayer({
   purposesList,
   vendorCount,
   locale,
+  onFailure,
+  pageLoadTimeoutMs = LAYER_PAGE_LOAD_TIMEOUT_MS,
+  readyTimeoutMs = UI_OPERATION_TIMEOUT_MS,
 }: {
   baseUrl: string;
   eventHandler: ContentpassLayerEvents;
@@ -275,6 +287,11 @@ export default function ContentpassLayer({
   purposesList: string[];
   vendorCount: number;
   locale?: string;
+  onFailure: (error: unknown) => void;
+  /** How long to wait for the static layer page to finish loading before failing. Defaults to {@link LAYER_PAGE_LOAD_TIMEOUT_MS}. */
+  pageLoadTimeoutMs?: number;
+  /** How long to wait, once the page has loaded, for it to report ready before failing. Defaults to {@link UI_OPERATION_TIMEOUT_MS}. */
+  readyTimeoutMs?: number;
 }) {
   const androidOverlayNavigationBarInset =
     useAndroidOverlayNavigationBarInset();
@@ -300,6 +317,7 @@ export default function ContentpassLayer({
   ]);
 
   const [ready, updateReady] = useReducer(layerReadyReducer, false);
+  const [pageLoaded, setPageLoaded] = useState(false);
   const [layerUrl, setLayerUrl] = useState(firstLayerUrl);
   const [popupUrl, setPopupUrl] = useState<string | null>(null);
   const [hasLoadError, setHasLoadError] = useState(false);
@@ -333,6 +351,7 @@ export default function ContentpassLayer({
     setLayerUrl(firstLayerUrl);
     setHasLoadError(false);
     markUrlChanged();
+    setPageLoaded(false);
   }, [firstLayerUrl, markUrlChanged]);
 
   useEffect(() => {
@@ -367,6 +386,37 @@ export default function ContentpassLayer({
     };
   }, [firstLayerUrl, hasLoadError, retryLoad]);
 
+  // Stage 1: the static HTML shell must finish loading quickly.
+  useEffect(() => {
+    if (pageLoaded) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      onFailure(
+        new Error('Timed out while loading the Contentpass layer page')
+      );
+    }, pageLoadTimeoutMs);
+
+    return () => clearTimeout(timeout);
+  }, [pageLoaded, onFailure, pageLoadTimeoutMs]);
+
+  // Stage 2: once the shell has loaded, its own JS has the full budget to
+  // finish initialising and report FIRST_LAYER_READY.
+  useEffect(() => {
+    if (!pageLoaded || ready) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      onFailure(
+        new Error('Timed out while initializing the Contentpass layer')
+      );
+    }, readyTimeoutMs);
+
+    return () => clearTimeout(timeout);
+  }, [pageLoaded, ready, onFailure, readyTimeoutMs]);
+
   const closePopup = useCallback(() => setPopupUrl(null), []);
 
   const isFirstLayerUrl = useCallback(
@@ -384,6 +434,7 @@ export default function ContentpassLayer({
   const loadLayerUrl = useCallback(
     (url: URL) => {
       markUrlChanged();
+      setPageLoaded(false);
       setLayerUrl(url.toString());
     },
     [markUrlChanged]
@@ -421,14 +472,14 @@ export default function ContentpassLayer({
       }
 
       try {
-        const popupUrl = new URL(url, baseUrl);
+        const resolvedPopupUrl = new URL(url, baseUrl);
 
-        if (!POPUP_URL_PROTOCOLS.has(popupUrl.protocol)) {
+        if (!POPUP_URL_PROTOCOLS.has(resolvedPopupUrl.protocol)) {
           console.warn('Unable to open popup with unsupported URL', url);
           return;
         }
 
-        setPopupUrl(popupUrl.toString());
+        setPopupUrl(resolvedPopupUrl.toString());
       } catch (error) {
         console.warn('Unable to open popup with invalid URL', url, error);
       }
@@ -601,6 +652,7 @@ export default function ContentpassLayer({
         }}
         onLoadEnd={(event) => {
           console.debug('WebView load end');
+          setPageLoaded(true);
           scheduleLoadEndReadyFallback(event.nativeEvent.url);
         }}
         onLoadProgress={(event) => {
@@ -612,6 +664,7 @@ export default function ContentpassLayer({
         }}
         onHttpError={(event) => {
           console.debug('WebView HTTP error', event.nativeEvent);
+          onFailure(event.nativeEvent);
         }}
         renderError={() => (
           <View style={styles.error}>

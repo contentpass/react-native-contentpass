@@ -1,3 +1,5 @@
+import fetchWithTimeout from '../fetchWithTimeout';
+
 type HitEndpointArgs = {
   propertyId: string;
   impressionId: string;
@@ -11,7 +13,7 @@ export default async function sendPageViewEvent(
   const { propertyId, impressionId, accessToken } = payload;
   const path = `pass/hit?pid=${propertyId}&iid=${impressionId}&t=pageview`;
 
-  const response = await fetch(`${apiUrl}/${path}`, {
+  const response = await fetchWithTimeout(`${apiUrl}/${path}`, {
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },

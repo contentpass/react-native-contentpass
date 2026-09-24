@@ -32,6 +32,7 @@ export type ContentpassObserver = (state: ContentpassState) => void;
 interface ContentpassInterface {
   authenticate: (route?: 'login' | 'signup') => Promise<void>;
   countImpression: () => Promise<void>;
+  destroy: () => void;
   event: (
     eventCategory: string,
     eventAction: string,
@@ -79,8 +80,22 @@ export default class Contentpass implements ContentpassInterface {
     this.samplingRate = config.samplingRate || DEFAULT_SAMPLING_RATE;
     this.authStateStorage = new OidcAuthStateStorage(config.propertyId);
     initSentry({ propertyId: config.propertyId });
-    this.initialiseAuthState();
+    this.initialiseAuthState().catch((err: any) => {
+      reportError(err, { msg: 'Failed to initialise auth state' });
+      this.changeContentpassState({
+        state: ContentpassStateType.ERROR,
+        error: err,
+      });
+    });
   }
+
+  public destroy = () => {
+    logger.info('Destroying Contentpass instance');
+    if (this.refreshTimer) {
+      clearTimeout(this.refreshTimer);
+      this.refreshTimer = null;
+    }
+  };
 
   public authenticate = async (route?: 'login' | 'signup'): Promise<void> => {
     logger.info('Starting authentication flow');
@@ -308,6 +323,9 @@ export default class Contentpass implements ContentpassInterface {
   private refreshToken = async (counter: number) => {
     if (!this.oidcAuthState?.refreshToken) {
       reportError(new Error('No Refresh Token in oidcAuthState provided'));
+      // Without a refresh token we can never recover on our own; stop
+      // pretending to be authenticated with a token that will just expire.
+      await this.logout();
       return;
     }
 

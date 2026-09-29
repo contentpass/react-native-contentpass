@@ -1,8 +1,10 @@
 // Copyright 2026 Content Pass GmbH. All Rights Reserved.
 import type { CmpAdapter } from '@contentpass/react-native-contentpass';
 import {
+  isConsentGateSatisfied,
   loadCmpMetadata,
   observeCmpConsentStatus,
+  withTimeout,
 } from './ContentpassConsentGateStartup';
 
 function deferred<T>() {
@@ -13,6 +15,30 @@ function deferred<T>() {
 
   return { promise, resolve };
 }
+
+describe('isConsentGateSatisfied', () => {
+  it('requires either a valid subscription or full consent', () => {
+    expect(isConsentGateSatisfied(false, false)).toBe(false);
+    expect(isConsentGateSatisfied(true, false)).toBe(true);
+    expect(isConsentGateSatisfied(false, true)).toBe(true);
+  });
+});
+
+describe('withTimeout', () => {
+  it('rejects operations that do not settle in time', async () => {
+    jest.useFakeTimers();
+    try {
+      const operation = deferred<void>();
+      const result = withTimeout(operation.promise, 'Timed out', 100);
+
+      jest.advanceTimersByTime(100);
+
+      await expect(result).rejects.toThrow('Timed out');
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+});
 
 describe('loadCmpMetadata', () => {
   it('waits until purposes and vendor count are both available', async () => {
@@ -85,5 +111,27 @@ describe('observeCmpConsentStatus', () => {
 
     stopObserving();
     expect(unsubscribe).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports an error when no initial consent status arrives', () => {
+    jest.useFakeTimers();
+    try {
+      const onError = jest.fn();
+      const cmpAdapter = {
+        hasFullConsent: jest.fn(() => new Promise<boolean>(() => {})),
+        onConsentStatusChange: jest.fn(),
+      } as unknown as CmpAdapter;
+
+      observeCmpConsentStatus(cmpAdapter, jest.fn(), onError, 100);
+      jest.advanceTimersByTime(100);
+
+      expect(onError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: 'Timed out while loading initial CMP consent status',
+        })
+      );
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });

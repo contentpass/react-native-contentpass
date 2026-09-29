@@ -245,6 +245,45 @@ describe('Contentpass', () => {
 
       expect(enableLoggerSpy).toHaveBeenCalledWith('info');
     });
+
+    it('should set error state if initialising the auth state throws', async () => {
+      const error = new Error('Storage error');
+      (oidcAuthStorageMock.getOidcAuthState as jest.Mock).mockRejectedValue(
+        error
+      );
+      contentpass = new Contentpass(config);
+      const contentpassStates: ContentpassState[] = [];
+      contentpass.registerObserver((state) => {
+        contentpassStates.push(state);
+      });
+
+      await jest.advanceTimersByTimeAsync(0);
+
+      expect(reportErrorSpy).toHaveBeenCalledWith(error, {
+        msg: 'Failed to initialise auth state',
+      });
+      expect(contentpassStates[contentpassStates.length - 1]).toEqual({
+        state: 'ERROR',
+        error,
+      });
+    });
+  });
+
+  describe('destroy', () => {
+    it('should clear the pending refresh timer', async () => {
+      await contentpass.authenticate();
+
+      contentpass.destroy();
+
+      const expirationDate = new Date(
+        EXAMPLE_AUTH_RESULT.accessTokenExpirationDate
+      ).getTime();
+      const expectedDelay = expirationDate - NOW;
+
+      await jest.advanceTimersByTimeAsync(expectedDelay + 1);
+
+      expect(refreshSpy).not.toHaveBeenCalled();
+    });
   });
 
   describe('authenticate', () => {
@@ -462,6 +501,37 @@ describe('Contentpass', () => {
       await jest.advanceTimersByTimeAsync(120000);
       expect(refreshSpy).toHaveBeenCalledTimes(1);
     });
+
+    it('should log out once a refresh completes without a new refresh token', async () => {
+      const contentpassStates: ContentpassState[] = [];
+      contentpass.registerObserver((state) => {
+        contentpassStates.push(state);
+      });
+
+      await contentpass.authenticate();
+
+      refreshSpy.mockResolvedValue({
+        ...EXAMPLE_REFRESH_RESULT,
+        refreshToken: null,
+      });
+
+      const totalDelay =
+        new Date(EXAMPLE_REFRESH_RESULT.accessTokenExpirationDate).getTime() -
+        NOW;
+
+      await jest.advanceTimersByTimeAsync(totalDelay + 1);
+
+      // The guard trips before a second refresh() call is ever made -
+      // there's no refresh token left to send.
+      expect(refreshSpy).toHaveBeenCalledTimes(1);
+      expect(reportErrorSpy).toHaveBeenCalledWith(
+        new Error('No Refresh Token in oidcAuthState provided')
+      );
+      expect(contentpassStates[contentpassStates.length - 1]).toEqual({
+        state: 'UNAUTHENTICATED',
+        hasValidSubscription: false,
+      });
+    });
   });
 
   describe('registerObserver', () => {
@@ -532,6 +602,21 @@ describe('Contentpass', () => {
         state: 'UNAUTHENTICATED',
         hasValidSubscription: false,
       });
+    });
+
+    it('should clear the pending refresh timer so a stale session cannot resurrect after logout', async () => {
+      await contentpass.authenticate();
+
+      await contentpass.logout();
+
+      const expirationDate = new Date(
+        EXAMPLE_AUTH_RESULT.accessTokenExpirationDate
+      ).getTime();
+      const expectedDelay = expirationDate - NOW;
+
+      await jest.advanceTimersByTimeAsync(expectedDelay + 1);
+
+      expect(refreshSpy).not.toHaveBeenCalled();
     });
   });
 

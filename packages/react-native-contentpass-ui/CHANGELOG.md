@@ -1,5 +1,11 @@
 # @contentpass/react-native-contentpass-ui
 
+## 0.9.0
+
+### Minor Changes
+
+- Add an optional `timeouts` prop to `ContentpassConsentGate` covering every timeout-driven stage (CMP init/metadata/consent-status, Contentpass authenticate, the CMP second layer, the Contentpass init watchdog, and the layer's page-load/ready stages), each independently overridable. Fail open — rendering app content instead of blocking indefinitely — when CMP/SDK startup, the first-layer WebView, or the CMP second layer stalls or errors. Require a valid subscription, not just an authenticated user, to bypass the consent layer. Unregister the SDK state observer on cleanup to prevent stale updates.
+
 ## 0.8.1
 
 ### Patch Changes

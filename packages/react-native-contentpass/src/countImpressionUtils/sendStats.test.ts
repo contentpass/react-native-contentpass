@@ -29,6 +29,7 @@ describe('sendStats', () => {
         'Content-Type': 'application/json; charset=UTF-8',
       },
       body: JSON.stringify(payload),
+      signal: expect.any(AbortSignal),
     });
   });
 

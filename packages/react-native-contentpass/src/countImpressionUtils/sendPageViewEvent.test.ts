@@ -27,6 +27,7 @@ describe('sendPageViewEvent', () => {
         headers: {
           Authorization: `Bearer ${payload.accessToken}`,
         },
+        signal: expect.any(AbortSignal),
       }
     );
   });

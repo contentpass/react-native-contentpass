@@ -1,5 +1,11 @@
 # @contentpass/react-native-contentpass
 
+## 0.8.2
+
+### Patch Changes
+
+- Harden the Contentpass SDK's lifecycle and network handling: clear the refresh timer on logout/destroy, log out when no refresh token survives a refresh, catch initialisation failures instead of leaving an unhandled rejection, and add a timeout to the SDK's fetch calls so a hung request can no longer hang forever.
+
 ## 0.8.1
 
 ### Patch Changes

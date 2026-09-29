@@ -1,4 +1,5 @@
 import { TOKEN_ENDPOINT } from '../consts/oidcConsts';
+import fetchWithTimeout from '../fetchWithTimeout';
 
 export default async function fetchContentpassToken({
   idToken,
@@ -9,17 +10,20 @@ export default async function fetchContentpassToken({
   propertyId: string;
   issuer: string;
 }) {
-  const tokenEndpointResponse = await fetch(`${issuer}${TOKEN_ENDPOINT}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: new URLSearchParams({
-      grant_type: 'contentpass_token',
-      subject_token: idToken,
-      client_id: propertyId,
-    }).toString(),
-  });
+  const tokenEndpointResponse = await fetchWithTimeout(
+    `${issuer}${TOKEN_ENDPOINT}`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        grant_type: 'contentpass_token',
+        subject_token: idToken,
+        client_id: propertyId,
+      }).toString(),
+    }
+  );
 
   if (!tokenEndpointResponse.ok) {
     throw new Error(

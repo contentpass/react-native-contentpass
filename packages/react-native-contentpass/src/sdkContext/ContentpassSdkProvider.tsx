@@ -21,6 +21,10 @@ export const ContentpassSdkProvider = ({
     const contentpass = new Contentpass(contentpassConfig);
 
     setContentpassSdk(contentpass);
+
+    return () => {
+      contentpass.destroy();
+    };
   }, [contentpassConfig]);
 
   if (!contentpassSdk) {

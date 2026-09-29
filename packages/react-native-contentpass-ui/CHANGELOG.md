@@ -1,5 +1,11 @@
 # @contentpass/react-native-contentpass-ui
 
+## 0.10.0
+
+### Minor Changes
+
+- Fire `wall`/`show` when the consent layer becomes visible and `wall`/`accept`/`cmp` when the CMP second layer resolves with full consent, and an `sdk`/`load` event when the Contentpass SDK is constructed, matching the events the web SDK already sends.
+
 ## 0.9.0
 
 ### Minor Changes

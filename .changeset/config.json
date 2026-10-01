@@ -13,7 +13,8 @@
   "ignore": [
     "@contentpass/examples-onetrust",
     "@contentpass/examples-sourcepoint",
-    "@contentpass/examples-sourcepoint-expo"
+    "@contentpass/examples-sourcepoint-expo",
+    "@contentpass/examples-consentmanager"
   ],
   "___experimentalUnsafeOptions_WILL_CHANGE_IN_PATCH": {
     "onlyUpdatePeerDependentsWhenOutOfRange": true

@@ -109,7 +109,10 @@ export default function ContentpassConsentGate({
             authenticateTimeoutMs
           );
         } catch (error) {
-          failOpen('Failed to authenticate Contentpass', error);
+          // Covers a plain user-cancelled login as much as a real failure, so
+          // recover rather than failing open: resurface the layer instead of
+          // permanently showing unprotected content for the rest of the session.
+          console.error('Failed to authenticate Contentpass', error);
           sdk.recoverFromError();
         } finally {
           setIsShowingContentpass(false);

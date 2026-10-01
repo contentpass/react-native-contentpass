@@ -1,5 +1,13 @@
 # @contentpass/react-native-contentpass-ui
 
+## 0.10.1
+
+### Patch Changes
+
+- [#78](https://github.com/contentpass/react-native-contentpass/pull/78) [`1b0dae8`](https://github.com/contentpass/react-native-contentpass/commit/1b0dae8ace4128b0ca5261415f50adaeca47bf4b) Thanks [@0x7f](https://github.com/0x7f)! - Use `StyleSheet.absoluteFill` instead of `StyleSheet.absoluteFillObject` for the consent overlay and the layer's loading view. React Native 0.85 removed the deprecated alias, and spreading the missing property left both views without absolute positioning, so a fresh install showed a white screen instead of the consent layer.
+
+- [#79](https://github.com/contentpass/react-native-contentpass/pull/79) [`b09faee`](https://github.com/contentpass/react-native-contentpass/commit/b09faee4418700d52a4d0a18bd2d98c4a380f79d) Thanks [@0x7f](https://github.com/0x7f)! - Resurface the Contentpass consent layer after a failed or cancelled login instead of permanently showing unprotected app content. `ContentpassConsentGate`'s `contentpass` handler routed every `authenticate()` rejection -- including a plain user-cancelled login -- through `failOpen`, which latches `failedOpen` true for the life of the mounted component with no reset path, so a single cancelled or flaky login hid the gate for the rest of the session.
+
 ## 0.10.0
 
 ### Minor Changes

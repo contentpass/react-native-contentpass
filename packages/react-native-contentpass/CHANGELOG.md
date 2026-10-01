@@ -1,5 +1,11 @@
 # @contentpass/react-native-contentpass
 
+## 0.9.1
+
+### Patch Changes
+
+- [#77](https://github.com/contentpass/react-native-contentpass/pull/77) [`82ed4ca`](https://github.com/contentpass/react-native-contentpass/commit/82ed4ca5694d64873950083a0a31dff569e91eb0) Thanks [@0x7f](https://github.com/0x7f)! - Stop disabling the host app's native Sentry SDK. Initialising the Contentpass Sentry client flipped the `enableNative` flag on the bridge object shared by every Sentry client in the app, so the host app's own Sentry integration silently dropped all JavaScript errors from then on.
+
 ## 0.9.0
 
 ### Minor Changes

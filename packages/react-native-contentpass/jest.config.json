@@ -15,9 +15,8 @@
     "^react-native$": "<rootDir>/node_modules/react-native",
     "^react-test-renderer$": "<rootDir>/node_modules/react-test-renderer"
   },
-  "modulePathIgnorePatterns": [
-    "./lib/",
-    "./ios/",
-    "./android/"
+  "modulePathIgnorePatterns": ["./lib/", "./ios/", "./android/"],
+  "transformIgnorePatterns": [
+    "node_modules/(?!((jest-)?react-native|@react-native(-community)?|@sentry(-internal)?)/)"
   ]
 }

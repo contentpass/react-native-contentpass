@@ -1,6 +1,7 @@
 import * as Sentry from '@sentry/react-native';
 import { defaultStackParser, makeFetchTransport } from '@sentry/react';
 import { getDefaultIntegrations } from '@sentry/react-native/dist/js/integrations/default';
+import { NATIVE } from '@sentry/react-native/dist/js/wrapper';
 import logger from './logger';
 import { Platform } from 'react-native';
 
@@ -51,7 +52,15 @@ export const initSentry = (args: InitSentryArgs) => {
   sentryScope = new Sentry.Scope();
   sentryScope.setClient(sentryClient);
 
+  // `ReactNativeClient.init()` hands the options to `NATIVE.initNativeSdk()`, and `NATIVE`
+  // is one module-level bridge object shared by every Sentry client in the app, the host
+  // app's own included. With `enableNative: false` that call switches `NATIVE.enableNative`
+  // off before its first `await`, and the host app's native transport then silently drops
+  // every JavaScript event it is given. This client sends through `makeFetchTransport` and
+  // never reads the flag, so put back whatever the host app had configured.
+  const hostEnableNative = NATIVE.enableNative;
   sentryClient.init();
+  NATIVE.enableNative = hostEnableNative;
 
   sentryScope.setTags({
     propertyId: args.propertyId,

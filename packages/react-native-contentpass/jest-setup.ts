@@ -32,3 +32,7 @@ jest.mock('@sentry/react-native', () => ({
 jest.mock('@sentry/react-native/dist/js/integrations/default', () => ({
   getDefaultIntegrations: jest.fn().mockReturnValue([]),
 }));
+
+jest.mock('@sentry/react-native/dist/js/wrapper', () => ({
+  NATIVE: { enableNative: true },
+}));

@@ -12,7 +12,7 @@ appId: com.contentpassOnetrustExample.onetrustExample
 # live run rather than guessed: "Einwilligen & weiter" (not "Accept All")
 # and "Login mit Contentpass" (not "Log in").
 #
-# Every wait below is generous (60s) because a first CI run — fresh
+# Every wait below is generous (90s) because a first CI run — fresh
 # simulator, no cached DNS/TLS state, first real network round trip from a
 # GitHub-hosted runner to the real OneTrust CDN and Contentpass backend —
 # measured meaningfully slower than local iterative testing; Maestro's
@@ -20,12 +20,12 @@ appId: com.contentpassOnetrustExample.onetrustExample
 - launchApp
 - extendedWaitUntil:
     visible: 'Login mit Contentpass'
-    timeout: 60000
+    timeout: 90000
 - tapOn: 'Einwilligen & weiter'
 - extendedWaitUntil:
     visible:
       id: 'content-full-consent'
-    timeout: 60000
+    timeout: 90000
 - assertVisible: 'Has full consent: Yes'
 
 # Relaunch to a clean funnel, then verify the auth path independently of
@@ -36,12 +36,12 @@ appId: com.contentpassOnetrustExample.onetrustExample
     clearState: true
 - extendedWaitUntil:
     visible: 'Login mit Contentpass'
-    timeout: 60000
+    timeout: 90000
 - tapOn: 'Login mit Contentpass'
 - tapOn: 'Continue'
 - extendedWaitUntil:
     visible: 'Email'
-    timeout: 60000
+    timeout: 90000
 - tapOn: 'Email'
 - inputText: ${E2E_STAGING_EMAIL}
 - tapOn: 'Please log in'
@@ -56,7 +56,7 @@ appId: com.contentpassOnetrustExample.onetrustExample
 - extendedWaitUntil:
     visible:
       id: 'content-authenticated'
-    timeout: 60000
+    timeout: 90000
 - assertVisible: 'Is authenticated: Yes'
 - tapOn:
     id: 'content-logout-button'

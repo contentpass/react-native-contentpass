@@ -118,3 +118,11 @@ jobs:
           maestro test e2e/flows/${{ matrix.flow }}.yaml \
             -e E2E_STAGING_EMAIL="${{ secrets.E2E_STAGING_EMAIL }}" \
             -e E2E_STAGING_PASSWORD="${{ secrets.E2E_STAGING_PASSWORD }}"
+
+      - name: Upload Maestro debug output
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: maestro-debug-${{ matrix.flow }}
+          path: ~/.maestro/tests/
+          retention-days: 7

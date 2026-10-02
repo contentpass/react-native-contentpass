@@ -7,8 +7,15 @@ appId: com.contentpassOnetrustExample.onetrustExample
 # directly rather than block it behind a CMP/backend that never answered in
 # time. Neither the OneTrust banner nor the Contentpass funnel should ever
 # appear.
+#
+# 60s wait: a first CI run (fresh simulator, no cached DNS/TLS state) still
+# needs real network round trips for OneTrust adapter creation in App.tsx,
+# which has its own timeout (`createOnetrustCmpAdapter` is not covered by
+# the forced gate timeouts) — more than Maestro's ~17s implicit default.
 - launchApp
+- extendedWaitUntil:
+    visible:
+      id: 'content-full-consent'
+    timeout: 60000
 - assertVisible:
-    id: "content-full-consent"
-- assertVisible:
-    id: "content-authenticated"
+    id: 'content-authenticated'

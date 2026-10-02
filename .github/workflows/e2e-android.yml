@@ -12,7 +12,11 @@ jobs:
     # runs, so this only decides whether the job shows as skipped (clean)
     # rather than failed on missing credentials for those runs.
     if: github.event.pull_request.head.repo.full_name == github.repository || github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
+    # Standard ubuntu-latest runners have no /dev/kvm, so the emulator falls
+    # back to unaccelerated software emulation and never finishes booting.
+    # macOS runners are Apple Silicon and accelerate an arm64-v8a system
+    # image via Hypervisor.framework with no special permissions needed.
+    runs-on: macos-14
     strategy:
       fail-fast: false
       matrix:
@@ -72,7 +76,7 @@ jobs:
         with:
           api-level: 34
           target: google_apis
-          arch: x86_64
+          arch: arm64-v8a
           profile: pixel_6
           disable-animations: true
           emulator-options: >-

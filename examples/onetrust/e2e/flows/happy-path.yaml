@@ -47,7 +47,10 @@ appId: com.contentpassOnetrustExample.onetrustExample
 - tapOn: 'Please log in'
 - tapOn: 'PASSWORD'
 - inputText: ${E2E_STAGING_PASSWORD}
-- tapOn: 'Log in'
+# Anchored exact match: the page's own "Please log in" heading contains
+# "Log in" as a substring too, and an unanchored match landed on that
+# non-interactive heading instead of the submit button.
+- tapOn: '^Log in$'
 
 # Back in the app after the OAuth redirect.
 - extendedWaitUntil:

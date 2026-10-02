@@ -119,6 +119,11 @@ jobs:
 
       - name: Run ${{ matrix.flow }} on simulator
         working-directory: examples/onetrust
+        env:
+          # Maestro's own XCTest-runner driver bootstrap ("iOS driver not
+          # ready in time") can take longer than its default on a
+          # GitHub-hosted runner than on a local machine.
+          MAESTRO_DRIVER_STARTUP_TIMEOUT: '120000'
         run: |
           DEVICE_UDID=$(xcrun simctl list devices available -j | jq -r '[.devices[] | .[] | select(.name | test("iPhone"))][0].udid')
           xcrun simctl boot "$DEVICE_UDID"

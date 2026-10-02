@@ -16,7 +16,9 @@ jobs:
     # doesn't need hardware virtualization support the way the Android
     # emulator does — unlike both ubuntu-latest (no /dev/kvm) and macos-14
     # itself (no HVF for a *nested* hypervisor), this just works.
-    runs-on: macos-14
+    # macos-15, not macos-14: idb-companion (Maestro's iOS driver) requires
+    # macOS Sequoia+ and a full Xcode 26 install, neither available on 14.
+    runs-on: macos-15
     strategy:
       fail-fast: false
       matrix:

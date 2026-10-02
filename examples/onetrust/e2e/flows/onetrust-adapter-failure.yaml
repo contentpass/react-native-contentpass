@@ -1,0 +1,10 @@
+appId: com.contentpassOnetrustExample.onetrustExample
+---
+# Built with EXPO_PUBLIC_ONETRUST_APP_ID set to a garbage value, so
+# createOnetrustCmpAdapter() rejects during startup. App.tsx catches that and
+# shows its own "Failed to load CMP" screen instead of ever reaching
+# ContentpassSdkProvider / ContentpassConsentGate.
+- launchApp
+- assertVisible:
+    id: "app-cmp-failed"
+- assertVisible: "Failed to load CMP"

@@ -1,0 +1,14 @@
+appId: com.contentpassOnetrustExample.onetrustExample
+---
+# Built with EXPO_PUBLIC_GATE_TIMEOUT_MS set to an unrealistically small
+# value (e.g. "1"), so every one of ContentpassConsentGate's own timeouts
+# fires before the real OneTrust SDK or Contentpass backend can respond.
+# The gate is designed to fail open in that case: render the app's content
+# directly rather than block it behind a CMP/backend that never answered in
+# time. Neither the OneTrust banner nor the Contentpass funnel should ever
+# appear.
+- launchApp
+- assertVisible:
+    id: "content-full-consent"
+- assertVisible:
+    id: "content-authenticated"

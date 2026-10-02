@@ -7,6 +7,7 @@ import type { CmpAdapter } from '@contentpass/react-native-contentpass';
 import { createOnetrustCmpAdapter } from '@contentpass/react-native-contentpass-cmp-onetrust';
 import {
   CONTENTPASS_CONFIG,
+  GATE_TIMEOUTS,
   ONETRUST_CDN_LOCATION,
   ONETRUST_APP_ID,
   ONETRUST_LANGUAGE_CODE,
@@ -59,7 +60,7 @@ export default function App() {
   if (!cmpReady) {
     return (
       <View style={styles.container}>
-        <Text>Loading...</Text>
+        <Text testID="app-loading">Loading...</Text>
       </View>
     );
   }
@@ -67,7 +68,7 @@ export default function App() {
   if (cmpFailed || !cmpAdapter) {
     return (
       <View style={styles.container}>
-        <Text>Failed to load CMP</Text>
+        <Text testID="app-cmp-failed">Failed to load CMP</Text>
       </View>
     );
   }
@@ -78,6 +79,7 @@ export default function App() {
         cmpAdapter={cmpAdapter!}
         contentpassConfig={CONTENTPASS_CONFIG}
         hideAppWhenVisible={false}
+        timeouts={GATE_TIMEOUTS}
       >
         <View style={styles.container}>
           <Content cmpAdapter={cmpAdapter!} />

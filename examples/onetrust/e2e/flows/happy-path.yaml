@@ -1,0 +1,42 @@
+appId: com.contentpassOnetrustExample.onetrustExample
+---
+# Full happy path against the real contentpass-staging backend and the real
+# OneTrust test tenant: accept consent, then log in and out with a static
+# staging test account (${E2E_STAGING_EMAIL} / ${E2E_STAGING_PASSWORD},
+# injected at `maestro test` invocation time — see e2e/README.md).
+#
+# NOTE: the OneTrust banner and the Contentpass funnel are both real,
+# third-party/hosted UI this repo doesn't control, so they can only be
+# targeted by their visible label, not a testID. "Accept All" (OneTrust) and
+# "Log in" (the Contentpass funnel's own login trigger, as opposed to the
+# OIDC form's "Log in" submit button below) are our best guess from the
+# configured test tenant/funnel copy and MUST be confirmed against a real
+# local run before this flow is wired into CI (see e2e/README.md).
+- launchApp
+- tapOn: "Accept All"
+- assertVisible:
+    id: "content-full-consent"
+- assertVisible: "Has full consent: Yes"
+
+# Consent alone already satisfies the gate, so re-open it deliberately via
+# the Contentpass funnel to exercise login — OneTrust Settings reopens the
+# native preference center, not the funnel, so this re-triggers the funnel
+# through the app's own "Deny All" -> funnel re-appears -> login path.
+- tapOn:
+    id: "content-deny-all-button"
+- tapOn: "Log in"
+
+# The real OIDC login page (frontend/oidc), opened in the system browser.
+- tapOn: "Email"
+- inputText: ${E2E_STAGING_EMAIL}
+- tapOn: "Password"
+- inputText: ${E2E_STAGING_PASSWORD}
+- tapOn: "Log in"
+
+# Back in the app after the OAuth redirect.
+- assertVisible:
+    id: "content-authenticated"
+- assertVisible: "Is authenticated: Yes"
+- tapOn:
+    id: "content-logout-button"
+- assertVisible: "Is authenticated: No"

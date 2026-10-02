@@ -101,12 +101,21 @@ jobs:
         run: |
           npx expo start --port 8081 > /tmp/metro.log 2>&1 &
           for i in $(seq 1 30); do
-            curl -s http://localhost:8081/status | grep -q "packager-status:running" && exit 0
+            curl -s http://localhost:8081/status | grep -q "packager-status:running" && break
             sleep 2
           done
-          echo "Metro did not become ready in time"
-          cat /tmp/metro.log
-          exit 1
+          if ! curl -s http://localhost:8081/status | grep -q "packager-status:running"; then
+            echo "Metro did not become ready in time"
+            cat /tmp/metro.log
+            exit 1
+          fi
+          # Metro's first bundle of this app takes well over a minute to
+          # transform from a cold cache (confirmed via a CI run that still
+          # showed "Bundling 88%..." past Maestro's 60s wait) — pre-warm it
+          # here, where there's no assertion timer running, rather than
+          # leave the app to request it cold at launch.
+          echo "Pre-warming Metro's bundle cache..."
+          time curl -s -o /dev/null "http://localhost:8081/.expo/.virtual-metro-entry.bundle?platform=ios&dev=true"
 
       - name: Run ${{ matrix.flow }} on simulator
         working-directory: examples/onetrust

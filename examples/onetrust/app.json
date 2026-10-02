@@ -26,7 +26,12 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "react-native-app-auth"
+      [
+        "react-native-app-auth",
+        {
+          "redirectUrls": ["de.contentpass.demo://oauth"]
+        }
+      ]
     ]
   }
 }

@@ -1,4 +1,5 @@
 import type { ContentpassConfig } from '@contentpass/react-native-contentpass';
+import type { ContentpassGateTimeouts } from '@contentpass/react-native-contentpass-ui';
 
 export const CONTENTPASS_CONFIG: ContentpassConfig = {
   // Testing app
@@ -12,5 +13,28 @@ export const CONTENTPASS_CONFIG: ContentpassConfig = {
 };
 
 export const ONETRUST_CDN_LOCATION = 'cdn.cookielaw.org';
-export const ONETRUST_APP_ID = '019beb25-2008-72e0-8788-da1eec1f18dc-test';
+export const ONETRUST_APP_ID =
+  process.env.EXPO_PUBLIC_ONETRUST_APP_ID ||
+  '019beb25-2008-72e0-8788-da1eec1f18dc-test';
 export const ONETRUST_LANGUAGE_CODE = 'en';
+
+// Lets an E2E build force every ContentpassConsentGate timeout down to the
+// same tiny value, to deterministically exercise its fail-open path without
+// needing the CMP or backend to actually misbehave.
+const forcedTimeoutMs = process.env.EXPO_PUBLIC_GATE_TIMEOUT_MS
+  ? Number(process.env.EXPO_PUBLIC_GATE_TIMEOUT_MS)
+  : undefined;
+
+export const GATE_TIMEOUTS: ContentpassGateTimeouts | undefined =
+  forcedTimeoutMs
+    ? {
+        cmpInitTimeoutMs: forcedTimeoutMs,
+        cmpMetadataTimeoutMs: forcedTimeoutMs,
+        cmpConsentStatusTimeoutMs: forcedTimeoutMs,
+        authenticateTimeoutMs: forcedTimeoutMs,
+        secondLayerTimeoutMs: forcedTimeoutMs,
+        contentpassInitTimeoutMs: forcedTimeoutMs,
+        layerPageLoadTimeoutMs: forcedTimeoutMs,
+        layerReadyTimeoutMs: forcedTimeoutMs,
+      }
+    : undefined;

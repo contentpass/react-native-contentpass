@@ -1,42 +1,47 @@
 appId: com.contentpassOnetrustExample.onetrustExample
 ---
 # Full happy path against the real contentpass-staging backend and the real
-# OneTrust test tenant: accept consent, then log in and out with a static
-# staging test account (${E2E_STAGING_EMAIL} / ${E2E_STAGING_PASSWORD},
-# injected at `maestro test` invocation time — see e2e/README.md).
+# OneTrust test tenant: accept consent, then separately verify login/logout
+# with a static staging test account (${E2E_STAGING_EMAIL} /
+# ${E2E_STAGING_PASSWORD}, injected at `maestro test` invocation time — see
+# e2e/README.md).
 #
-# NOTE: the OneTrust banner and the Contentpass funnel are both real,
-# third-party/hosted UI this repo doesn't control, so they can only be
-# targeted by their visible label, not a testID. "Accept All" (OneTrust) and
-# "Log in" (the Contentpass funnel's own login trigger, as opposed to the
-# OIDC form's "Log in" submit button below) are our best guess from the
-# configured test tenant/funnel copy and MUST be confirmed against a real
-# local run before this flow is wired into CI (see e2e/README.md).
+# The funnel shown here is real, hosted Contentpass content (not native
+# OneTrust banner UI — this app never calls into OneTrust's own banner, only
+# its consent-status/adapter APIs), so its labels are verified against a
+# live run rather than guessed: "Einwilligen & weiter" (not "Accept All")
+# and "Login mit Contentpass" (not "Log in").
 - launchApp
-- tapOn: "Accept All"
+- extendedWaitUntil:
+    visible: 'Login mit Contentpass'
+    timeout: 30000
+- tapOn: 'Einwilligen & weiter'
 - assertVisible:
-    id: "content-full-consent"
-- assertVisible: "Has full consent: Yes"
+    id: 'content-full-consent'
+- assertVisible: 'Has full consent: Yes'
 
-# Consent alone already satisfies the gate, so re-open it deliberately via
-# the Contentpass funnel to exercise login — OneTrust Settings reopens the
-# native preference center, not the funnel, so this re-triggers the funnel
-# through the app's own "Deny All" -> funnel re-appears -> login path.
-- tapOn:
-    id: "content-deny-all-button"
-- tapOn: "Log in"
-
-# The real OIDC login page (frontend/oidc), opened in the system browser.
-- tapOn: "Email"
+# Relaunch to a clean funnel, then verify the auth path independently of
+# consent. iOS shows its own native ASWebAuthenticationSession permission
+# dialog ("Wants to Use... to Sign In") before the real OIDC login page
+# loads — there's no Android equivalent of this step.
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: 'Login mit Contentpass'
+    timeout: 30000
+- tapOn: 'Login mit Contentpass'
+- tapOn: 'Continue'
+- tapOn: 'Email'
 - inputText: ${E2E_STAGING_EMAIL}
-- tapOn: "Password"
+- hideKeyboard
+- tapOn: 'PASSWORD'
 - inputText: ${E2E_STAGING_PASSWORD}
-- tapOn: "Log in"
+- tapOn: 'Log in'
 
 # Back in the app after the OAuth redirect.
 - assertVisible:
-    id: "content-authenticated"
-- assertVisible: "Is authenticated: Yes"
+    id: 'content-authenticated'
+- assertVisible: 'Is authenticated: Yes'
 - tapOn:
-    id: "content-logout-button"
-- assertVisible: "Is authenticated: No"
+    id: 'content-logout-button'
+- assertVisible: 'Is authenticated: No'

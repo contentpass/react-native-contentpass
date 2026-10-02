@@ -44,7 +44,7 @@ appId: com.contentpassOnetrustExample.onetrustExample
     timeout: 60000
 - tapOn: 'Email'
 - inputText: ${E2E_STAGING_EMAIL}
-- hideKeyboard
+- tapOn: 'Please log in'
 - tapOn: 'PASSWORD'
 - inputText: ${E2E_STAGING_PASSWORD}
 - tapOn: 'Log in'

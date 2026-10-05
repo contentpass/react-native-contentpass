@@ -56,18 +56,22 @@ export default function App() {
       });
   }, []);
 
-  if (!cmpReady) {
+  // Checked before !cmpReady: neither startSDK() nor
+  // createOnetrustCmpAdapter() failing ever sets cmpReady, so checking
+  // !cmpReady first would leave the app stuck on "Loading..." forever
+  // instead of ever reaching this screen.
+  if (cmpFailed) {
     return (
       <View style={styles.container}>
-        <Text>Loading...</Text>
+        <Text testID="app-cmp-failed">Failed to load CMP</Text>
       </View>
     );
   }
 
-  if (cmpFailed || !cmpAdapter) {
+  if (!cmpReady || !cmpAdapter) {
     return (
       <View style={styles.container}>
-        <Text>Failed to load CMP</Text>
+        <Text testID="app-loading">Loading...</Text>
       </View>
     );
   }

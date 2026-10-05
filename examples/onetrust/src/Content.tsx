@@ -35,19 +35,25 @@ export default function Content({ cmpAdapter }: { cmpAdapter: CmpAdapter }) {
   return (
     <View>
       <Text>Hello World!</Text>
-      <Text>Has full consent: {hasFullConsent ? 'Yes' : 'No'}</Text>
+      <Text testID="content-full-consent">
+        Has full consent: {hasFullConsent ? 'Yes' : 'No'}
+      </Text>
       <Button title="OneTrust Settings" onPress={openOneTrustSettings} />
       {hasFullConsent && (
         <Button
+          testID="content-deny-all-button"
           title="Deny All"
           onPress={() => {
             cmpAdapter!.denyAll();
           }}
         />
       )}
-      <Text>Is authenticated: {isAuthenticated ? 'Yes' : 'No'}</Text>
+      <Text testID="content-authenticated">
+        Is authenticated: {isAuthenticated ? 'Yes' : 'No'}
+      </Text>
       {isAuthenticated && (
         <Button
+          testID="content-logout-button"
           title="Logout"
           onPress={() => {
             sdk.logout();

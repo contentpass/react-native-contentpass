@@ -19,17 +19,25 @@ jobs:
     # macos-15, not macos-14: idb-companion (Maestro's iOS driver) requires
     # macOS Sequoia+ and a full Xcode 26 install, neither available on 14.
     runs-on: macos-15
+    name: e2e-ios (${{ matrix.scenario }})
     strategy:
       fail-fast: false
       matrix:
+        # One job per Metro configuration, not per flow: a job is mostly
+        # setup and build, so every flow that runs against the example's
+        # default config shares the first one, and only flows that need Metro
+        # started with other EXPO_PUBLIC_* values get a job of their own.
         include:
-          - flow: happy-path
+          - scenario: default-config
+            flows: happy-path cancelled-login deny-all consent-survives-relaunch
             onetrust_app_id: ''
             gate_timeout_ms: ''
-          - flow: onetrust-adapter-failure
+          - scenario: onetrust-adapter-failure
+            flows: onetrust-adapter-failure
             onetrust_app_id: 'e2e-invalid-app-id'
             gate_timeout_ms: ''
-          - flow: cmp-timeout-fail-open
+          - scenario: cmp-timeout-fail-open
+            flows: cmp-timeout-fail-open
             onetrust_app_id: ''
             gate_timeout_ms: '1'
     steps:
@@ -96,7 +104,7 @@ jobs:
             ARCHS=arm64 \
             build
 
-      - name: Start Metro (${{ matrix.flow }})
+      - name: Start Metro (${{ matrix.scenario }})
         working-directory: examples/onetrust
         env:
           EXPO_PUBLIC_ONETRUST_APP_ID: ${{ matrix.onetrust_app_id }}
@@ -124,19 +132,26 @@ jobs:
           echo "Pre-warming Metro's bundle cache..."
           time curl -s -o /dev/null "http://localhost:8081/.expo/.virtual-metro-entry.bundle?platform=ios&dev=true"
 
-      - name: Run ${{ matrix.flow }} on simulator
+      - name: Run ${{ matrix.scenario }} flows on simulator
         working-directory: examples/onetrust
         env:
           # Maestro's own XCTest-runner driver bootstrap ("iOS driver not
           # ready in time") can take longer than its default on a
           # GitHub-hosted runner than on a local machine.
           MAESTRO_DRIVER_STARTUP_TIMEOUT: '240000'
+          FLOWS: ${{ matrix.flows }}
         run: |
           DEVICE_UDID=$(xcrun simctl list devices available -j | jq -r '[.devices[] | .[] | select(.name | test("iPhone"))][0].udid')
           xcrun simctl boot "$DEVICE_UDID"
           xcrun simctl bootstatus "$DEVICE_UDID" -b
           xcrun simctl install "$DEVICE_UDID" ios/build/Build/Products/Debug-iphonesimulator/ContentpassOnetrustExample.app
-          maestro test e2e/flows/${{ matrix.flow }}.yaml \
+          flow_files=()
+          for flow in $FLOWS; do
+            flow_files+=("e2e/flows/$flow.yaml")
+          done
+          # One invocation runs every flow even when an earlier one fails,
+          # and fails the step if any did.
+          maestro test "${flow_files[@]}" \
             -e E2E_STAGING_EMAIL="${{ secrets.E2E_STAGING_EMAIL }}" \
             -e E2E_STAGING_PASSWORD="${{ secrets.E2E_STAGING_PASSWORD }}"
 
@@ -154,6 +169,6 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: maestro-debug-${{ matrix.flow }}
+          name: maestro-debug-${{ matrix.scenario }}
           path: ~/.maestro/tests/
           retention-days: 7

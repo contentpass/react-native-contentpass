@@ -17,7 +17,13 @@ appId: com.contentpassOnetrustExample.onetrustExample
 # GitHub-hosted runner to the real OneTrust CDN and Contentpass backend —
 # measured meaningfully slower than local iterative testing; Maestro's
 # ~17s implicit default was not enough.
-- launchApp
+#
+# Every flow in a job shares one simulator, so each starts from a clean
+# slate: clearState wipes stored consent, but not the login tokens, which
+# live in the iOS keychain.
+- clearKeychain
+- launchApp:
+    clearState: true
 - extendedWaitUntil:
     visible: 'Login mit Contentpass'
     timeout: 90000
@@ -63,6 +69,22 @@ appId: com.contentpassOnetrustExample.onetrustExample
       id: 'content-authenticated'
     timeout: 90000
 - assertVisible: 'Is authenticated: Yes'
+
+# The login has to survive a relaunch, and since this run never consented,
+# the subscription alone has to keep the consent layer away.
+- launchApp
+- extendedWaitUntil:
+    visible: 'Is authenticated: Yes'
+    timeout: 90000
+- assertVisible: 'Consent layer: hidden'
+- assertNotVisible: 'Login mit Contentpass'
+
+# With neither a subscription nor consent left, logging out has to bring the
+# layer back.
 - tapOn:
     id: 'content-logout-button'
 - assertVisible: 'Is authenticated: No'
+- extendedWaitUntil:
+    visible: 'Login mit Contentpass'
+    timeout: 90000
+- assertVisible: 'Consent layer: shown'

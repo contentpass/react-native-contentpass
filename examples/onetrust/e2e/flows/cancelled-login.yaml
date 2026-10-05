@@ -1,0 +1,22 @@
+appId: com.contentpassOnetrustExample.onetrustExample
+---
+# Backing out of the login on iOS's own "Wants to Use ... to Sign In" prompt
+# has to bring the consent layer back, rather than leave the app on the
+# gate's spinner with neither the layer nor the app showing.
+- clearKeychain
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: 'Login mit Contentpass'
+    timeout: 90000
+- tapOn: 'Login mit Contentpass'
+- extendedWaitUntil:
+    visible: 'Cancel'
+    timeout: 90000
+- tapOn: 'Cancel'
+
+- extendedWaitUntil:
+    visible: 'Login mit Contentpass'
+    timeout: 90000
+- assertVisible: 'Consent layer: shown'
+- assertVisible: 'Is authenticated: No'

@@ -25,7 +25,7 @@ Debug (which skips bundling/minification at build time and fetches JS from
 Metro at runtime) sidesteps it entirely. One consequence: the
 `EXPO_PUBLIC_ONETRUST_APP_ID` / `EXPO_PUBLIC_GATE_TIMEOUT_MS` env vars that
 pick a scenario have to be set on the **Metro process**, not on the build —
-a Debug build itself is identical across all three flows.
+a Debug build itself is identical across every flow.
 
 ## Prerequisites
 
@@ -43,15 +43,42 @@ a Debug build itself is identical across all three flows.
   values; locally, export them in your shell, don't put them in a tracked
   `.env`.
 
+## The flows
+
+Against the example's default config (one CI job, `default-config`):
+
+| Flow                             | Checks                                                                                                                                                                            |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `happy-path.yaml`                | Consent through the funnel; then a subscriber's login, that it survives a relaunch with the layer kept away by the subscription alone, and that logging out brings the layer back |
+| `cancelled-login.yaml`           | Cancelling iOS's sign-in prompt brings the layer back                                                                                                                             |
+| `deny-all.yaml`                  | Withdrawing consent in the app brings the layer back                                                                                                                              |
+| `consent-survives-relaunch.yaml` | Stored consent alone satisfies the gate after a relaunch                                                                                                                          |
+
+Against a Metro started with an override (one CI job each):
+
+| Flow                            | Override                        | Checks                                                     |
+| ------------------------------- | ------------------------------- | ---------------------------------------------------------- |
+| `onetrust-adapter-failure.yaml` | `EXPO_PUBLIC_ONETRUST_APP_ID`   | An invalid OneTrust app id lands on the CMP-failure screen |
+| `cmp-timeout-fail-open.yaml`    | `EXPO_PUBLIC_GATE_TIMEOUT_MS=1` | Every gate timeout expiring fails open into the app        |
+
+The example's screen prints "Consent layer: shown/hidden" from the gate's
+`onVisibilityChange`. It renders underneath the layer too, so this line,
+not the presence of the app's own text, is how a flow tells the two apart.
+
+Every flow starts with `clearKeychain` and a `clearState` launch, since a
+job runs its flows one after another on the same simulator, and the login
+tokens live in the keychain, which `clearState` leaves alone.
+
 ## Running a flow
 
 ```sh
 maestro test flows/happy-path.yaml -e E2E_STAGING_EMAIL="$E2E_STAGING_EMAIL" -e E2E_STAGING_PASSWORD="$E2E_STAGING_PASSWORD"
+maestro test flows/cancelled-login.yaml flows/deny-all.yaml flows/consent-survives-relaunch.yaml
 maestro test flows/onetrust-adapter-failure.yaml
 maestro test flows/cmp-timeout-fail-open.yaml
 ```
 
-The latter two need Metro itself started with the matching env var before
+The last two need Metro itself started with the matching env var before
 `yarn ios`:
 
 ```sh
@@ -59,7 +86,7 @@ EXPO_PUBLIC_ONETRUST_APP_ID=garbage-app-id npx expo start   # onetrust-adapter-f
 EXPO_PUBLIC_GATE_TIMEOUT_MS=1 npx expo start                # cmp-timeout-fail-open.yaml
 ```
 
-## What `happy-path.yaml` has to step through
+## iOS steps the login flows have to tap through
 
 - The funnel's real labels are "Einwilligen & weiter" and "Login mit
   Contentpass". This app never shows a separate native OneTrust banner; the

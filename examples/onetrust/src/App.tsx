@@ -31,6 +31,9 @@ export default function App() {
   const [cmpReady, setCmpReady] = useState(false);
   const [cmpFailed, setCmpFailed] = useState(false);
   const [cmpAdapter, setCmpAdapter] = useState<CmpAdapter | null>(null);
+  // The gate only reports changes, and it starts out hidden, so false is
+  // also the right value when it settles on hidden without ever calling back.
+  const [consentLayerVisible, setConsentLayerVisible] = useState(false);
 
   useEffect(() => {
     OTPublishersNativeSDK.startSDK(
@@ -84,9 +87,13 @@ export default function App() {
         contentpassConfig={CONTENTPASS_CONFIG}
         hideAppWhenVisible={false}
         timeouts={GATE_TIMEOUTS}
+        onVisibilityChange={setConsentLayerVisible}
       >
         <View style={styles.container}>
-          <Content cmpAdapter={cmpAdapter!} />
+          <Content
+            cmpAdapter={cmpAdapter!}
+            consentLayerVisible={consentLayerVisible}
+          />
         </View>
       </ContentpassConsentGate>
     </ContentpassSdkProvider>

@@ -1,0 +1,25 @@
+appId: com.contentpassOnetrustExample.onetrustExample
+---
+# Withdrawing consent from inside the app has to bring the consent layer
+# back: the gate has to follow consent changes after startup, not only read
+# the status once.
+- clearKeychain
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: 'Login mit Contentpass'
+    timeout: 90000
+- tapOn: 'Einwilligen & weiter'
+- extendedWaitUntil:
+    visible:
+      id: 'content-deny-all-button'
+    timeout: 90000
+- assertVisible: 'Consent layer: hidden'
+
+- tapOn:
+    id: 'content-deny-all-button'
+- assertVisible: 'Has full consent: No'
+- extendedWaitUntil:
+    visible: 'Login mit Contentpass'
+    timeout: 90000
+- assertVisible: 'Consent layer: shown'

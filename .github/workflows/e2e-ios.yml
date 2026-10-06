@@ -241,6 +241,31 @@ jobs:
           mkdir -p ~/.maestro/tests
           cp /tmp/metro.log ~/.maestro/tests/ 2>/dev/null || true
 
+      # Maestro writes the staging account's credentials in plain text into
+      # its debug output (commands.json, maestro.log). GitHub masks secrets
+      # in job logs but not inside uploaded files, and this public repo's
+      # artifacts can be downloaded by anyone, so both are scrubbed before
+      # the upload. A file that still holds one afterwards (a screenshot,
+      # say) is dropped rather than uploaded.
+      - name: Redact credentials from debug output
+        if: failure() || env.E2E_RETRIED == 'true'
+        env:
+          E2E_STAGING_EMAIL: ${{ secrets.E2E_STAGING_EMAIL }}
+          E2E_STAGING_PASSWORD: ${{ secrets.E2E_STAGING_PASSWORD }}
+        run: |
+          dir=~/.maestro/tests
+          [ -d "$dir" ] || exit 0
+          for var in E2E_STAGING_EMAIL E2E_STAGING_PASSWORD; do
+            secret=${!var}
+            [ -n "$secret" ] || continue
+            SECRET=$secret find "$dir" -type f ! -name '*.png' \
+              -exec perl -pi -e 's/\Q$ENV{SECRET}\E/[redacted]/g' {} +
+            grep -rlF -- "$secret" "$dir" | while read -r f; do
+              echo "Dropping $f, which still contains $var"
+              rm -f "$f"
+            done
+          done
+
       - name: Upload Maestro debug output
         if: failure() || env.E2E_RETRIED == 'true'
         uses: actions/upload-artifact@v4

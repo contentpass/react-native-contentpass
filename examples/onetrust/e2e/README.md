@@ -69,6 +69,24 @@ Every flow starts with `clearKeychain` and a `clearState` launch, since a
 job runs its flows one after another on the same simulator, and the login
 tokens live in the keychain, which `clearState` leaves alone.
 
+## In CI
+
+The flows run against live staging on hosted runners, so the job is built
+to tolerate what fails there without the code being at fault:
+
+- A failed flow runs once more, and so does every flow if Maestro stops
+  before reporting any (its iOS driver not starting, most often). A pass on
+  retry turns the job green with a warning annotation naming the flows, and
+  still uploads the debug output, Metro's log included, so the flake can be
+  looked into.
+- The `default-config` job starts Metro with
+  `EXPO_PUBLIC_LAYER_PAGE_LOAD_TIMEOUT_MS=30000`, so a slow page from
+  staging doesn't fail the gate open halfway through a flow; the SDK's
+  default is 8s.
+- The simulator boots at the start of the job and settles while the app
+  builds. It is pinned (`SIM_DEVICE`, `SIM_RUNTIME`), as is Maestro
+  (`MAESTRO_VERSION`), in the workflow's job `env`.
+
 ## Running a flow
 
 ```sh

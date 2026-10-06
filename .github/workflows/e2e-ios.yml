@@ -20,6 +20,13 @@ jobs:
     # macOS Sequoia+ and a full Xcode 26 install, neither available on 14.
     runs-on: macos-15
     name: e2e-ios (${{ matrix.scenario }})
+    env:
+      # Pinned rather than "newest" and "first iPhone the image lists", so a
+      # Maestro release or a runner image update can't change the job
+      # between two runs of the same commit.
+      MAESTRO_VERSION: '2.11.0'
+      SIM_DEVICE: 'iPhone 16 Pro'
+      SIM_RUNTIME: 'com.apple.CoreSimulator.SimRuntime.iOS-18-5'
     strategy:
       fail-fast: false
       matrix:
@@ -27,22 +34,53 @@ jobs:
         # setup and build, so every flow that runs against the example's
         # default config shares the first one, and only flows that need Metro
         # started with other EXPO_PUBLIC_* values get a job of their own.
+        #
+        # layer_page_load_timeout_ms gives the layer's page longer to load
+        # from live staging than the SDK's 8s default; cmp-timeout-fail-open
+        # forces every timeout down instead, and the CMP-failure flow never
+        # gets as far as the layer.
         include:
           - scenario: default-config
             flows: happy-path cancelled-login deny-all consent-survives-relaunch
             onetrust_app_id: ''
             gate_timeout_ms: ''
+            layer_page_load_timeout_ms: '30000'
           - scenario: onetrust-adapter-failure
             flows: onetrust-adapter-failure
             onetrust_app_id: 'e2e-invalid-app-id'
             gate_timeout_ms: ''
+            layer_page_load_timeout_ms: ''
           - scenario: cmp-timeout-fail-open
             flows: cmp-timeout-fail-open
             onetrust_app_id: ''
             gate_timeout_ms: '1'
+            layer_page_load_timeout_ms: ''
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      # macos-15 defaults xcode-select to 16.4; idb-companion needs a full
+      # Xcode 26 install (CLT alone isn't enough), which is present on the
+      # image but not selected by default. Selected first, since the
+      # simulator boots against it.
+      - name: Select Xcode 26
+        run: sudo xcode-select -s /Applications/Xcode_26.2.app
+
+      # Booted now, without waiting, so the simulator gets through its first
+      # boot (data migration included) while dependencies install and the
+      # app builds, rather than inside the flow step.
+      - name: Boot simulator
+        run: |
+          udid=$(xcrun simctl list devices available -j \
+            | jq -r --arg rt "$SIM_RUNTIME" --arg name "$SIM_DEVICE" \
+              '(.devices[$rt] // []) | map(select(.name == $name)) | .[0].udid // empty')
+          if [ -z "$udid" ]; then
+            echo "::error::No available $SIM_DEVICE simulator on $SIM_RUNTIME"
+            xcrun simctl list devices available
+            exit 1
+          fi
+          echo "SIM_UDID=$udid" >> "$GITHUB_ENV"
+          xcrun simctl boot "$udid"
 
       - name: Setup
         uses: ./.github/actions/setup
@@ -53,12 +91,7 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-      # macos-15 defaults xcode-select to 16.4; idb-companion needs a full
-      # Xcode 26 install (CLT alone isn't enough), which is present on the
-      # image but not selected by default.
-      - name: Select Xcode 26
-        run: sudo xcode-select -s /Applications/Xcode_26.2.app
-
+      # Installs MAESTRO_VERSION from the job's env.
       - name: Install Maestro and idb-companion
         run: |
           curl -Ls "https://get.maestro.mobile.dev" | bash
@@ -109,6 +142,7 @@ jobs:
         env:
           EXPO_PUBLIC_ONETRUST_APP_ID: ${{ matrix.onetrust_app_id }}
           EXPO_PUBLIC_GATE_TIMEOUT_MS: ${{ matrix.gate_timeout_ms }}
+          EXPO_PUBLIC_LAYER_PAGE_LOAD_TIMEOUT_MS: ${{ matrix.layer_page_load_timeout_ms }}
         # A Debug build fetches its JS bundle from Metro at app-launch time,
         # so the env vars that pick the per-flow scenario have to be set on
         # the Metro process, not on the (now scenario-independent) build
@@ -138,35 +172,77 @@ jobs:
           # Maestro's own XCTest-runner driver bootstrap ("iOS driver not
           # ready in time") can take longer than its default on a
           # GitHub-hosted runner than on a local machine.
-          MAESTRO_DRIVER_STARTUP_TIMEOUT: '240000'
+          MAESTRO_DRIVER_STARTUP_TIMEOUT: '300000'
           FLOWS: ${{ matrix.flows }}
+          E2E_STAGING_EMAIL: ${{ secrets.E2E_STAGING_EMAIL }}
+          E2E_STAGING_PASSWORD: ${{ secrets.E2E_STAGING_PASSWORD }}
         run: |
-          DEVICE_UDID=$(xcrun simctl list devices available -j | jq -r '[.devices[] | .[] | select(.name | test("iPhone"))][0].udid')
-          xcrun simctl boot "$DEVICE_UDID"
-          xcrun simctl bootstatus "$DEVICE_UDID" -b
-          xcrun simctl install "$DEVICE_UDID" ios/build/Build/Products/Debug-iphonesimulator/ContentpassOnetrustExample.app
-          flow_files=()
-          for flow in $FLOWS; do
-            flow_files+=("e2e/flows/$flow.yaml")
-          done
-          # One invocation runs every flow even when an earlier one fails,
-          # and fails the step if any did.
-          maestro test "${flow_files[@]}" \
-            -e E2E_STAGING_EMAIL="${{ secrets.E2E_STAGING_EMAIL }}" \
-            -e E2E_STAGING_PASSWORD="${{ secrets.E2E_STAGING_PASSWORD }}"
+          xcrun simctl bootstatus "$SIM_UDID" -b
+          xcrun simctl install "$SIM_UDID" ios/build/Build/Products/Debug-iphonesimulator/ContentpassOnetrustExample.app
+
+          # One invocation runs every flow it's given, even after one fails,
+          # and records in a JUnit report which ones did.
+          run_flows() {
+            local report=$1
+            shift
+            local files=()
+            for flow in "$@"; do
+              files+=("e2e/flows/$flow.yaml")
+            done
+            maestro test --udid "$SIM_UDID" --format junit --output "$report" \
+              "${files[@]}" \
+              -e E2E_STAGING_EMAIL="$E2E_STAGING_EMAIL" \
+              -e E2E_STAGING_PASSWORD="$E2E_STAGING_PASSWORD"
+          }
+
+          failed_flows() {
+            python3 - "$1" <<'PY'
+          import sys
+          import xml.etree.ElementTree as ET
+
+          for case in ET.parse(sys.argv[1]).getroot().iter("testcase"):
+              if case.find("failure") is not None or case.find("error") is not None:
+                  print(case.get("name"))
+          PY
+          }
+
+          if run_flows /tmp/maestro-attempt-1.xml $FLOWS; then
+            exit 0
+          fi
+
+          # Every flow starts from a clean slate, so a failed one can simply
+          # run again. Without a report, Maestro never got as far as a flow
+          # (most often its iOS driver not starting), so all of them do.
+          retry=""
+          if [ -s /tmp/maestro-attempt-1.xml ]; then
+            retry=$(failed_flows /tmp/maestro-attempt-1.xml | xargs)
+          fi
+          if [ -n "$retry" ]; then
+            echo "::warning title=E2E retry::Retrying failed flows: $retry"
+          else
+            retry=$FLOWS
+            echo "::warning title=E2E retry::Maestro stopped before reporting any flow; retrying all of them"
+          fi
+          echo "E2E_RETRIED=true" >> "$GITHUB_ENV"
+
+          run_flows /tmp/maestro-attempt-2.xml $retry
+          echo "::warning title=Flaky E2E run::Passed on retry: $retry"
 
       # Metro's output is the app's JS console, including the SDK's
       # console.debug lines (every message from the layer's WebView, the
       # gate's and the CMP adapter's progress), none of which reach the
       # simulator log that Maestro collects.
+      #
+      # Also collected when a retry passed, so a flake still leaves its
+      # evidence behind instead of disappearing into a green run.
       - name: Add Metro log to debug output
-        if: failure()
+        if: failure() || env.E2E_RETRIED == 'true'
         run: |
           mkdir -p ~/.maestro/tests
           cp /tmp/metro.log ~/.maestro/tests/ 2>/dev/null || true
 
       - name: Upload Maestro debug output
-        if: failure()
+        if: failure() || env.E2E_RETRIED == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: maestro-debug-${{ matrix.scenario }}

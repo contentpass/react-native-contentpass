@@ -6,7 +6,13 @@ import {
   useContentpassSdk,
 } from '@contentpass/react-native-contentpass';
 
-export default function Content({ cmpAdapter }: { cmpAdapter: CmpAdapter }) {
+export default function Content({
+  cmpAdapter,
+  consentLayerVisible,
+}: {
+  cmpAdapter: CmpAdapter;
+  consentLayerVisible: boolean;
+}) {
   const sdk = useContentpassSdk();
 
   const [hasFullConsent, setHasFullConsent] = useState(false);
@@ -35,19 +41,30 @@ export default function Content({ cmpAdapter }: { cmpAdapter: CmpAdapter }) {
   return (
     <View>
       <Text>Hello World!</Text>
-      <Text>Has full consent: {hasFullConsent ? 'Yes' : 'No'}</Text>
+      {/* This screen also renders underneath the layer while it is up, so
+          this line is how the E2E flows tell "layer shown" from "hidden". */}
+      <Text testID="content-consent-layer">
+        Consent layer: {consentLayerVisible ? 'shown' : 'hidden'}
+      </Text>
+      <Text testID="content-full-consent">
+        Has full consent: {hasFullConsent ? 'Yes' : 'No'}
+      </Text>
       <Button title="OneTrust Settings" onPress={openOneTrustSettings} />
       {hasFullConsent && (
         <Button
+          testID="content-deny-all-button"
           title="Deny All"
           onPress={() => {
             cmpAdapter!.denyAll();
           }}
         />
       )}
-      <Text>Is authenticated: {isAuthenticated ? 'Yes' : 'No'}</Text>
+      <Text testID="content-authenticated">
+        Is authenticated: {isAuthenticated ? 'Yes' : 'No'}
+      </Text>
       {isAuthenticated && (
         <Button
+          testID="content-logout-button"
           title="Logout"
           onPress={() => {
             sdk.logout();

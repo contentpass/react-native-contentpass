@@ -9,19 +9,11 @@ runs:
       with:
         node-version-file: .nvmrc
 
-    - name: Cache dependencies
-      id: yarn-cache
-      uses: actions/cache@v4
-      with:
-        path: |
-          **/node_modules
-          .yarn/install-state.gz
-        key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock') }}-${{ hashFiles('**/package.json', '!node_modules/**') }}
-        restore-keys: |
-          ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock') }}
-          ${{ runner.os }}-yarn-
-
+    # Installs from the registry on every run rather than restoring a cached
+    # node_modules: with nmHoistingLimits: workspaces that cache is ~1 GB of
+    # small files, which took 12-16 minutes to unpack on the macOS runners
+    # (and 8-13 to pack whenever its key changed), against about a minute to
+    # fetch every package.
     - name: Install dependencies
-      if: steps.yarn-cache.outputs.cache-hit != 'true'
       run: yarn install --immutable
       shell: bash

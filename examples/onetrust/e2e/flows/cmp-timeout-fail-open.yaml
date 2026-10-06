@@ -1,0 +1,21 @@
+appId: com.contentpassOnetrustExample.onetrustExample
+---
+# Built with EXPO_PUBLIC_GATE_TIMEOUT_MS set to an unrealistically small
+# value (e.g. "1"), so every one of ContentpassConsentGate's own timeouts
+# fires before the real OneTrust SDK or Contentpass backend can respond.
+# The gate is designed to fail open in that case: render the app's content
+# directly rather than block it behind a CMP/backend that never answered in
+# time. Neither the OneTrust banner nor the Contentpass funnel should ever
+# appear.
+#
+# 90s wait: a first CI run (fresh simulator, no cached DNS/TLS state) still
+# needs real network round trips for OneTrust adapter creation in App.tsx,
+# which has its own timeout (`createOnetrustCmpAdapter` is not covered by
+# the forced gate timeouts) — more than Maestro's ~17s implicit default.
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: 'content-full-consent'
+    timeout: 90000
+- assertVisible:
+    id: 'content-authenticated'

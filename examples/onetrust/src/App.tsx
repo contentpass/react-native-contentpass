@@ -7,6 +7,7 @@ import type { CmpAdapter } from '@contentpass/react-native-contentpass';
 import { createOnetrustCmpAdapter } from '@contentpass/react-native-contentpass-cmp-onetrust';
 import {
   CONTENTPASS_CONFIG,
+  GATE_TIMEOUTS,
   ONETRUST_CDN_LOCATION,
   ONETRUST_APP_ID,
   ONETRUST_LANGUAGE_CODE,
@@ -30,6 +31,9 @@ export default function App() {
   const [cmpReady, setCmpReady] = useState(false);
   const [cmpFailed, setCmpFailed] = useState(false);
   const [cmpAdapter, setCmpAdapter] = useState<CmpAdapter | null>(null);
+  // The gate only reports changes, and it starts out hidden, so false is
+  // also the right value when it settles on hidden without ever calling back.
+  const [consentLayerVisible, setConsentLayerVisible] = useState(false);
 
   useEffect(() => {
     OTPublishersNativeSDK.startSDK(
@@ -56,18 +60,22 @@ export default function App() {
       });
   }, []);
 
-  if (!cmpReady) {
+  // Checked before !cmpReady: neither startSDK() nor
+  // createOnetrustCmpAdapter() failing ever sets cmpReady, so checking
+  // !cmpReady first would leave the app stuck on "Loading..." forever
+  // instead of ever reaching this screen.
+  if (cmpFailed) {
     return (
       <View style={styles.container}>
-        <Text>Loading...</Text>
+        <Text testID="app-cmp-failed">Failed to load CMP</Text>
       </View>
     );
   }
 
-  if (cmpFailed || !cmpAdapter) {
+  if (!cmpReady || !cmpAdapter) {
     return (
       <View style={styles.container}>
-        <Text>Failed to load CMP</Text>
+        <Text testID="app-loading">Loading...</Text>
       </View>
     );
   }
@@ -78,9 +86,14 @@ export default function App() {
         cmpAdapter={cmpAdapter!}
         contentpassConfig={CONTENTPASS_CONFIG}
         hideAppWhenVisible={false}
+        timeouts={GATE_TIMEOUTS}
+        onVisibilityChange={setConsentLayerVisible}
       >
         <View style={styles.container}>
-          <Content cmpAdapter={cmpAdapter!} />
+          <Content
+            cmpAdapter={cmpAdapter!}
+            consentLayerVisible={consentLayerVisible}
+          />
         </View>
       </ContentpassConsentGate>
     </ContentpassSdkProvider>

@@ -1,0 +1,16 @@
+appId: com.contentpassOnetrustExample.onetrustExample
+---
+# Built with EXPO_PUBLIC_ONETRUST_APP_ID set to a garbage value, so
+# createOnetrustCmpAdapter() rejects during startup. App.tsx catches that and
+# shows its own "Failed to load CMP" screen instead of ever reaching
+# ContentpassSdkProvider / ContentpassConsentGate.
+#
+# 90s wait: a first CI run (fresh simulator, no cached DNS/TLS state) needs
+# more than Maestro's ~17s implicit default to even get the rejection back
+# from OneTrust's real CDN.
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: 'app-cmp-failed'
+    timeout: 90000
+- assertVisible: 'Failed to load CMP'

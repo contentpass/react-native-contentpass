@@ -1,0 +1,23 @@
+appId: com.contentpassOnetrustExample.onetrustExample
+---
+# Consent given once has to be enough: after a relaunch, the consent OneTrust
+# stored has to satisfy the gate on its own, without showing the layer again.
+- clearKeychain
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: 'Login mit Contentpass'
+    timeout: 90000
+- tapOn: 'Einwilligen & weiter'
+- extendedWaitUntil:
+    visible: 'Has full consent: Yes'
+    timeout: 90000
+
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: 'content-full-consent'
+    timeout: 90000
+- assertVisible: 'Has full consent: Yes'
+- assertVisible: 'Consent layer: hidden'
+- assertNotVisible: 'Login mit Contentpass'

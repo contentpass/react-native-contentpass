@@ -1,0 +1,90 @@
+appId: com.contentpassOnetrustExample.onetrustExample
+---
+# Full happy path against the real contentpass-staging backend and the real
+# OneTrust test tenant: accept consent, then separately verify login/logout
+# with a static staging test account (${E2E_STAGING_EMAIL} /
+# ${E2E_STAGING_PASSWORD}, injected at `maestro test` invocation time — see
+# e2e/README.md).
+#
+# The funnel shown here is real, hosted Contentpass content (not native
+# OneTrust banner UI — this app never calls into OneTrust's own banner, only
+# its consent-status/adapter APIs), so its labels are verified against a
+# live run rather than guessed: "Einwilligen & weiter" (not "Accept All")
+# and "Login mit Contentpass" (not "Log in").
+#
+# Every wait below is generous (90s) because a first CI run — fresh
+# simulator, no cached DNS/TLS state, first real network round trip from a
+# GitHub-hosted runner to the real OneTrust CDN and Contentpass backend —
+# measured meaningfully slower than local iterative testing; Maestro's
+# ~17s implicit default was not enough.
+#
+# Every flow in a job shares one simulator, so each starts from a clean
+# slate: clearState wipes stored consent, but not the login tokens, which
+# live in the iOS keychain.
+- clearKeychain
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: 'Login mit Contentpass'
+    timeout: 90000
+- tapOn: 'Einwilligen & weiter'
+- extendedWaitUntil:
+    visible:
+      id: 'content-full-consent'
+    timeout: 90000
+- assertVisible: 'Has full consent: Yes'
+
+# Relaunch to a clean funnel, then verify the auth path independently of
+# consent. iOS shows its own native ASWebAuthenticationSession permission
+# dialog ("Wants to Use... to Sign In") before the real OIDC login page
+# loads — there's no Android equivalent of this step.
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: 'Login mit Contentpass'
+    timeout: 90000
+- tapOn: 'Login mit Contentpass'
+- tapOn: 'Continue'
+- extendedWaitUntil:
+    visible: 'Email'
+    timeout: 90000
+- tapOn: 'Email'
+- inputText: ${E2E_STAGING_EMAIL}
+- tapOn: 'Please log in'
+- tapOn: 'PASSWORD'
+- inputText: ${E2E_STAGING_PASSWORD}
+# Anchored exact match: the page's own "Please log in" heading contains
+# "Log in" as a substring too, and an unanchored match landed on that
+# non-interactive heading instead of the submit button.
+- tapOn: '^Log in$'
+# iOS may offer to save the just-submitted password in a system alert that
+# hides everything else from Maestro until it's dismissed.
+- tapOn:
+    text: 'Not Now'
+    optional: true
+
+# Back in the app after the OAuth redirect.
+- extendedWaitUntil:
+    visible:
+      id: 'content-authenticated'
+    timeout: 90000
+- assertVisible: 'Is authenticated: Yes'
+
+# The login has to survive a relaunch, and since this run never consented,
+# the subscription alone has to keep the consent layer away.
+- launchApp
+- extendedWaitUntil:
+    visible: 'Is authenticated: Yes'
+    timeout: 90000
+- assertVisible: 'Consent layer: hidden'
+- assertNotVisible: 'Login mit Contentpass'
+
+# With neither a subscription nor consent left, logging out has to bring the
+# layer back.
+- tapOn:
+    id: 'content-logout-button'
+- assertVisible: 'Is authenticated: No'
+- extendedWaitUntil:
+    visible: 'Login mit Contentpass'
+    timeout: 90000
+- assertVisible: 'Consent layer: shown'

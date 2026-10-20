@@ -1,8 +1,6 @@
-import packageJson from '../../package.json';
+import { SDK_VERSION } from './sdkVersion';
 
 const THEME = 'classic-app';
-
-const SDK_VERSION = `react-native-contentpass-ui@${packageJson.version}`;
 
 export default function buildFirstLayerUrl({
   baseUrl,

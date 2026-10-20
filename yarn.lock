@@ -3535,7 +3535,7 @@ __metadata:
     react-test-renderer: 19.2.0
     typescript: ^5.9.3
   peerDependencies:
-    "@contentpass/react-native-contentpass": "*"
+    "@contentpass/react-native-contentpass": ">=0.10.0"
     react: "*"
     react-native: "*"
     react-native-webview: "*"

@@ -36,7 +36,33 @@ A gate component that wraps your app content. It automatically shows the Content
 | `contentpassConfig` | `ContentpassConfig` | Yes | — | The Contentpass SDK configuration object. |
 | `hideAppWhenVisible` | `boolean` | No | `true` | When `true`, the app content is completely replaced by the consent layer. When `false`, the consent layer is rendered as an overlay on top of the app content. |
 | `locale` | `string` | No | — | Forces the consent layer to be displayed in the given locale (e.g. `"de"`, `"es"`). When omitted, the layer picks the locale from the user's browser/device preferences and falls back to English. Unsupported values are ignored by the layer. |
-| `onVisibilityChange` | `(visible: boolean) => void` | No | — | Callback invoked when the consent layer visibility changes. |
+| `onVisibilityChange` | `(visible: boolean) => void` | No | — | Callback invoked when the consent layer visibility changes, including with `false` when the gate fails open while the layer is shown. |
+| `timeouts` | `ContentpassGateTimeouts` | No | 30s each | Overrides how long the gate waits for each step before it fails open. See [Timeouts and failing open](#timeouts-and-failing-open). |
+
+#### Timeouts and failing open
+
+When a step does not finish in time, or fails, the gate fails open: it renders `children` for the rest of the mounted session instead of blocking the app, and reports the failure to Contentpass. Every timeout defaults to 30 seconds and can be overridden on its own through `timeouts`:
+
+| Key | What the gate waits for |
+|-----|-------------------------|
+| `cmpInitTimeoutMs` | `cmpAdapter.waitForInit()` |
+| `cmpMetadataTimeoutMs` | `cmpAdapter.getRequiredPurposes()` and `getNumberOfVendors()` |
+| `cmpConsentStatusTimeoutMs` | The first `cmpAdapter.hasFullConsent()` |
+| `contentpassInitTimeoutMs` | The Contentpass SDK leaving its `INITIALISING` state |
+| `authenticateTimeoutMs` | The Contentpass login or signup flow |
+| `secondLayerTimeoutMs` | `cmpAdapter.showSecondLayer()` |
+| `layerPageLoadTimeoutMs` | The consent layer's page and every resource it loads, counted from when the layer mounts. On a fresh install this includes starting the device's WebView for the first time. |
+| `layerReadyTimeoutMs` | The loaded page reporting that it is ready |
+
+```tsx
+<ContentpassConsentGate
+  cmpAdapter={cmpAdapter}
+  contentpassConfig={contentpassConfig}
+  timeouts={{ layerPageLoadTimeoutMs: 45_000 }}
+>
+  {/* Your app content */}
+</ContentpassConsentGate>
+```
 
 ## Usage
 
@@ -78,7 +104,7 @@ For a full working example using OneTrust as the CMP, see the [`examples/onetrus
 ## Requirements
 
 - React Native >= 0.76.0
-- `@contentpass/react-native-contentpass` (peer dependency)
+- `@contentpass/react-native-contentpass` >= 0.10.0 (peer dependency)
 - `react-native-webview` (peer dependency)
 
 ## License

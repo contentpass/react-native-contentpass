@@ -124,6 +124,20 @@ describe('sentryIntegration', () => {
       expect(captureExceptionMock).toHaveBeenCalledWith(err);
     });
 
+    it('should attach the given tags to the reported event only', () => {
+      initSentry({ propertyId: 'test-id' });
+      setTagsMock.mockClear();
+      const err = new Error('test');
+      const tags = { sdkVersion: 'react-native-contentpass-ui@1.2.3' };
+
+      reportError(err, { msg: 'test message', tags });
+
+      expect(captureExceptionMock).toHaveBeenCalledWith(err, {
+        captureContext: { tags },
+      });
+      expect(setTagsMock).not.toHaveBeenCalled();
+    });
+
     it('should not throw error when reportError is called before initSentry', () => {
       const err = new Error('test');
       const msg = 'test message';

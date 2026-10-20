@@ -20,7 +20,11 @@ import { RefreshTokenStrategy } from './types/RefreshTokenStrategy';
 import fetchContentpassToken from './contentpassTokenUtils/fetchContentpassToken';
 import validateSubscription from './contentpassTokenUtils/validateSubscription';
 import type { ContentpassConfig } from './types/ContentpassConfig';
-import { initSentry, reportError } from './sentryIntegration';
+import {
+  initSentry,
+  reportError,
+  type ReportErrorOptions,
+} from './sentryIntegration';
 import sendStats from './countImpressionUtils/sendStats';
 import sendPageViewEvent from './countImpressionUtils/sendPageViewEvent';
 import logger, { enableLogger } from './logger';
@@ -42,6 +46,7 @@ interface ContentpassInterface {
   logout: () => Promise<void>;
   registerObserver: (observer: ContentpassObserver) => void;
   recoverFromError: () => Promise<void>;
+  reportError: (error: Error, options?: ReportErrorOptions) => void;
   unregisterObserver: (observer: ContentpassObserver) => void;
 }
 
@@ -164,6 +169,12 @@ export default class Contentpass implements ContentpassInterface {
     } catch (err: any) {
       reportError(err, { msg: 'Failed to send event' });
     }
+  };
+
+  // Lets the Contentpass UI packages report their own failures to the SDK's
+  // Sentry project, which they have no client for.
+  public reportError = (error: Error, options?: ReportErrorOptions) => {
+    reportError(error, options);
   };
 
   public registerObserver(observer: ContentpassObserver) {

@@ -79,10 +79,6 @@ to tolerate what fails there without the code being at fault:
   retry turns the job green with a warning annotation naming the flows, and
   still uploads the debug output, Metro's log included, so the flake can be
   looked into.
-- The `default-config` job starts Metro with
-  `EXPO_PUBLIC_LAYER_PAGE_LOAD_TIMEOUT_MS=30000`, so a slow page from
-  staging doesn't fail the gate open halfway through a flow; the SDK's
-  default is 8s.
 - The simulator boots at the start of the job and settles while the app
   builds. It is pinned (`SIM_DEVICE`, `SIM_RUNTIME`), as is Maestro
   (`MAESTRO_VERSION`), in the workflow's job `env`.

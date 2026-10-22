@@ -53,10 +53,10 @@ appId: com.contentpassOnetrustExample.onetrustExample
 - tapOn: 'Please log in'
 - tapOn: 'PASSWORD'
 - inputText: ${E2E_STAGING_PASSWORD}
-# Anchored exact match: the page's own "Please log in" heading contains
-# "Log in" as a substring too, and an unanchored match landed on that
-# non-interactive heading instead of the submit button.
-- tapOn: '^Log in$'
+# Submit with the keyboard's return key, not a tap on "Log in": the button
+# sits in a footer pinned to the bottom of the page, and with the keyboard
+# open its centre can fall on the keyboard's toolbar, which takes the tap.
+- pressKey: Enter
 # iOS may offer to save the just-submitted password in a system alert that
 # hides everything else from Maestro until it's dismissed.
 - tapOn:

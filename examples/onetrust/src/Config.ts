@@ -25,14 +25,6 @@ const forcedTimeoutMs = process.env.EXPO_PUBLIC_GATE_TIMEOUT_MS
   ? Number(process.env.EXPO_PUBLIC_GATE_TIMEOUT_MS)
   : undefined;
 
-// Lets an E2E run against live staging give the layer's page longer to load
-// than the SDK's default, so a slow response doesn't fail the gate open
-// halfway through a flow that is testing something else.
-const layerPageLoadTimeoutMs = process.env
-  .EXPO_PUBLIC_LAYER_PAGE_LOAD_TIMEOUT_MS
-  ? Number(process.env.EXPO_PUBLIC_LAYER_PAGE_LOAD_TIMEOUT_MS)
-  : undefined;
-
 export const GATE_TIMEOUTS: ContentpassGateTimeouts | undefined =
   forcedTimeoutMs
     ? {
@@ -45,6 +37,4 @@ export const GATE_TIMEOUTS: ContentpassGateTimeouts | undefined =
         layerPageLoadTimeoutMs: forcedTimeoutMs,
         layerReadyTimeoutMs: forcedTimeoutMs,
       }
-    : layerPageLoadTimeoutMs
-      ? { layerPageLoadTimeoutMs }
-      : undefined;
+    : undefined;

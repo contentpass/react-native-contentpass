@@ -69,11 +69,15 @@ export const initSentry = (args: InitSentryArgs) => {
   });
 };
 
-type ReportErrorOptions = {
+export type ReportErrorOptions = {
   msg?: string;
+  tags?: Record<string, string>;
 };
 
-export const reportError = (err: Error, { msg }: ReportErrorOptions = {}) => {
+export const reportError = (
+  err: Error,
+  { msg, tags }: ReportErrorOptions = {}
+) => {
   logger.error({ err }, msg || 'Unexpected error');
   if (!sentryScope) {
     return;
@@ -87,7 +91,11 @@ export const reportError = (err: Error, { msg }: ReportErrorOptions = {}) => {
     });
   }
 
-  sentryScope.captureException(err);
+  if (tags) {
+    sentryScope.captureException(err, { captureContext: { tags } });
+  } else {
+    sentryScope.captureException(err);
+  }
 };
 
 export const __internal_reset_sentry_scope = () => {

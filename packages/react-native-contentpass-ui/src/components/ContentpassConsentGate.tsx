@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { ActivityIndicator, AppState, StyleSheet, View } from 'react-native';
 import {
   ContentpassStateType,
@@ -24,6 +30,7 @@ import {
   isConsentGateWaitingForAuth,
   shouldRecoverFromErrorOnAppState,
 } from './ContentpassConsentGateRecovery';
+import { SDK_VERSION } from './sdkVersion';
 
 type ContentpassConsentGateProps = {
   children: React.ReactNode;
@@ -74,10 +81,33 @@ export default function ContentpassConsentGate({
   } | null>(null);
   const currentCmpConsentStatus =
     cmpConsentStatus?.adapter === cmpAdapter ? cmpConsentStatus : null;
-  const failOpen = useCallback((message: string, error?: unknown) => {
-    console.error(message, error);
-    setFailedOpen(true);
-  }, []);
+  const failOpen = useCallback(
+    (message: string, error?: unknown, { report = true } = {}) => {
+      console.error(message, error);
+      if (report) {
+        sdk.reportError(error instanceof Error ? error : new Error(message), {
+          msg: message,
+          tags: { uiVersion: SDK_VERSION },
+        });
+      }
+      setFailedOpen(true);
+    },
+    [sdk]
+  );
+  // What the host app was last told through `onVisibilityChange`, so it hears
+  // about every change exactly once, including the layer going away when the
+  // gate fails open.
+  const reportedVisibility = useRef(false);
+  const reportVisibility = useCallback(
+    (visible: boolean) => {
+      if (reportedVisibility.current === visible) {
+        return;
+      }
+      reportedVisibility.current = visible;
+      onVisibilityChange?.(visible);
+    },
+    [onVisibilityChange]
+  );
   const handleLayerFailure = useCallback(
     (error: unknown) => {
       failOpen('Failed to initialize Contentpass layer', error);
@@ -247,7 +277,10 @@ export default function ContentpassConsentGate({
 
   useEffect(() => {
     if (cpAuthState?.state === ContentpassStateType.ERROR) {
-      failOpen('Contentpass initialization failed', cpAuthState.error);
+      // The SDK has already reported the error that put it into ERROR.
+      failOpen('Contentpass initialization failed', cpAuthState.error, {
+        report: false,
+      });
       return;
     }
 
@@ -268,6 +301,7 @@ export default function ContentpassConsentGate({
   // Policy for setting the visibility of the consent layer
   useEffect(() => {
     if (
+      failedOpen ||
       !cmpReady ||
       !currentCmpMetadata ||
       !currentCmpConsentStatus ||
@@ -300,21 +334,26 @@ export default function ContentpassConsentGate({
       isShowingSecondLayer,
       visible,
     });
-    if (visible !== isVisible) {
-      onVisibilityChange?.(visible);
-    }
+    reportVisibility(visible);
     setIsVisible(visible);
     setConsentResolved(true);
   }, [
+    failedOpen,
     cmpReady,
     currentCmpMetadata,
     currentCmpConsentStatus,
     cpAuthState,
     isShowingContentpass,
     isShowingSecondLayer,
-    isVisible,
-    onVisibilityChange,
+    reportVisibility,
   ]);
+
+  // Failing open renders the app in place of the layer.
+  useEffect(() => {
+    if (failedOpen) {
+      reportVisibility(false);
+    }
+  }, [failedOpen, reportVisibility]);
 
   // The layer is triggered to display whenever it becomes visible, matching
   // the point the web SDK fires `wall`/`show`: right before mounting the

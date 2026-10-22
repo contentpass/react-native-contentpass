@@ -34,27 +34,19 @@ jobs:
         # setup and build, so every flow that runs against the example's
         # default config shares the first one, and only flows that need Metro
         # started with other EXPO_PUBLIC_* values get a job of their own.
-        #
-        # layer_page_load_timeout_ms gives the layer's page longer to load
-        # from live staging than the SDK's 8s default; cmp-timeout-fail-open
-        # forces every timeout down instead, and the CMP-failure flow never
-        # gets as far as the layer.
         include:
           - scenario: default-config
             flows: happy-path cancelled-login deny-all consent-survives-relaunch
             onetrust_app_id: ''
             gate_timeout_ms: ''
-            layer_page_load_timeout_ms: '30000'
           - scenario: onetrust-adapter-failure
             flows: onetrust-adapter-failure
             onetrust_app_id: 'e2e-invalid-app-id'
             gate_timeout_ms: ''
-            layer_page_load_timeout_ms: ''
           - scenario: cmp-timeout-fail-open
             flows: cmp-timeout-fail-open
             onetrust_app_id: ''
             gate_timeout_ms: '1'
-            layer_page_load_timeout_ms: ''
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -142,7 +134,6 @@ jobs:
         env:
           EXPO_PUBLIC_ONETRUST_APP_ID: ${{ matrix.onetrust_app_id }}
           EXPO_PUBLIC_GATE_TIMEOUT_MS: ${{ matrix.gate_timeout_ms }}
-          EXPO_PUBLIC_LAYER_PAGE_LOAD_TIMEOUT_MS: ${{ matrix.layer_page_load_timeout_ms }}
         # A Debug build fetches its JS bundle from Metro at app-launch time,
         # so the env vars that pick the per-flow scenario have to be set on
         # the Metro process, not on the (now scenario-independent) build

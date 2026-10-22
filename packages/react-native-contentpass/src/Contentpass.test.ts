@@ -736,4 +736,18 @@ describe('Contentpass', () => {
       expect(sendPageViewEventSpy).not.toHaveBeenCalled();
     });
   });
+
+  describe('reportError', () => {
+    it('should report the error with its message and tags to Sentry', () => {
+      const error = new Error('Timed out while loading the layer page');
+      const options = {
+        msg: 'Failed to initialize Contentpass layer',
+        tags: { sdkVersion: 'react-native-contentpass-ui@1.2.3' },
+      };
+
+      contentpass.reportError(error, options);
+
+      expect(reportErrorSpy).toHaveBeenCalledWith(error, options);
+    });
+  });
 });

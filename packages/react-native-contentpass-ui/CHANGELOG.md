@@ -1,5 +1,13 @@
 # @contentpass/react-native-contentpass-ui
 
+## 0.11.0
+
+### Minor Changes
+
+- [#82](https://github.com/contentpass/react-native-contentpass/pull/82) [`6d230b2`](https://github.com/contentpass/react-native-contentpass/commit/6d230b2b843875504b276b28ec882195d865dd19) Thanks [@0x7f](https://github.com/0x7f)! - Call `onVisibilityChange(false)` when the gate fails open while the consent layer is shown, so an app that hides its content while the layer is visible shows it again. `onVisibilityChange` is now only called when the visibility it last reported changes. Every fail-open is reported to Contentpass's error tracking, tagged with the UI package version, which needs `@contentpass/react-native-contentpass` 0.10.0 or later. The `timeouts` prop is now documented in the README.
+
+- [#82](https://github.com/contentpass/react-native-contentpass/pull/82) [`613ad69`](https://github.com/contentpass/react-native-contentpass/commit/613ad69fefb6e56c72749db803ef48569bff5b75) Thanks [@0x7f](https://github.com/0x7f)! - Give the consent layer's page 30 seconds to load before the gate fails open, instead of 8, the same default as every other gate timeout. The wait starts when the layer mounts and ends once the page and every resource it loads have arrived, so it includes starting the device's WebView for the first time. On fresh Android installs that often took longer than 8 seconds, and the gate failed open before the layer ever showed. `timeouts.layerPageLoadTimeoutMs` still overrides the default.
+
 ## 0.10.1
 
 ### Patch Changes

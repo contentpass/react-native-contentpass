@@ -19,7 +19,7 @@ export type ContentpassGateTimeouts = {
   secondLayerTimeoutMs?: number;
   /** Waiting for the Contentpass SDK to leave its initial `INITIALISING` state. */
   contentpassInitTimeoutMs?: number;
-  /** Waiting for the layer's static HTML page to finish loading. */
+  /** Waiting, from when the layer mounts, for its page and every resource the page loads to finish loading. */
   layerPageLoadTimeoutMs?: number;
   /** Waiting, once the layer page has loaded, for it to report ready. */
   layerReadyTimeoutMs?: number;

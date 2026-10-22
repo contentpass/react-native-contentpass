@@ -1,5 +1,11 @@
 # @contentpass/react-native-contentpass
 
+## 0.10.0
+
+### Minor Changes
+
+- [#82](https://github.com/contentpass/react-native-contentpass/pull/82) [`25b99d9`](https://github.com/contentpass/react-native-contentpass/commit/25b99d9bf0ace8db82f3cbdf2b884ce46fa4b3f7) Thanks [@0x7f](https://github.com/0x7f)! - Add `reportError(error, { msg, tags })` to the SDK instance. It reports to the SDK's own error tracking, and `@contentpass/react-native-contentpass-ui` uses it to report why the consent gate failed open.
+
 ## 0.9.1
 
 ### Patch Changes
